@@ -1,0 +1,9 @@
+{
+  "1": {
+    "theme": "granite.jpg",
+    "layout": "room1_1.png",
+    "sprites": {
+      "player":  [100, 150],
+      "robot": [400, 200]}
+  }
+}
