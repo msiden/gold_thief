@@ -30,6 +30,8 @@ class Levels(object):
         self.layout_img = None
         self.background_img = None
         self.layout_sprite = None
+        self.layout_group = None
+        self.load()
 
     def load(self):
         dark_overlay = pygame.Surface(SCREEN_SIZE, flags=pygame.SRCALPHA)
@@ -37,15 +39,19 @@ class Levels(object):
         self.database = load_db(LEVEL_DB.format(self.level))
         self.theme = THEMES_FOLDER + self.database[str(self.room)]["theme"]
         self.layout = LAYOUTS_FOLDER + self.database[str(self.room)]["layout"]
-        self.theme_img = self.background_img = pygame.image.load(self.theme)
-        self.theme_img = self.background_img = pygame.transform.scale(self.theme_img, SCREEN_SIZE)
+        self.theme_img = pygame.image.load(self.theme)
+        self.background_img = pygame.image.load(self.theme)
+        self.theme_img = pygame.transform.scale(self.theme_img, SCREEN_SIZE)
+        self.background_img = pygame.transform.scale(self.theme_img, SCREEN_SIZE)
         self.background_img.blit(dark_overlay, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
         self.layout_img = pygame.image.load(self.layout)
         self.layout_img.set_colorkey(Color.BLACK)
         self.theme_img.blit(self.layout_img, (0, 0))
         self.theme_img.set_colorkey(Color.WHITE)
-        self.layout_sprite = Sprite(self.theme)
+        self.layout_sprite = Sprite(self.layout)
         self.layout_sprite.rect.x = self.layout_sprite.rect.y = 0
+        self.layout_group = pygame.sprite.Group()
+        self.layout_group.add(self.layout_sprite)
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -70,6 +76,8 @@ class Color(object):
 
 # Constants
 SCREEN_SIZE = (750, 500)
+
+# Make Enum!
 IMAGES_FOLDER = "images" + os.sep
 LAYOUTS_FOLDER = IMAGES_FOLDER + "layouts" + os.sep
 SPRITES_FOLDER = IMAGES_FOLDER + "sprites" + os.sep
@@ -81,20 +89,6 @@ LEVEL_DB = LEVELS_FOLDER + "level{}.json"
 screen = pygame.display.set_mode(SCREEN_SIZE)
 game_is_running = True
 level = Levels()
-level.load()
-background_img = pygame.image.load(THEMES_FOLDER + "granite.jpg")
-background_img = pygame.transform.scale(background_img, SCREEN_SIZE)
-dark = pygame.Surface(SCREEN_SIZE, flags=pygame.SRCALPHA)
-dark.fill((100, 100, 100, 0))
-background_img.blit(dark, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
-walls_img = pygame.image.load(LAYOUTS_FOLDER + "room1_1.png")
-walls_img.set_colorkey(Color.BLACK)
-pattern = pygame.image.load(THEMES_FOLDER + "granite.jpg")
-pattern = pygame.transform.scale(pattern, SCREEN_SIZE)
-pattern.blit(walls_img, (0, 0))
-pattern.set_colorkey(Color.WHITE)
-walls = Sprite(LAYOUTS_FOLDER + "room1_1.png")
-walls.rect.x = walls.rect.y = 0
 player = Sprite(SPRITES_FOLDER + "player" + os.sep + "robot1.png")
 player.rect.x = 100
 player.rect.y = 150
@@ -104,9 +98,6 @@ block.rect.y = 200
 blocks = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 blocks.add(block)
-walls_group = pygame.sprite.Group()
-#walls_group.add(level.layout_sprite)
-walls_group.add(walls)
 for s in (player, block):
     all_sprites.add(s)
 animate = False
@@ -146,13 +137,10 @@ while game_is_running:
 
     if pygame.sprite.spritecollide(player, blocks, False, pygame.sprite.collide_mask):
         print("sprites have collided!")
-    if pygame.sprite.spritecollide(player, walls_group, False, pygame.sprite.collide_mask):
+    if pygame.sprite.spritecollide(player, level.layout_group, False, pygame.sprite.collide_mask):
         print("Player hit a wall")
 
-    #screen.blit(level.background_img, (0, 0))
-    #screen.blit(level.theme_img, (0, 0))
-
-    screen.blit(background_img, (0, 0))
-    screen.blit(pattern, (0, 0))
+    screen.blit(level.background_img, (0, 0))
+    screen.blit(level.theme_img, (0, 0))
     all_sprites.draw(screen)
     pygame.display.flip()
