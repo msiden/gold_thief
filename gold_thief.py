@@ -64,6 +64,29 @@ class Sprite(pygame.sprite.Sprite):
         self.image.set_colorkey(Color.WHITE)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
+        self.is_walking = False
+        self.is_climbing = False
+        self.is_passed_out = False
+        self.is_pulling_up = False
+        self.is_carrying_bag = False
+        self.is_standing_still = False
+        self.animation = []
+        self.direction = Direction.RIGHT
+        self.update()
+
+    def update(self):
+        self.is_walking = False
+        self.is_climbing = False
+        self.is_passed_out = False
+        self.is_pulling_up = False
+        self.is_carrying_bag = False
+        self.is_standing_still = not any([self.is_walking, self.is_climbing, self.is_passed_out, self.is_pulling_up])
+
+    def get_images(self):
+        walking = []
+        for i in os.listdir(Folder.PLAYER_WALKING_IMGS):
+            walking.append(pygame.image.load(Folder.PLAYER_WALKING_IMGS + i))
+        print(walking)
 
 
 # Enums
@@ -74,12 +97,22 @@ class Color(object):
     WHITE = (255, 255, 255)
 
 
+class Direction(object):
+    RIGHT = "RIGHT"
+    LEFT = "LEFT"
+    UP = "UP"
+    DOWN = "DOWN"
+
+
 class Folder(object):
     IMAGES = "images" + os.sep
     LAYOUTS = IMAGES + "layouts" + os.sep
     SPRITES = IMAGES + "sprites" + os.sep
     TEXTURES = IMAGES + "textures" + os.sep
     LEVELS = "levels" + os.sep
+    PLAYER_IMAGES = SPRITES + "player" + os.sep
+    PLAYER_STANDING_IMGS = PLAYER_IMAGES + "standing" + os.sep
+    PLAYER_WALKING_IMGS = PLAYER_IMAGES + "walking" + os.sep
 
 
 class FileName(object):
@@ -108,7 +141,7 @@ animate = False
 player_imgs = animation_loop([
     Folder.SPRITES + "player" + os.sep + "robot1.png",
     Folder.SPRITES + "player" + os.sep + "robot1b.png"])
-
+print(player.get_images())
 # Initialize PyGame
 pygame.init()
 
