@@ -1,6 +1,6 @@
 {
   "1": {
-    "theme": "granite.jpg",
+    "texture": "granite.jpg",
     "layout": "room1_1.png",
     "sprites": {
       "player":  [100, 150],
