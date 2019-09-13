@@ -17,6 +17,15 @@ def load_db(database):
     return db
 
 
+def load_images(animation, sprite_name):
+    folder = {
+        Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
+        Animation.STANDING: Folder.STANDING_IMGS.format(sprite_name)}[animation]
+    if not os.path.exists(folder):
+        return
+    return [pygame.image.load(folder + i) for i in os.listdir(folder)]
+
+
 # Classes
 class Rooms(object):
 
@@ -48,7 +57,7 @@ class Rooms(object):
         self.layout_img.set_colorkey(Color.BLACK)
         self.texture_img.blit(self.layout_img, (0, 0))
         self.texture_img.set_colorkey(Color.WHITE)
-        self.layout_sprite = Sprite(self.layout)
+        self.layout_sprite = Sprite(SpriteName.LAYOUT, self.layout)
         self.layout_sprite.rect.x = self.layout_sprite.rect.y = 0
         self.layout_group = pygame.sprite.Group()
         self.layout_group.add(self.layout_sprite)
@@ -56,40 +65,53 @@ class Rooms(object):
 
 class Sprite(pygame.sprite.Sprite):
 
-    def __init__(self, image):
+    def __init__(self, name, image=None):
 
         pygame.sprite.Sprite.__init__(self)
 
-        self.image = pygame.image.load(image)
+        self.activity = None
+        self.is_walking = self.activity == Activity.WALKING
+        self.is_climbing = self.activity == Activity.CLIMBING
+        self.is_passed_out = self.activity == Activity.PASSED_OUT
+        self.is_pulling_up = self.activity == Activity.PULLING_UP
+        self.is_carrying_bag = False
+        self.is_standing_still = self.activity == Activity.STANDING
+        self.animation = None
+        self.direction = Direction.RIGHT
+        self.name = name
+        self.animations = {
+            Animation.WALKING: load_images(Animation.WALKING, self.name),
+            Animation.STANDING: load_images(Animation.STANDING, self.name)}
+        if image:
+            self.image = pygame.image.load(image)
+            self.image.set_colorkey(Color.WHITE)
+            self.mask = pygame.mask.from_surface(self.image)
+        else:
+            self.update(Activity.WALKING)
+        self.rect = self.image.get_rect()
+
+    def update(self, activity):
+        if activity != self.activity:
+            self.animation = animation_loop(self.animations[activity])
+        self.activity = activity
+        self.image = next(self.animation)
         self.image.set_colorkey(Color.WHITE)
         self.mask = pygame.mask.from_surface(self.image)
-        self.rect = self.image.get_rect()
-        self.is_walking = False
-        self.is_climbing = False
-        self.is_passed_out = False
-        self.is_pulling_up = False
-        self.is_carrying_bag = False
-        self.is_standing_still = False
-        self.animation = []
-        self.direction = Direction.RIGHT
-        self.update()
-
-    def update(self):
-        self.is_walking = False
-        self.is_climbing = False
-        self.is_passed_out = False
-        self.is_pulling_up = False
-        self.is_carrying_bag = False
-        self.is_standing_still = not any([self.is_walking, self.is_climbing, self.is_passed_out, self.is_pulling_up])
-
-    def get_images(self):
-        walking = []
-        for i in os.listdir(Folder.PLAYER_WALKING_IMGS):
-            walking.append(pygame.image.load(Folder.PLAYER_WALKING_IMGS + i))
-        print(walking)
 
 
 # Enums
+class Activity(object):
+    WALKING = "walking"
+    STANDING = "standing"
+    CLIMBING = "climbing"
+    PULLING_UP = "pulling_up"
+    PASSED_OUT = "passed_out"
+
+
+class Animation(Activity):
+    pass
+
+
 class Color(object):
     BLACK = (0, 0, 0)
     BLUE = (0, 0, 255)
@@ -98,10 +120,10 @@ class Color(object):
 
 
 class Direction(object):
-    RIGHT = "RIGHT"
-    LEFT = "LEFT"
-    UP = "UP"
-    DOWN = "DOWN"
+    RIGHT = "right"
+    LEFT = "left"
+    UP = "up"
+    DOWN = "down"
 
 
 class Folder(object):
@@ -110,13 +132,18 @@ class Folder(object):
     SPRITES = IMAGES + "sprites" + os.sep
     TEXTURES = IMAGES + "textures" + os.sep
     LEVELS = "levels" + os.sep
-    PLAYER_IMAGES = SPRITES + "player" + os.sep
-    PLAYER_STANDING_IMGS = PLAYER_IMAGES + "standing" + os.sep
-    PLAYER_WALKING_IMGS = PLAYER_IMAGES + "walking" + os.sep
+    WALKING_IMGS = SPRITES + "{}" + os.sep + "walking" + os.sep
+    STANDING_IMGS = SPRITES + "{}" + os.sep + "standing" + os.sep
 
 
 class FileName(object):
     LEVEL_DB = Folder.LEVELS + "level{}.json"
+
+
+class SpriteName(object):
+    PLAYER = "player"
+    LAYOUT = "layout"
+    ROBOT = "robot"
 
 
 # Constants
@@ -126,10 +153,10 @@ SCREEN_SIZE = (750, 500)
 screen = pygame.display.set_mode(SCREEN_SIZE)
 game_is_running = True
 room = Rooms()
-player = Sprite(Folder.SPRITES + "player" + os.sep + "robot1.png")
+player = Sprite(name=SpriteName.PLAYER)
 player.rect.x = 100
 player.rect.y = 150
-block = Sprite(Folder.SPRITES + "robot" + os.sep + "robot2.png")
+block = Sprite(image=Folder.SPRITES + "robot" + os.sep + "robot2.png", name=SpriteName.ROBOT)
 block.rect.x = 400
 block.rect.y = 200
 blocks = pygame.sprite.Group()
@@ -141,7 +168,7 @@ animate = False
 player_imgs = animation_loop([
     Folder.SPRITES + "player" + os.sep + "robot1.png",
     Folder.SPRITES + "player" + os.sep + "robot1b.png"])
-print(player.get_images())
+
 # Initialize PyGame
 pygame.init()
 
@@ -158,20 +185,27 @@ while game_is_running:
             animate = False
 
     key_press = pygame.key.get_pressed()
+    if not any(key_press):
+        player.update(Activity.STANDING)
     if key_press[pygame.K_DOWN]:
         player.rect.y += 1
+        player.update(Activity.WALKING)
     elif key_press[pygame.K_UP]:
         player.rect.y -= 1
+        player.update(Activity.WALKING)
     if key_press[pygame.K_RIGHT]:
         player.rect.x += 1
+        player.update(Activity.WALKING)
     elif key_press[pygame.K_LEFT]:
         player.rect.x -= 1
+        player.update(Activity.WALKING)
 
-    if animate:
+
+    """if animate:
         player.image = pygame.image.load(next(player_imgs)).convert()
     else:
         player.image = pygame.image.load(Folder.SPRITES + "player" + os.sep + "robot1.png")
-    player.image.set_colorkey(Color.WHITE)
+    player.image.set_colorkey(Color.WHITE)"""
 
     if pygame.sprite.spritecollide(player, blocks, False, pygame.sprite.collide_mask):
         print("sprites have collided!")
