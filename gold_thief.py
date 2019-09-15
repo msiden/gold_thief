@@ -2,6 +2,10 @@ import pygame
 import os
 import json
 
+# Define Screen and sprite sizes
+SCREEN_SIZE = (750, 500)
+SPRITE_SIZE = (50, 50)
+
 
 # Functions
 def animation_loop(imgs):
@@ -23,7 +27,7 @@ def load_images(animation, sprite_name):
         Animation.STANDING: Folder.STANDING_IMGS.format(sprite_name)}[animation]
     if not os.path.exists(folder):
         return
-    return [pygame.transform.scale(pygame.image.load(folder + i), (50, 50)) for i in os.listdir(folder)]
+    return [pygame.transform.scale(pygame.image.load(folder + i), SPRITE_SIZE) for i in os.listdir(folder)]
 
 
 # Classes
@@ -146,8 +150,7 @@ class SpriteName(object):
     ROBOT = "robot"
 
 
-# Constants
-SCREEN_SIZE = (750, 500)
+# Load sprite animation images and store in a dict
 SPRITE_ANIMATIONS = {
     SpriteName.PLAYER: {
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
