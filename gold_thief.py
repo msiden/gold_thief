@@ -23,7 +23,7 @@ def load_images(animation, sprite_name):
         Animation.STANDING: Folder.STANDING_IMGS.format(sprite_name)}[animation]
     if not os.path.exists(folder):
         return
-    return [pygame.image.load(folder + i) for i in os.listdir(folder)]
+    return [pygame.transform.scale(pygame.image.load(folder + i), (50, 50)) for i in os.listdir(folder)]
 
 
 # Classes
@@ -65,7 +65,7 @@ class Rooms(object):
 
 class Sprite(pygame.sprite.Sprite):
 
-    def __init__(self, name, activity="STANDING", image=None):
+    def __init__(self, name, activity="standing", image=None, position=(0, 0)):
 
         pygame.sprite.Sprite.__init__(self)
 
@@ -88,6 +88,7 @@ class Sprite(pygame.sprite.Sprite):
             self.animations = SPRITE_ANIMATIONS[name]
             self.update(activity)
         self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = position
 
     def update(self, activity):
         if activity != self.activity:
@@ -158,12 +159,8 @@ SPRITE_ANIMATIONS = {
 screen = pygame.display.set_mode(SCREEN_SIZE)
 game_is_running = True
 room = Rooms()
-player = Sprite(name=SpriteName.PLAYER)
-player.rect.x = 100
-player.rect.y = 150
-robot = Sprite(name=SpriteName.ROBOT)
-robot.rect.x = 400
-robot.rect.y = 200
+player = Sprite(name=SpriteName.PLAYER, position=(100, 150))
+robot = Sprite(name=SpriteName.ROBOT, position=(400, 200))
 robots = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 robots.add(robot)
