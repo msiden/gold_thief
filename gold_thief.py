@@ -57,7 +57,7 @@ class Rooms(object):
         self.layout_img.set_colorkey(Color.BLACK)
         self.texture_img.blit(self.layout_img, (0, 0))
         self.texture_img.set_colorkey(Color.WHITE)
-        self.layout_sprite = Sprite(SpriteName.LAYOUT, self.layout)
+        self.layout_sprite = Sprite(SpriteName.LAYOUT, image=self.layout)
         self.layout_sprite.rect.x = self.layout_sprite.rect.y = 0
         self.layout_group = pygame.sprite.Group()
         self.layout_group.add(self.layout_sprite)
@@ -65,7 +65,7 @@ class Rooms(object):
 
 class Sprite(pygame.sprite.Sprite):
 
-    def __init__(self, name, image=None):
+    def __init__(self, name, activity="STANDING", image=None):
 
         pygame.sprite.Sprite.__init__(self)
 
@@ -79,15 +79,14 @@ class Sprite(pygame.sprite.Sprite):
         self.animation = None
         self.direction = Direction.RIGHT
         self.name = name
-        self.animations = {
-            Animation.WALKING: load_images(Animation.WALKING, self.name),
-            Animation.STANDING: load_images(Animation.STANDING, self.name)}
         if image:
+            self.animations = None
             self.image = pygame.image.load(image)
             self.image.set_colorkey(Color.WHITE)
             self.mask = pygame.mask.from_surface(self.image)
         else:
-            self.update(Activity.WALKING)
+            self.animations = SPRITE_ANIMATIONS[name]
+            self.update(activity)
         self.rect = self.image.get_rect()
 
     def update(self, activity):
@@ -148,6 +147,12 @@ class SpriteName(object):
 
 # Constants
 SCREEN_SIZE = (750, 500)
+SPRITE_ANIMATIONS = {
+    SpriteName.PLAYER: {
+        Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
+        Animation.STANDING: load_images(Animation.STANDING, SpriteName.PLAYER)},
+    SpriteName.ROBOT: {
+        Animation.STANDING: load_images(Animation.STANDING, SpriteName.ROBOT)}}
 
 # Variables and objects
 screen = pygame.display.set_mode(SCREEN_SIZE)
@@ -156,18 +161,14 @@ room = Rooms()
 player = Sprite(name=SpriteName.PLAYER)
 player.rect.x = 100
 player.rect.y = 150
-block = Sprite(image=Folder.SPRITES + "robot" + os.sep + "robot2.png", name=SpriteName.ROBOT)
-block.rect.x = 400
-block.rect.y = 200
-blocks = pygame.sprite.Group()
+robot = Sprite(name=SpriteName.ROBOT)
+robot.rect.x = 400
+robot.rect.y = 200
+robots = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
-blocks.add(block)
-for s in (player, block):
+robots.add(robot)
+for s in (player, robot):
     all_sprites.add(s)
-animate = False
-player_imgs = animation_loop([
-    Folder.SPRITES + "player" + os.sep + "robot1.png",
-    Folder.SPRITES + "player" + os.sep + "robot1b.png"])
 
 # Initialize PyGame
 pygame.init()
@@ -200,14 +201,7 @@ while game_is_running:
         player.rect.x -= 1
         player.update(Activity.WALKING)
 
-
-    """if animate:
-        player.image = pygame.image.load(next(player_imgs)).convert()
-    else:
-        player.image = pygame.image.load(Folder.SPRITES + "player" + os.sep + "robot1.png")
-    player.image.set_colorkey(Color.WHITE)"""
-
-    if pygame.sprite.spritecollide(player, blocks, False, pygame.sprite.collide_mask):
+    if pygame.sprite.spritecollide(player, robots, False, pygame.sprite.collide_mask):
         print("sprites have collided!")
     if pygame.sprite.spritecollide(player, room.layout_group, False, pygame.sprite.collide_mask):
         print("Player hit a wall")
