@@ -13,22 +13,65 @@ screen = pygame.display.set_mode(SCREEN_SIZE)
 
 # Functions
 def animation_loop(imgs):
+    """
+    Generator function that will continuously loop through a list of pyGame images
+
+    - imgs -- (List. Mandatory) A list of images
+
+    Yields: image
+    """
     i = 0
     while True:
         yield imgs[i]
         i = i + 1 if i + 1 < len(imgs) else 0
 
 
+def generate_sprites(room_obj, name):
+    """
+    Generate a sprites group from room setup dictionary
+
+    - room_obj -- (Object. Mandatory) An instance of Room class
+    - name -- (String. Mandatory) The name of the sprite to generate. Use SpriteNames enum.
+
+    returns: An instance of pygame.sprites.Group()
+    """
+    sprites_db = room_obj.database[str(room_obj.room)]["sprites"][name]
+    sprites = []
+    group = pygame.sprite.Group()
+    for spr in sprites_db:
+        activity = spr["activity"] if "activity" in spr else Activity.IDLE
+        direction = spr["direction"] if "direction" in spr else Direction.RIGHT
+        sprites.append(Sprite(name=name, position=spr["position"], activity=activity, direction=direction))
+    for spr in sprites:
+        group.add(spr)
+    return group
+
+
 def load_db(database):
+    """
+    Read a json file and return as dict
+
+    - database -- (String. Mandatory) The json-file to read.
+
+    Returns: Dict
+    """
     with open(database, "r") as f:
         db = json.loads(f.read())
     return db
 
 
 def load_images(animation, sprite_name):
+    """
+    Read all image files in a folder and return as a list of pyGame images
+
+    - animation -- (String. Mandatory) The name of the requested animation. Use Animation enum
+    - sprite_name -- (String. Optional) The name of the sprite. Use SpriteName enum.
+
+    Returns: List
+    """
     folder = {
         Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
-        Animation.STANDING: Folder.STANDING_IMGS.format(sprite_name)}[animation]
+        Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name)}[animation]
     if not os.path.exists(folder):
         return
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), SPRITE_SIZE) for i in os.listdir(folder)]
@@ -36,6 +79,7 @@ def load_images(animation, sprite_name):
 
 # Classes
 class Rooms(object):
+    """Class for loading a room layout from a level setup json-file"""
 
     def __init__(self):
         self.background_img = None
@@ -51,6 +95,7 @@ class Rooms(object):
         self.load()
 
     def load(self):
+        """Load a new room"""
         dark_overlay = pygame.Surface(SCREEN_SIZE, flags=pygame.SRCALPHA)
         dark_overlay.fill((100, 100, 100, 0))
         self.database = load_db(FileName.LEVEL_DB.format(self.level))
@@ -73,20 +118,30 @@ class Rooms(object):
 
 class Sprite(pygame.sprite.Sprite):
 
-    def __init__(self, name, activity="standing", image=None, position=(0, 0)):
+    def __init__(self, name, activity="idle", image=None, position=(0, 0), direction="right"):
+        """
+        Create a new sprite
 
+        name -- (String. Mandatory) The sprite name. Use SpriteName enum
+        activity -- (String. Optional. Defaults to "idle") The current activity of the sprite. Use Activity enum
+        image -- (String. Optional. Defaults to None) Path to image file. If provided a static image will be used for
+            the sprite and animations will be disabled.
+        position -- (Tuple. Optional. Defaults to (0, 0)) The current position of the sprite
+        direction -- (String. Optional. Defaults to "right") The current direction the sprite is facing. Use Direction
+           enum.
+        """
         pygame.sprite.Sprite.__init__(self)
 
         self.activity = None
         self.animation = None
-        self.direction = Direction.RIGHT
+        self.direction = direction
         self.facing_left = None
         self.facing_right = None
         self.is_carrying_bag = False
         self.is_climbing = self.activity == Activity.CLIMBING
         self.is_passed_out = self.activity == Activity.PASSED_OUT
         self.is_pulling_up = self.activity == Activity.PULLING_UP
-        self.is_standing_still = self.activity == Activity.STANDING
+        self.is_idle = self.activity == Activity.IDLE
         self.is_walking = self.activity == Activity.WALKING
         self.name = name
         self.speed = 2
@@ -102,6 +157,7 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = position
 
     def update(self, activity):
+        """Update the sprite animation"""
         self.facing_left = self.direction == Direction.LEFT
         self.facing_right = self.direction == Direction.RIGHT
         if activity != self.activity:
@@ -119,7 +175,7 @@ class Activity(object):
     CLIMBING = "climbing"
     PASSED_OUT = "passed_out"
     PULLING_UP = "pulling_up"
-    STANDING = "standing"
+    IDLE = "idle"
     WALKING = "walking"
 
 
@@ -146,7 +202,7 @@ class Folder(object):
     LAYOUTS = IMAGES + "layouts" + os.sep
     LEVELS = "levels" + os.sep
     SPRITES = IMAGES + "sprites" + os.sep
-    STANDING_IMGS = SPRITES + "{}" + os.sep + "standing" + os.sep
+    IDLE_IMGS = SPRITES + "{}" + os.sep + "idle" + os.sep
     TEXTURES = IMAGES + "textures" + os.sep
     WALKING_IMGS = SPRITES + "{}" + os.sep + "walking" + os.sep
 
@@ -156,30 +212,32 @@ class FileName(object):
 
 
 class SpriteName(object):
+    GOLD = "gold"
     LAYOUT = "layout"
     PLAYER = "player"
-    ROBOT = "robot"
+    MINER = "miner"
 
 
 # Load sprite animation images and store in a dict
 SPRITE_ANIMATIONS = {
+    SpriteName.GOLD: {
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.GOLD)},
     SpriteName.PLAYER: {
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
-        Animation.STANDING: load_images(Animation.STANDING, SpriteName.PLAYER)},
-    SpriteName.ROBOT: {
-        Animation.STANDING: load_images(Animation.STANDING, SpriteName.ROBOT)}}
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER)},
+    SpriteName.MINER: {
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER)}}
 
 # Variables and objects
 clock = pygame.time.Clock()
 game_is_running = True
 room = Rooms()
-player = Sprite(name=SpriteName.PLAYER, position=(100, 150))
-robot = Sprite(name=SpriteName.ROBOT, position=(400, 200))
-robots = pygame.sprite.Group()
-all_sprites = pygame.sprite.Group()
-robots.add(robot)
-for s in (player, robot):
-    all_sprites.add(s)
+players = generate_sprites(room, SpriteName.PLAYER)
+player = players.sprites()[0]
+miners = generate_sprites(room, SpriteName.MINER)
+gold_sacks = generate_sprites(room, SpriteName.GOLD)
+all_sprites = (players, miners, gold_sacks)
+not_player = (miners, gold_sacks)
 
 # Initialize PyGame
 pygame.init()
@@ -199,7 +257,7 @@ while game_is_running:
     # Read key presses and move the player
     key_press = pygame.key.get_pressed()
     if not any(key_press):
-        player.update(Activity.STANDING)
+        player.update(Activity.IDLE)
     if key_press[pygame.K_DOWN]:
         player.rect.y += player.speed
         player.update(Activity.WALKING)
@@ -216,8 +274,9 @@ while game_is_running:
         player.update(Activity.WALKING)
 
     # Check if player collides with another sprite
-    if pygame.sprite.spritecollide(player, robots, False, pygame.sprite.collide_mask):
-        print("sprites have collided!")
+    for sprite in not_player:
+        if pygame.sprite.spritecollide(player, sprite, False, pygame.sprite.collide_mask):
+            print("Player collided with another sprite")
 
     # Check if player collides with a wall
     if pygame.sprite.spritecollide(player, room.layout_group, False, pygame.sprite.collide_mask):
@@ -226,5 +285,6 @@ while game_is_running:
     # Draw sprites and update the screen
     screen.blit(room.background_img, (0, 0))
     screen.blit(room.texture_img, (0, 0))
-    all_sprites.draw(screen)
+    for s in all_sprites:
+        s.draw(screen)
     pygame.display.flip()
