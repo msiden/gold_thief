@@ -79,6 +79,11 @@ def load_images(animation, sprite_name):
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), SPRITE_SIZE) for i in os.listdir(folder)]
 
 
+def sprites_collide(spr, sprites):
+    sprites = [sprites] if type(sprites) not in (list, tuple) else sprites
+    return any([pygame.sprite.spritecollide(spr, x, True, pygame.sprite.collide_mask) for x in sprites])
+
+
 # Classes
 class Rooms(object):
     """Class for loading a room layout from a level setup json-file"""
@@ -288,21 +293,28 @@ while game_is_running:
         player.update(Activity.WALKING)
 
     # Check if player collides with another sprite
-    for sprite in not_player:
-        if pygame.sprite.spritecollide(player, sprite, True, pygame.sprite.collide_mask):
-            print("Player collided with another sprite")
+    #for sprite in not_player:
+    #    if pygame.sprite.spritecollide(player, sprite, True, pygame.sprite.collide_mask):
+    #        print("Player collided with another sprite")
+    if sprites_collide(player, not_player):
+        print("YA")
+
 
     # Check if player collides with a wall
-    print(player.v_direction, player.h_direction)
+    #print(player.v_direction, player.h_direction)
     if pygame.sprite.spritecollide(player, room.layout_group, False, pygame.sprite.collide_mask):
         if player.is_facing_up:
-            player.rect.y += (SPRITE_SIZE[1] / 5)
+            player.rect.y += (player.speed + 1)
+            player.update(activity=Activity.IDLE)
         elif player.is_facing_down:
-            player.rect.y -= (SPRITE_SIZE[1] / 5)
+            player.rect.y -= (player.speed + 1)
+            player.update(activity=Activity.IDLE)
         elif player.is_facing_left:
-            player.rect.x += (SPRITE_SIZE[0] / 5)
+            player.rect.x += (player.speed + 1)
+            player.update(activity=Activity.IDLE)
         elif player.is_facing_right:
-            player.rect.x -= (SPRITE_SIZE[0] / 5)
+            player.rect.x -= (player.speed + 1)
+            player.update(activity=Activity.IDLE)
 
     # Update animation for gold sacks
     for s in gold_sacks.sprites():
