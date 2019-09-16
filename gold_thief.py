@@ -40,8 +40,10 @@ def generate_sprites(room_obj, name):
     group = pygame.sprite.Group()
     for spr in sprites_db:
         activity = spr["activity"] if "activity" in spr else Activity.IDLE
-        direction = spr["direction"] if "direction" in spr else Direction.RIGHT
-        sprites.append(Sprite(name=name, position=spr["position"], activity=activity, direction=direction))
+        h_direction = spr["h_direction"] if "h_direction" in spr else Direction.RIGHT
+        v_direction = spr["v_direction"] if "v_direction" in spr else Direction.NONE
+        sprites.append(Sprite(
+            name=name, position=spr["position"], activity=activity, h_direction=h_direction, v_direction=v_direction))
     for spr in sprites:
         group.add(spr)
     return group
@@ -118,7 +120,7 @@ class Rooms(object):
 
 class Sprite(pygame.sprite.Sprite):
 
-    def __init__(self, name, activity="idle", image=None, position=(0, 0), direction="right"):
+    def __init__(self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none"):
         """
         Create a new sprite
 
@@ -127,24 +129,29 @@ class Sprite(pygame.sprite.Sprite):
         image -- (String. Optional. Defaults to None) Path to image file. If provided a static image will be used for
             the sprite and animations will be disabled.
         position -- (Tuple. Optional. Defaults to (0, 0)) The current position of the sprite
-        direction -- (String. Optional. Defaults to "right") The current direction the sprite is facing. Use Direction
-           enum.
+        h_direction -- (String. Optional. Defaults to "right") The current horizontal direction the sprite is facing.
+            Use Direction enum.
+        v_direction -- (String. Optional. Defaults to "right") The current vertical direction the sprite is moving in.
+            Use Direction enum.
         """
         pygame.sprite.Sprite.__init__(self)
 
         self.activity = None
         self.animation = None
-        self.direction = direction
-        self.facing_left = None
-        self.facing_right = None
+        self.h_direction = h_direction
+        self.v_direction = v_direction
         self.is_carrying_bag = False
         self.is_climbing = self.activity == Activity.CLIMBING
+        self.is_facing_down = None
+        self.is_facing_left = None
+        self.is_facing_right = None
+        self.is_facing_up = None
         self.is_passed_out = self.activity == Activity.PASSED_OUT
         self.is_pulling_up = self.activity == Activity.PULLING_UP
         self.is_idle = self.activity == Activity.IDLE
         self.is_walking = self.activity == Activity.WALKING
         self.name = name
-        self.speed = 2
+        self.speed = 3
         if image:
             self.animations = None
             self.image = pygame.image.load(image)
@@ -158,14 +165,16 @@ class Sprite(pygame.sprite.Sprite):
 
     def update(self, activity):
         """Update the sprite animation"""
-        self.facing_left = self.direction == Direction.LEFT
-        self.facing_right = self.direction == Direction.RIGHT
+        self.is_facing_down = self.v_direction == Direction.DOWN
+        self.is_facing_left = self.h_direction == Direction.LEFT
+        self.is_facing_right = self.h_direction == Direction.RIGHT
+        self.is_facing_up = self.v_direction == Direction.UP
         if activity != self.activity:
             self.animation = animation_loop(self.animations[activity])
         self.activity = activity
         self.image = next(self.animation)
         self.image.set_colorkey(Color.WHITE)
-        if self.facing_left:
+        if self.is_facing_left:
             self.image = pygame.transform.flip(self.image, True, False)
         self.mask = pygame.mask.from_surface(self.image)
 
@@ -195,6 +204,7 @@ class Direction(object):
     LEFT = "left"
     RIGHT = "right"
     UP = "up"
+    NONE = "none"
 
 
 class Folder(object):
@@ -253,34 +263,50 @@ while game_is_running:
     for event in pygame.event.get():
         game_is_running = \
             not (event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE))
+        if event.type == pygame.KEYUP and event.key in (pygame.K_UP, pygame.K_DOWN):
+            player.v_direction = Direction.NONE
 
     # Read key presses and move the player
     key_press = pygame.key.get_pressed()
     if not any(key_press):
         player.update(Activity.IDLE)
     if key_press[pygame.K_DOWN]:
+        player.v_direction = Direction.DOWN
         player.rect.y += player.speed
         player.update(Activity.WALKING)
     elif key_press[pygame.K_UP]:
+        player.v_direction = Direction.UP
         player.rect.y -= player.speed
         player.update(Activity.WALKING)
     if key_press[pygame.K_RIGHT]:
-        player.direction = Direction.RIGHT
+        player.h_direction = Direction.RIGHT
         player.rect.x += player.speed
         player.update(Activity.WALKING)
     elif key_press[pygame.K_LEFT]:
-        player.direction = Direction.LEFT
+        player.h_direction = Direction.LEFT
         player.rect.x -= player.speed
         player.update(Activity.WALKING)
 
     # Check if player collides with another sprite
     for sprite in not_player:
-        if pygame.sprite.spritecollide(player, sprite, False, pygame.sprite.collide_mask):
+        if pygame.sprite.spritecollide(player, sprite, True, pygame.sprite.collide_mask):
             print("Player collided with another sprite")
 
     # Check if player collides with a wall
+    print(player.v_direction, player.h_direction)
     if pygame.sprite.spritecollide(player, room.layout_group, False, pygame.sprite.collide_mask):
-        print("Player hit a wall")
+        if player.is_facing_up:
+            player.rect.y += (SPRITE_SIZE[1] / 5)
+        elif player.is_facing_down:
+            player.rect.y -= (SPRITE_SIZE[1] / 5)
+        elif player.is_facing_left:
+            player.rect.x += (SPRITE_SIZE[0] / 5)
+        elif player.is_facing_right:
+            player.rect.x -= (SPRITE_SIZE[0] / 5)
+
+    # Update animation for gold sacks
+    for s in gold_sacks.sprites():
+        s.update(activity=Activity.IDLE)
 
     # Draw sprites and update the screen
     screen.blit(room.background_img, (0, 0))

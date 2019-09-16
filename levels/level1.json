@@ -3,8 +3,8 @@
     "texture": "granite.jpg",
     "layout": "room1_1.png",
     "sprites": {
-      "player":  [{"position": [100, 150], "direction": "right", "activity":  "idle"}],
-      "miner": [{"position": [600, 250], "direction": "left", "activity":  "idle"}],
-      "gold": [{"position": [100, 100]}, {"position": [200, 100]}, {"position": [300, 100]}]}
+      "player":  [{"position": [100, 150], "h_direction": "right", "activity":  "idle"}],
+      "miner": [{"position": [600, 250], "h_direction": "left", "activity":  "idle"}],
+      "gold": [{"position": [100, 100]}, {"position": [200, 110]}, {"position": [300, 120]}]}
   }
 }
