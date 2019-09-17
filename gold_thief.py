@@ -79,11 +79,6 @@ def load_images(animation, sprite_name):
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), SPRITE_SIZE) for i in os.listdir(folder)]
 
 
-def sprites_collide(spr, sprites):
-    sprites = [sprites] if type(sprites) not in (list, tuple) else sprites
-    return any([pygame.sprite.spritecollide(spr, x, True, pygame.sprite.collide_mask) for x in sprites])
-
-
 # Classes
 class Rooms(object):
     """Class for loading a room layout from a level setup json-file"""
@@ -92,7 +87,7 @@ class Rooms(object):
         self.background_img = None
         self.database = None
         self.layout = None
-        self.layout_group = None
+        self.layouts = None
         self.layout_img = None
         self.layout_sprite = None
         self.level = 1
@@ -119,8 +114,8 @@ class Rooms(object):
         self.texture_img.set_colorkey(Color.WHITE)
         self.layout_sprite = Sprite(SpriteName.LAYOUT, image=self.layout)
         self.layout_sprite.rect.x = self.layout_sprite.rect.y = 0
-        self.layout_group = pygame.sprite.Group()
-        self.layout_group.add(self.layout_sprite)
+        self.layouts = pygame.sprite.Group()
+        self.layouts.add(self.layout_sprite)
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -167,6 +162,17 @@ class Sprite(pygame.sprite.Sprite):
             self.update(activity)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = position
+
+    def collides(self, sprites):
+        """
+        Check if the sprite collides with another sprite
+
+        - sprites -- (List, Tuple or object) The sprite or sprites to check for collision against
+
+        Returns: Boolean
+        """
+        sprites = [sprites] if type(sprites) not in (list, tuple) else sprites
+        return any([pygame.sprite.spritecollide(self, x, False, pygame.sprite.collide_mask) for x in sprites])
 
     def update(self, activity):
         """Update the sprite animation"""
@@ -278,31 +284,42 @@ while game_is_running:
     if key_press[pygame.K_DOWN]:
         player.v_direction = Direction.DOWN
         player.rect.y += player.speed
-        player.update(Activity.WALKING)
+        if player.collides(room.layouts):
+            player.rect.y -= player.speed
+            player.update(Activity.IDLE)
+        else:
+            player.update(Activity.WALKING)
     elif key_press[pygame.K_UP]:
         player.v_direction = Direction.UP
         player.rect.y -= player.speed
-        player.update(Activity.WALKING)
+        if player.collides(room.layouts):
+            player.rect.y += player.speed
+            player.update(Activity.IDLE)
+        else:
+            player.update(Activity.WALKING)
     if key_press[pygame.K_RIGHT]:
         player.h_direction = Direction.RIGHT
         player.rect.x += player.speed
-        player.update(Activity.WALKING)
+        if player.collides(room.layouts):
+            player.rect.x -= player.speed
+            player.update(Activity.IDLE)
+        else:
+            player.update(Activity.WALKING)
     elif key_press[pygame.K_LEFT]:
         player.h_direction = Direction.LEFT
         player.rect.x -= player.speed
-        player.update(Activity.WALKING)
+        if player.collides(room.layouts):
+            player.rect.x += player.speed
+            player.update(Activity.IDLE)
+        else:
+            player.update(Activity.WALKING)
 
-    # Check if player collides with another sprite
-    #for sprite in not_player:
-    #    if pygame.sprite.spritecollide(player, sprite, True, pygame.sprite.collide_mask):
-    #        print("Player collided with another sprite")
-    if sprites_collide(player, not_player):
-        print("YA")
-
+    if player.collides(not_player):
+        print("Player collided with another sprite")
 
     # Check if player collides with a wall
     #print(player.v_direction, player.h_direction)
-    if pygame.sprite.spritecollide(player, room.layout_group, False, pygame.sprite.collide_mask):
+    """if pygame.sprite.spritecollide(player, room.layouts, False, pygame.sprite.collide_mask):
         if player.is_facing_up:
             player.rect.y += (player.speed + 1)
             player.update(activity=Activity.IDLE)
@@ -314,7 +331,7 @@ while game_is_running:
             player.update(activity=Activity.IDLE)
         elif player.is_facing_right:
             player.rect.x -= (player.speed + 1)
-            player.update(activity=Activity.IDLE)
+            player.update(activity=Activity.IDLE)"""
 
     # Update animation for gold sacks
     for s in gold_sacks.sprites():
