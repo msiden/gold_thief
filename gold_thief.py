@@ -174,6 +174,22 @@ class Sprite(pygame.sprite.Sprite):
         sprites = [sprites] if type(sprites) not in (list, tuple) else sprites
         return any([pygame.sprite.spritecollide(self, x, False, pygame.sprite.collide_mask) for x in sprites])
 
+    def move(self, direction):
+        vertical = direction in (Direction.UP, Direction.DOWN)
+        horizontal = direction in (Direction.LEFT, Direction.RIGHT)
+        one_pixel = {True: 1, False: -1}[direction in (Direction.DOWN, Direction.RIGHT)]
+        x = one_pixel if horizontal else 0
+        y = one_pixel if vertical else 0
+        self.v_direction = direction if vertical else self.v_direction
+        self.h_direction = direction if horizontal else self.h_direction
+        for i in range(1, self.speed + 1):
+            self.rect.move_ip(x, y)
+            if self.collides(room.layouts):
+                self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
+                self.update(Activity.IDLE)
+                break
+            self.update(Activity.WALKING)
+
     def update(self, activity):
         """Update the sprite animation"""
         self.is_facing_down = self.v_direction == Direction.DOWN
@@ -282,37 +298,13 @@ while game_is_running:
     if not any(key_press):
         player.update(Activity.IDLE)
     if key_press[pygame.K_DOWN]:
-        player.v_direction = Direction.DOWN
-        player.rect.y += player.speed
-        if player.collides(room.layouts):
-            player.rect.y -= player.speed
-            player.update(Activity.IDLE)
-        else:
-            player.update(Activity.WALKING)
+        player.move(Direction.DOWN)
     elif key_press[pygame.K_UP]:
-        player.v_direction = Direction.UP
-        player.rect.y -= player.speed
-        if player.collides(room.layouts):
-            player.rect.y += player.speed
-            player.update(Activity.IDLE)
-        else:
-            player.update(Activity.WALKING)
+        player.move(Direction.UP)
     if key_press[pygame.K_RIGHT]:
-        player.h_direction = Direction.RIGHT
-        player.rect.x += player.speed
-        if player.collides(room.layouts):
-            player.rect.x -= player.speed
-            player.update(Activity.IDLE)
-        else:
-            player.update(Activity.WALKING)
+        player.move(Direction.RIGHT)
     elif key_press[pygame.K_LEFT]:
-        player.h_direction = Direction.LEFT
-        player.rect.x -= player.speed
-        if player.collides(room.layouts):
-            player.rect.x += player.speed
-            player.update(Activity.IDLE)
-        else:
-            player.update(Activity.WALKING)
+        player.move(Direction.LEFT)
 
     if player.collides(not_player):
         print("Player collided with another sprite")
