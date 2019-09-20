@@ -156,12 +156,12 @@ class Sprite(pygame.sprite.Sprite):
             self.animations = None
             self.image = pygame.image.load(image)
             self.image.set_colorkey(Color.WHITE)
-            self.mask = pygame.mask.from_surface(self.image)
         else:
             self.animations = SPRITE_ANIMATIONS[name]
             self.update(activity)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = position
+        self.mask = pygame.mask.from_surface(self.image)
 
     def collides(self, sprites):
         """
@@ -203,7 +203,6 @@ class Sprite(pygame.sprite.Sprite):
         self.image.set_colorkey(Color.WHITE)
         if self.is_facing_left:
             self.image = pygame.transform.flip(self.image, True, False)
-        self.mask = pygame.mask.from_surface(self.image)
 
 
 # Enums
