@@ -122,12 +122,13 @@ class Rooms(object):
         self.room = 1
         self.texture = None
         self.texture_img = None
-        self.load()
 
-    def load(self):
+    def load(self, level, room_):
         """Load a new room"""
         dark_overlay = pygame.Surface(SCREEN_SIZE, flags=pygame.SRCALPHA)
         dark_overlay.fill((100, 100, 100, 0))
+        self.level = level
+        self.room = room_
         self.database = load_db(FileName.LEVEL_DB.format(self.level))
         self.texture = Folder.TEXTURES + self.database[str(self.room)]["texture"]
         self.texture_img = pygame.image.load(self.texture)
@@ -135,7 +136,7 @@ class Rooms(object):
         self.background_img = pygame.image.load(self.texture)
         self.background_img = pygame.transform.scale(self.texture_img, SCREEN_SIZE)
         self.background_img.blit(dark_overlay, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
-        self.layout_img = pygame.image.load(self.layout)
+        self.layout_img = pygame.image.load(self.layout).convert()
         self.layout_img.set_colorkey(Color.BLACK)
         self.texture_img = pygame.transform.scale(self.texture_img, SCREEN_SIZE)
         self.texture_img.blit(self.layout_img, (0, 0))
@@ -307,6 +308,7 @@ SPRITE_ANIMATIONS = {
 clock = pygame.time.Clock()
 game_is_running = True
 room = Rooms()
+room.load(1, 2)
 players = generate_sprites(room, SpriteName.PLAYER)
 player = players.sprites()[0]
 miners = generate_sprites(room, SpriteName.MINER)
