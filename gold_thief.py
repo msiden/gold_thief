@@ -2,10 +2,12 @@ import pygame
 import os
 import json
 
-# Define Screen and sprite sizes and game update frequency (FPS)
+# Define Screen and sprite sizes and game update frequency (FPS) etc
 FPS = 25
+GRAVITY = 5
 SCREEN_SIZE = (750, 500)
 SPRITE_SIZE = (50, 50)
+SUPPORTED_KEY_PRESSES = (pygame.K_DOWN, pygame.K_UP, pygame.K_LEFT, pygame.K_RIGHT)
 
 # Setup screen
 screen = pygame.display.set_mode(SCREEN_SIZE)
@@ -47,6 +49,32 @@ def generate_sprites(room_obj, name):
     for spr in sprites:
         group.add(spr)
     return group
+
+
+def gravity():
+    """Apply gravity effect to all sprites"""
+    for sp in all_sprites:
+        for spr in sp.sprites():
+            spr.move(Direction.DOWN, GRAVITY, update_activity=False)
+
+
+def key_presses():
+    """Check key presses and control the player sprite"""
+    key_press = pygame.key.get_pressed()
+    if not any([key_press[k] for k in SUPPORTED_KEY_PRESSES]):
+        player.update(Activity.IDLE)
+    if key_press[pygame.K_DOWN]:
+        # Only allowed when next to a ladder
+        #player.move(Direction.DOWN)
+        pass
+    elif key_press[pygame.K_UP]:
+        #player.move(Direction.UP)
+        # Only allowed when next to a ladder
+        pass
+    if key_press[pygame.K_RIGHT]:
+        player.move(Direction.RIGHT)
+    elif key_press[pygame.K_LEFT]:
+        player.move(Direction.LEFT)
 
 
 def load_db(database):
@@ -174,7 +202,17 @@ class Sprite(pygame.sprite.Sprite):
         sprites = [sprites] if type(sprites) not in (list, tuple) else sprites
         return any([pygame.sprite.spritecollide(self, x, False, pygame.sprite.collide_mask) for x in sprites])
 
-    def move(self, direction):
+    def move(self, direction, speed=None, update_activity=True):
+        """
+        Move the sprite
+
+        - direction -- (String. Mandatory) Use Direction enum
+        - speed -- (Int or Float. Optional. Defaults to self.speed) The speed (number of pixels) to move the sprite in
+        - update_activity -- (Boolean. Optional. Defaults to True) If False the activity (animation) of the sprite
+            will not be updated.
+        """
+        activity = Activity.WALKING
+        speed = self.speed if not speed else speed
         vertical = direction in (Direction.UP, Direction.DOWN)
         horizontal = direction in (Direction.LEFT, Direction.RIGHT)
         one_pixel = {True: 1, False: -1}[direction in (Direction.DOWN, Direction.RIGHT)]
@@ -182,13 +220,14 @@ class Sprite(pygame.sprite.Sprite):
         y = one_pixel if vertical else 0
         self.v_direction = direction if vertical else self.v_direction
         self.h_direction = direction if horizontal else self.h_direction
-        for i in range(1, self.speed + 1):
+        for i in range(1, speed + 1):
             self.rect.move_ip(x, y)
             if self.collides(room.layouts):
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
-                self.update(Activity.IDLE)
+                activity = Activity.IDLE
                 break
-            self.update(Activity.WALKING)
+        if update_activity:
+            self.update(activity)
 
     def update(self, activity):
         """Update the sprite animation"""
@@ -293,36 +332,13 @@ while game_is_running:
             player.v_direction = Direction.NONE
 
     # Read key presses and move the player
-    key_press = pygame.key.get_pressed()
-    if not any(key_press):
-        player.update(Activity.IDLE)
-    if key_press[pygame.K_DOWN]:
-        player.move(Direction.DOWN)
-    elif key_press[pygame.K_UP]:
-        player.move(Direction.UP)
-    if key_press[pygame.K_RIGHT]:
-        player.move(Direction.RIGHT)
-    elif key_press[pygame.K_LEFT]:
-        player.move(Direction.LEFT)
+    key_presses()
+
+    # Apply gravity to all sprites
+    gravity()
 
     if player.collides(not_player):
         print("Player collided with another sprite")
-
-    # Check if player collides with a wall
-    #print(player.v_direction, player.h_direction)
-    """if pygame.sprite.spritecollide(player, room.layouts, False, pygame.sprite.collide_mask):
-        if player.is_facing_up:
-            player.rect.y += (player.speed + 1)
-            player.update(activity=Activity.IDLE)
-        elif player.is_facing_down:
-            player.rect.y -= (player.speed + 1)
-            player.update(activity=Activity.IDLE)
-        elif player.is_facing_left:
-            player.rect.x += (player.speed + 1)
-            player.update(activity=Activity.IDLE)
-        elif player.is_facing_right:
-            player.rect.x -= (player.speed + 1)
-            player.update(activity=Activity.IDLE)"""
 
     # Update animation for gold sacks
     for s in gold_sacks.sprites():
