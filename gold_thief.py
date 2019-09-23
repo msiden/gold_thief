@@ -2,12 +2,13 @@ import pygame
 import os
 import json
 
-# Define Screen and sprite sizes and game update frequency (FPS) etc
+# Define Screen and sprite sizes and other constants
 CLIMBABLE_PIX = 1
 FPS = 25
-GRAVITY = 5
-SCREEN_SIZE = (750, 500)
-SPRITE_SIZE = (50, 50)
+GRAVITY = 10
+PLAYER_SPEED = 5
+SCREEN_SIZE = (970, 545)
+SPRITE_SIZE = (60, 60)
 SUPPORTED_KEY_PRESSES = (pygame.K_DOWN, pygame.K_UP, pygame.K_LEFT, pygame.K_RIGHT)
 
 # Setup screen
@@ -181,7 +182,7 @@ class Sprite(pygame.sprite.Sprite):
         self.is_idle = self.activity == Activity.IDLE
         self.is_walking = self.activity == Activity.WALKING
         self.name = name
-        self.speed = 3
+        self.speed = PLAYER_SPEED
         if image:
             self.animations = None
             self.image = pygame.image.load(image)
@@ -330,7 +331,7 @@ SPRITE_ANIMATIONS = {
 clock = pygame.time.Clock()
 game_is_running = True
 room = Rooms()
-room.load(1, 2)
+room.load(1, 3)
 players = generate_sprites(room, SpriteName.PLAYER)
 player = players.sprites()[0]
 miners = generate_sprites(room, SpriteName.MINER)

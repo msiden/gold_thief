@@ -16,5 +16,15 @@
         {"position": [80, 410], "h_direction": "left", "activity":  "idle"},
         {"position": [300, 410], "h_direction": "right", "activity":  "idle"}],
       "gold": [{"position": [130, 80]}, {"position": [100, 220]}, {"position": [600, 350]}]}
+  },
+  "3": {
+    "texture": "granite.jpg",
+    "layout": "room1_3.png",
+    "sprites": {
+      "player":  [{"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
+      "miner": [
+        {"position": [400, 145], "h_direction": "left", "activity":  "idle"},
+        {"position": [800, 455], "h_direction": "right", "activity":  "idle"}],
+      "gold": [{"position": [180, 190]}, {"position": [180, 350]}, {"position": [800, 310]}]}
   }
 }
