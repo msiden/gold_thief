@@ -3,6 +3,7 @@ import os
 import json
 
 # Define Screen and sprite sizes and game update frequency (FPS) etc
+CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 5
 SCREEN_SIZE = (750, 500)
@@ -212,6 +213,7 @@ class Sprite(pygame.sprite.Sprite):
         - update_activity -- (Boolean. Optional. Defaults to True) If False the activity (animation) of the sprite
             will not be updated.
         """
+        # Set variables
         activity = Activity.WALKING
         speed = self.speed if not speed else speed
         vertical = direction in (Direction.UP, Direction.DOWN)
@@ -221,9 +223,29 @@ class Sprite(pygame.sprite.Sprite):
         y = one_pixel if vertical else 0
         self.v_direction = direction if vertical else self.v_direction
         self.h_direction = direction if horizontal else self.h_direction
+
+        # Move the sprite one pixel at a time and check for wall collisions
         for i in range(1, speed + 1):
+
+            # Move the sprite one pixel
             self.rect.move_ip(x, y)
+
+            # Check for wall collision
             if self.collides(room.layouts):
+                climbed = False
+
+                # Try climbing up slope
+                for _ in range(CLIMBABLE_PIX):
+                    self.rect.move_ip(0, -1)
+                    if not self.collides(room.layouts):
+                        climbed = True
+                        break
+                if climbed:
+                    continue
+                else:
+                    self.rect.move_ip(0, CLIMBABLE_PIX)
+
+                # Stop the sprite if impossible to get pass obstacle
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
                 activity = Activity.IDLE
                 break
