@@ -23,8 +23,8 @@
     "sprites": {
       "player":  [{"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
       "miner": [
-        {"position": [400, 145], "h_direction": "left", "activity":  "idle"},
-        {"position": [800, 455], "h_direction": "right", "activity":  "idle"}],
-      "gold": [{"position": [180, 190]}, {"position": [180, 350]}, {"position": [800, 310]}]}
+        {"position": [700, 290], "h_direction": "left", "activity":  "idle"},
+        {"position": [1250, 900], "h_direction": "right", "activity":  "idle"}],
+      "gold": [{"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}]}
   }
 }

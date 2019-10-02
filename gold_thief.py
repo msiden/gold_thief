@@ -1,15 +1,19 @@
 import pygame
 import os
 import json
+import ctypes
 
 # Define Screen and sprite sizes and other constants
 CLIMBABLE_PIX = 1
 FPS = 25
-GRAVITY = 10
-PLAYER_SPEED = 5
-SCREEN_SIZE = (970, 545)
-SPRITE_SIZE = (60, 60)
+GRAVITY = 20
+PLAYER_SPEED = 8
+SCREEN_SIZE = (1440, 1080)
+SPRITE_SIZE = (120, 120)
 SUPPORTED_KEY_PRESSES = (pygame.K_DOWN, pygame.K_UP, pygame.K_LEFT, pygame.K_RIGHT)
+
+# Make sure we get the right screen resolution
+ctypes.windll.user32.SetProcessDPIAware()
 
 # Setup screen
 screen = pygame.display.set_mode(SCREEN_SIZE)
@@ -128,7 +132,7 @@ class Rooms(object):
     def load(self, level, room_):
         """Load a new room"""
         dark_overlay = pygame.Surface(SCREEN_SIZE, flags=pygame.SRCALPHA)
-        dark_overlay.fill((100, 100, 100, 0))
+        dark_overlay.fill((90, 90, 90, 0))
         self.level = level
         self.room = room_
         self.database = load_db(FileName.LEVEL_DB.format(self.level))

@@ -2,10 +2,10 @@
 A platform puzzle game made with PyGame based on the C64 classic Gilligan's Gold
 
 TODO:  
-- [x] Set screen size (970 * 545)
+- [x] Set screen size (1440 * 1080)
 - [ ] Better player animations  
-    - [ ] Idle
-    - [ ] Walking
+    - [x] Idle
+    - [x] Walking
     - [ ] Climbing
     - [ ] Pulling up
     - [ ] Passed out
@@ -16,7 +16,8 @@ TODO:
     - [ ] Idle pushing wheelbarrow
     - [ ] Riding cart
 - [ ] Design real levels
-- [ ] Nicer textures. Bright background and dark foreground?
+- [X] Nicer granite texture
+- [ ] More textures
 - [ ] Create more sprites
     - [ ] Ladder
     - [ ] Miner
