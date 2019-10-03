@@ -15,6 +15,13 @@ TODO:
     - [ ] Walking pushing wheelbarrow
     - [ ] Idle pushing wheelbarrow
     - [ ] Riding cart
+- [ ] More player abilities
+    - [ ] Climb
+    - [ ] Carry sack
+    - [ ] Die if fall to far
+    - [ ] Push wheelbarrow
+    - [ ] Ride cart   
+    - [ ] Die if caught by miner 
 - [ ] Design real levels
 - [X] Nicer granite texture
 - [ ] More textures
@@ -28,5 +35,4 @@ TODO:
     - [ ] Elevator
     - [ ] Handle
 - [ ] Make miners move
-- [ ] Interact with other sprites
  

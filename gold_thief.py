@@ -34,12 +34,13 @@ def animation_loop(imgs):
         i = i + 1 if i + 1 < len(imgs) else 0
 
 
-def generate_sprites(room_obj, name):
+def generate_sprites(room_obj, name, image=None):
     """
     Generate a sprites group from room setup dictionary
 
     - room_obj -- (Object. Mandatory) An instance of Room class
     - name -- (String. Mandatory) The name of the sprite to generate. Use SpriteNames enum.
+    - image -- (String. Optional. Defaults to None) Use a specific image instead of an animation
 
     returns: An instance of pygame.sprites.Group()
     """
@@ -50,8 +51,10 @@ def generate_sprites(room_obj, name):
         activity = spr["activity"] if "activity" in spr else Activity.IDLE
         h_direction = spr["h_direction"] if "h_direction" in spr else Direction.RIGHT
         v_direction = spr["v_direction"] if "v_direction" in spr else Direction.NONE
+        length = spr["length"] if "length" in spr else None
         sprites.append(Sprite(
-            name=name, position=spr["position"], activity=activity, h_direction=h_direction, v_direction=v_direction))
+            name=name, position=spr["position"], image=image, activity=activity, h_direction=h_direction,
+            v_direction=v_direction, length=length))
     for spr in sprites:
         group.add(spr)
     return group
@@ -155,7 +158,9 @@ class Rooms(object):
 
 class Sprite(pygame.sprite.Sprite):
 
-    def __init__(self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none"):
+    def __init__(
+            self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none",
+            length=None):
         """
         Create a new sprite
 
@@ -189,7 +194,11 @@ class Sprite(pygame.sprite.Sprite):
         self.speed = PLAYER_SPEED
         if image:
             self.animations = None
-            self.image = pygame.image.load(image)
+            self.image = pygame.image.load(image).convert()
+            if length:
+                cropped = pygame.Surface((self.image.get_size()[0], length))
+                cropped.blit(self.image, (0, 0))
+                self.image = cropped
             self.image.set_colorkey(Color.WHITE)
         else:
             self.animations = SPRITE_ANIMATIONS[name]
@@ -315,21 +324,27 @@ class FileName(object):
 
 
 class SpriteName(object):
+    AXE = "axe"
+    CART = "cart"
+    ELEVATOR = "elevator"
     GOLD = "gold"
+    HANDLE = "handle"
+    LADDER = "ladder"
     LAYOUT = "layout"
     PLAYER = "player"
     MINER = "miner"
+    WHEELBARROW = "wheelbarrow"
 
 
 # Load sprite animation images and store in a dict
 SPRITE_ANIMATIONS = {
     SpriteName.GOLD: {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.GOLD)},
+    SpriteName.MINER: {
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER)},
     SpriteName.PLAYER: {
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
-        Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER)},
-    SpriteName.MINER: {
-        Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER)}}
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER)}}
 
 # Variables and objects
 clock = pygame.time.Clock()
@@ -340,8 +355,9 @@ players = generate_sprites(room, SpriteName.PLAYER)
 player = players.sprites()[0]
 miners = generate_sprites(room, SpriteName.MINER)
 gold_sacks = generate_sprites(room, SpriteName.GOLD)
-all_sprites = (players, miners, gold_sacks)
-not_player = (miners, gold_sacks)
+ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
+all_sprites = (miners, gold_sacks, ladders, players)
+not_player = (miners, gold_sacks, ladders)
 
 # Initialize PyGame
 pygame.init()

@@ -1,22 +1,4 @@
 {
-  "1": {
-    "texture": "granite.jpg",
-    "layout": "room1_1.png",
-    "sprites": {
-      "player":  [{"position": [100, 150], "h_direction": "right", "activity":  "idle"}],
-      "miner": [{"position": [600, 250], "h_direction": "left", "activity":  "idle"}],
-      "gold": [{"position": [100, 100]}, {"position": [200, 110]}, {"position": [300, 120]}]}
-  },
-  "2": {
-    "texture": "granite.jpg",
-    "layout": "room1_2.png",
-    "sprites": {
-      "player":  [{"position": [40, 1], "h_direction": "right", "activity":  "idle"}],
-      "miner": [
-        {"position": [80, 410], "h_direction": "left", "activity":  "idle"},
-        {"position": [300, 410], "h_direction": "right", "activity":  "idle"}],
-      "gold": [{"position": [130, 80]}, {"position": [100, 220]}, {"position": [600, 350]}]}
-  },
   "3": {
     "texture": "granite.jpg",
     "layout": "room1_3.png",
@@ -25,6 +7,7 @@
       "miner": [
         {"position": [700, 290], "h_direction": "left", "activity":  "idle"},
         {"position": [1250, 900], "h_direction": "right", "activity":  "idle"}],
-      "gold": [{"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}]}
+      "gold": [{"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}],
+      "ladder": [{"position": [392, 230], "length":  790}]}
   }
 }
