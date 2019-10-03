@@ -3,11 +3,16 @@
     "texture": "granite.jpg",
     "layout": "room1_3.png",
     "sprites": {
-      "player":  [{"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
+      "player":  [
+        {"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
       "miner": [
         {"position": [700, 290], "h_direction": "left", "activity":  "idle"},
         {"position": [1250, 900], "h_direction": "right", "activity":  "idle"}],
-      "gold": [{"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}],
-      "ladder": [{"position": [392, 230], "length":  790}]}
+      "gold": [
+        {"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}],
+      "ladder": [
+        {"position": [402, 230], "length":  790},
+        {"position": [95, 385], "length":  443},
+        {"position": [880, 520], "length":  265}]}
   }
 }
