@@ -64,7 +64,8 @@ def gravity():
     """Apply gravity effect to all sprites"""
     for sp in all_sprites:
         for spr in sp.sprites():
-            spr.move(Direction.DOWN, GRAVITY, update_activity=False)
+            if not spr.collides(ladders):
+                spr.move(Direction.DOWN, GRAVITY, update_activity=False)
 
 
 def key_presses():
@@ -73,13 +74,11 @@ def key_presses():
     if not any([key_press[k] for k in SUPPORTED_KEY_PRESSES]):
         player.update(Activity.IDLE)
     if key_press[pygame.K_DOWN]:
-        # Only allowed when next to a ladder
-        #player.move(Direction.DOWN)
-        pass
+        if player.collides(ladders):
+            player.move(Direction.DOWN)
     elif key_press[pygame.K_UP]:
-        #player.move(Direction.UP)
-        # Only allowed when next to a ladder
-        pass
+        if player.collides(ladders):
+            player.move(Direction.UP)
     if key_press[pygame.K_RIGHT]:
         player.move(Direction.RIGHT)
     elif key_press[pygame.K_LEFT]:
@@ -382,8 +381,8 @@ while game_is_running:
     # Apply gravity to all sprites
     gravity()
 
-    if player.collides(not_player):
-        print("Player collided with another sprite")
+    #if player.collides(not_player):
+    #    print("Player collided with another sprite")
 
     # Update animation for gold sacks
     for s in gold_sacks.sprites():

@@ -11,7 +11,7 @@
       "gold": [
         {"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}],
       "ladder": [
-        {"position": [402, 230], "length":  790},
+        {"position": [402, 200], "length":  820},
         {"position": [95, 385], "length":  443},
         {"position": [880, 520], "length":  265}]}
   }

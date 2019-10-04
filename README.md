@@ -4,7 +4,7 @@ A platform puzzle game made with PyGame based on the C64 classic Gilligan's Gold
 TODO:  
 - [x] Set screen size (1440 * 1080)
 - [ ] Use jpeg and not png for sprites
-- [ ] Better player animations  
+- [ ] Player animations  
     - [x] Idle
     - [x] Walking
     - [ ] Climbing
