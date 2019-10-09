@@ -17,7 +17,7 @@ TODO:
     - [ ] Idle pushing wheelbarrow
     - [ ] Riding cart
 - [ ] More player abilities
-    - [ ] Climb
+    - [x] Climb
     - [ ] Carry sack
     - [ ] Die if fall to far
     - [ ] Push wheelbarrow

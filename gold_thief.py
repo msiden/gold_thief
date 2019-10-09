@@ -65,7 +65,7 @@ def gravity():
     for sp in all_sprites:
         for spr in sp.sprites():
             if not spr.collides(ladders):
-                spr.move(Direction.DOWN, GRAVITY, update_activity=False)
+                spr.move(Direction.DOWN, GRAVITY)
 
 
 def key_presses():
@@ -73,16 +73,14 @@ def key_presses():
     key_press = pygame.key.get_pressed()
     if not any([key_press[k] for k in SUPPORTED_KEY_PRESSES]):
         player.update(Activity.IDLE)
-    if key_press[pygame.K_DOWN]:
-        if player.collides(ladders):
-            player.move(Direction.DOWN)
-    elif key_press[pygame.K_UP]:
-        if player.collides(ladders):
-            player.move(Direction.UP)
+    if key_press[pygame.K_DOWN] and player.collides(ladders):
+        player.move(Direction.DOWN, activity=Activity.CLIMBING)
+    elif key_press[pygame.K_UP] and player.collides(ladders):
+        player.move(Direction.UP, activity=Activity.CLIMBING)
     if key_press[pygame.K_RIGHT]:
-        player.move(Direction.RIGHT)
+        player.move(Direction.RIGHT, activity=Activity.WALKING)
     elif key_press[pygame.K_LEFT]:
-        player.move(Direction.LEFT)
+        player.move(Direction.LEFT, activity=Activity.WALKING)
 
 
 def load_db(database):
@@ -109,7 +107,8 @@ def load_images(animation, sprite_name):
     """
     folder = {
         Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
-        Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name)}[animation]
+        Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name),
+        Animation.CLIMBING: Folder.CLIMBING_IMGS.format(sprite_name)}[animation]
     if not os.path.exists(folder):
         return
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), SPRITE_SIZE) for i in os.listdir(folder)]
@@ -217,17 +216,16 @@ class Sprite(pygame.sprite.Sprite):
         sprites = [sprites] if type(sprites) not in (list, tuple) else sprites
         return any([pygame.sprite.spritecollide(self, x, False, pygame.sprite.collide_mask) for x in sprites])
 
-    def move(self, direction, speed=None, update_activity=True):
+    def move(self, direction, speed=None, activity=None):
         """
         Move the sprite
 
         - direction -- (String. Mandatory) Use Direction enum
         - speed -- (Int or Float. Optional. Defaults to self.speed) The speed (number of pixels) to move the sprite in
-        - update_activity -- (Boolean. Optional. Defaults to True) If False the activity (animation) of the sprite
-            will not be updated.
+        - activity -- (String. Optional. Defaults to None) The activity (animation) of the sprite. Will not be updated
+            if set to None. Use Activity enum.
         """
         # Set variables
-        activity = Activity.WALKING
         speed = self.speed if not speed else speed
         vertical = direction in (Direction.UP, Direction.DOWN)
         horizontal = direction in (Direction.LEFT, Direction.RIGHT)
@@ -262,7 +260,7 @@ class Sprite(pygame.sprite.Sprite):
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
                 activity = Activity.IDLE
                 break
-        if update_activity:
+        if activity:
             self.update(activity)
 
     def update(self, activity):
@@ -283,9 +281,11 @@ class Sprite(pygame.sprite.Sprite):
 # Enums
 class Activity(object):
     CLIMBING = "climbing"
+    IDLE = "idle"
     PASSED_OUT = "passed_out"
     PULLING_UP = "pulling_up"
-    IDLE = "idle"
+    PUSHING_WHEELBARROW = "pushing_wheelbarrow"
+    RIDING_CART = "riding cart"
     WALKING = "walking"
 
 
@@ -316,6 +316,7 @@ class Folder(object):
     IDLE_IMGS = SPRITES + "{}" + os.sep + "idle" + os.sep
     TEXTURES = IMAGES + "textures" + os.sep
     WALKING_IMGS = SPRITES + "{}" + os.sep + "walking" + os.sep
+    CLIMBING_IMGS = SPRITES + "{}" + os.sep + "climbing" + os.sep
 
 
 class FileName(object):
@@ -343,7 +344,8 @@ SPRITE_ANIMATIONS = {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER)},
     SpriteName.PLAYER: {
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
-        Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER)}}
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER),
+        Animation.CLIMBING: load_images(Animation.CLIMBING, SpriteName.PLAYER)}}
 
 # Variables and objects
 clock = pygame.time.Clock()
@@ -394,3 +396,4 @@ while game_is_running:
     for s in all_sprites:
         s.draw(screen)
     pygame.display.flip()
+    print(player.activity)
