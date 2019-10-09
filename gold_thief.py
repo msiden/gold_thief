@@ -71,16 +71,24 @@ def gravity():
 def key_presses():
     """Check key presses and control the player sprite"""
     key_press = pygame.key.get_pressed()
+
+    # Player is idle if no keys are pressed
     if not any([key_press[k] for k in SUPPORTED_KEY_PRESSES]):
         player.update(Activity.IDLE)
+
+    # Move up and down
     if key_press[pygame.K_DOWN] and player.collides(ladders):
         player.move(Direction.DOWN, activity=Activity.CLIMBING)
     elif key_press[pygame.K_UP] and player.collides(ladders):
         player.move(Direction.UP, activity=Activity.CLIMBING)
+
+    # Move left and right
+    activity = \
+        Activity.CLIMBING if player.collides(ladders) and player.activity == Activity.CLIMBING else Activity.WALKING
     if key_press[pygame.K_RIGHT]:
-        player.move(Direction.RIGHT, activity=Activity.WALKING)
+        player.move(Direction.RIGHT, activity=activity)
     elif key_press[pygame.K_LEFT]:
-        player.move(Direction.LEFT, activity=Activity.WALKING)
+        player.move(Direction.LEFT, activity=activity)
 
 
 def load_db(database):
@@ -258,7 +266,8 @@ class Sprite(pygame.sprite.Sprite):
 
                 # Stop the sprite if impossible to get pass obstacle
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
-                activity = Activity.IDLE
+                #activity = Activity.IDLE
+                activity = Activity.CLIMBING if self.activity == Activity.CLIMBING else Activity.IDLE
                 break
         if activity:
             self.update(activity)
