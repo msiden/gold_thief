@@ -3,11 +3,10 @@ A platform puzzle game made with PyGame based on the C64 classic Gilligan's Gold
 
 TODO:  
 - [x] Set screen size (1440 * 1080)
-- [ ] Use jpeg and not png for sprites
 - [ ] Player animations  
     - [x] Idle
     - [x] Walking
-    - [ ] Climbing
+    - [x] Climbing
     - [ ] Pulling up
     - [ ] Passed out
     - [ ] Idle carrying sack
@@ -27,7 +26,7 @@ TODO:
 - [X] Nicer granite texture
 - [ ] More textures
 - [ ] Create more sprites
-    - [ ] Ladder
+    - [X] Ladder
     - [ ] Miner
     - [ ] Gold sack
     - [ ] Cart
