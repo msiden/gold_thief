@@ -34,6 +34,17 @@ def animation_loop(imgs):
         i = i + 1 if i + 1 < len(imgs) else 0
 
 
+def flatten_list(l):
+    """
+    Make a list of lists into a single list. CURRENTLY NOT IN USE!
+
+    - l -- (List. Mandatory)
+
+    Returns: List
+    """
+    return [item for sublist in l for item in sublist]
+
+
 def generate_sprites(room_obj, name, image=None):
     """
     Generate a sprites group from room setup dictionary
@@ -100,8 +111,7 @@ def load_db(database):
     Returns: Dict
     """
     with open(database, "r") as f:
-        db = json.loads(f.read())
-    return db
+        return json.loads(f.read())
 
 
 def load_images(animation, sprite_name):
@@ -266,7 +276,6 @@ class Sprite(pygame.sprite.Sprite):
 
                 # Stop the sprite if impossible to get pass obstacle
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
-                #activity = Activity.IDLE
                 activity = Activity.CLIMBING if self.activity == Activity.CLIMBING else Activity.IDLE
                 break
         if activity:
@@ -393,11 +402,11 @@ while game_is_running:
     gravity()
 
     #if player.collides(not_player):
-    #    print("Player collided with another sprite")
+    #   print("Player collided with another sprite")
 
-    # Update animation for gold sacks
+    # Update animations
     for s in gold_sacks.sprites():
-        s.update(activity=Activity.IDLE)
+        s.update(Activity.IDLE)
 
     # Draw sprites and update the screen
     screen.blit(room.background_img, (0, 0))
@@ -405,4 +414,4 @@ while game_is_running:
     for s in all_sprites:
         s.draw(screen)
     pygame.display.flip()
-    print(player.activity)
+
