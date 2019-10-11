@@ -380,14 +380,19 @@ not_player = (miners, gold_sacks, ladders)
 
 # Initialize PyGame
 pygame.init()
-
+next_ = 0
 ########################################################################################################################
 # MAIN LOOP
 ########################################################################################################################
 while game_is_running:
 
     clock.tick(FPS)
-
+    #import copy
+    update_ms = 10000
+    now = pygame.time.get_ticks()
+    #print(now, end=" - ")
+    #next_ = now + update_ms
+    #print(next_)
     # Check for quit game request from user
     for event in pygame.event.get():
         game_is_running = \
@@ -398,15 +403,20 @@ while game_is_running:
     # Read key presses and move the player
     key_presses()
 
-    # Apply gravity to all sprites
+    # Apply gravity to all sprites. This will also update sprite animations.
     gravity()
 
     #if player.collides(not_player):
     #   print("Player collided with another sprite")
 
     # Update animations
-    for s in gold_sacks.sprites():
-        s.update(Activity.IDLE)
+    """for s in gold_sacks.sprites():
+        print(now, next_)
+        if now >= next_:
+            print("UPDATE")
+            #s.update(Activity.IDLE)
+            #next_ = now + update_ms
+    """
 
     # Draw sprites and update the screen
     screen.blit(room.background_img, (0, 0))
