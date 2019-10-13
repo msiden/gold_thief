@@ -45,13 +45,15 @@ def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
 
-def generate_sprites(room_obj, name, image=None):
+def generate_sprites(room_obj, name, image=None, animation_freq_ms=0):
     """
     Generate a sprites group from room setup dictionary
 
     - room_obj -- (Object. Mandatory) An instance of Room class
     - name -- (String. Mandatory) The name of the sprite to generate. Use SpriteNames enum.
     - image -- (String. Optional. Defaults to None) Use a specific image instead of an animation
+    - animation_freq_ms -- (Integer. Optional. Defaults to 0) The update frequency of the sprite animation in
+            milliseconds.
 
     returns: An instance of pygame.sprites.Group()
     """
@@ -65,7 +67,7 @@ def generate_sprites(room_obj, name, image=None):
         length = spr["length"] if "length" in spr else None
         sprites.append(Sprite(
             name=name, position=spr["position"], image=image, activity=activity, h_direction=h_direction,
-            v_direction=v_direction, length=length))
+            v_direction=v_direction, length=length, animation_freq_ms=animation_freq_ms))
     for spr in sprites:
         group.add(spr)
     return group
@@ -176,7 +178,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def __init__(
             self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none",
-            length=None):
+            length=None, animation_freq_ms=0):
         """
         Create a new sprite
 
@@ -189,6 +191,10 @@ class Sprite(pygame.sprite.Sprite):
             Use Direction enum.
         v_direction -- (String. Optional. Defaults to "right") The current vertical direction the sprite is moving in.
             Use Direction enum.
+        length -- (Integer. Optional. Defaults to None) Crop the sprites image to a certain length. If this is provided
+            the image will not be scaled.
+        animation_freq_ms -- (Integer. Optional. Defaults to 0) The update frequency of the sprite animation in
+            milliseconds.
         """
         pygame.sprite.Sprite.__init__(self)
 
@@ -208,6 +214,8 @@ class Sprite(pygame.sprite.Sprite):
         self.is_walking = self.activity == Activity.WALKING
         self.name = name
         self.speed = PLAYER_SPEED
+        self.animation_freq_ms = animation_freq_ms
+        self.next_img = 0
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -283,6 +291,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def update(self, activity):
         """Update the sprite animation"""
+        now = pygame.time.get_ticks()
         self.is_facing_down = self.v_direction == Direction.DOWN
         self.is_facing_left = self.h_direction == Direction.LEFT
         self.is_facing_right = self.h_direction == Direction.RIGHT
@@ -290,8 +299,10 @@ class Sprite(pygame.sprite.Sprite):
         if activity != self.activity:
             self.animation = animation_loop(self.animations[activity])
         self.activity = activity
-        self.image = next(self.animation)
-        self.image.set_colorkey(Color.WHITE)
+        if now >= self.next_img:
+            self.image = next(self.animation)
+            self.next_img = now + self.animation_freq_ms
+            self.image.set_colorkey(Color.WHITE)
         if self.is_facing_left:
             self.image = pygame.transform.flip(self.image, True, False)
 
@@ -373,7 +384,7 @@ room.load(1, 3)
 players = generate_sprites(room, SpriteName.PLAYER)
 player = players.sprites()[0]
 miners = generate_sprites(room, SpriteName.MINER)
-gold_sacks = generate_sprites(room, SpriteName.GOLD)
+gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
 all_sprites = (miners, gold_sacks, ladders, players)
 not_player = (miners, gold_sacks, ladders)
@@ -388,8 +399,8 @@ while game_is_running:
 
     clock.tick(FPS)
     #import copy
-    update_ms = 10000
-    now = pygame.time.get_ticks()
+    #update_ms = 10000
+    #now = pygame.time.get_ticks()
     #print(now, end=" - ")
     #next_ = now + update_ms
     #print(next_)

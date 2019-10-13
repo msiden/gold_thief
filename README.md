@@ -28,7 +28,7 @@ TODO:
 - [ ] Create more sprites
     - [X] Ladder
     - [ ] Miner
-    - [ ] Gold sack
+    - [X] Gold sack
     - [ ] Cart
     - [ ] Wheelbarrow
     - [ ] Axe
