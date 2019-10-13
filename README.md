@@ -35,4 +35,6 @@ TODO:
     - [ ] Elevator
     - [ ] Handle
 - [ ] Make miners move
+- [ ] Make player able to move between different rooms 
+
  
