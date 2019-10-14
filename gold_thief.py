@@ -206,20 +206,15 @@ class Sprite(pygame.sprite.Sprite):
         self.animation = None
         self.h_direction = h_direction
         self.v_direction = v_direction
-        self.is_carrying_bag = False
-        self.is_climbing = self.activity == Activity.CLIMBING
         self.is_facing_down = None
         self.is_facing_left = None
         self.is_facing_right = None
         self.is_facing_up = None
-        self.is_passed_out = self.activity == Activity.PASSED_OUT
-        self.is_pulling_up = self.activity == Activity.PULLING_UP
-        self.is_idle = self.activity == Activity.IDLE
-        self.is_walking = self.activity == Activity.WALKING
         self.name = name
         self.speed = PLAYER_SPEED
         self.animation_freq_ms = animation_freq_ms
         self.next_img = 0
+        self.wake_up_time = 0
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -299,8 +294,16 @@ class Sprite(pygame.sprite.Sprite):
         self.is_facing_left = self.h_direction == Direction.LEFT
         self.is_facing_right = self.h_direction == Direction.RIGHT
         self.is_facing_up = self.v_direction == Direction.UP
+
         if activity != self.activity:
             self.animation = animation_loop(self.animations[activity])
+            if activity == Activity.PASSED_OUT:
+                self.wake_up_time = now + 5000
+        elif activity == Activity.PASSED_OUT and now >= self.wake_up_time:
+            activity = Activity.IDLE
+            self.rect.x -= 100
+            print("WAKE UP")
+
         self.activity = activity
         if now >= self.next_img:
             self.image = next(self.animation)
@@ -309,9 +312,31 @@ class Sprite(pygame.sprite.Sprite):
             if self.is_facing_left:
                 self.image = pygame.transform.flip(self.image, True, False)
 
+    def is_passed_out(self):
+        return self.activity == Activity.PASSED_OUT
+
+    def is_walking(self):
+        return self.activity == Activity.WALKING
+
+    def is_climbing(self):
+        return self.activity == Activity.CLIMBING
+
+    def is_idle(self):
+        return self.activity == Activity.IDLE
+
+    def is_carrying_gold(self):
+        return self.activity == Activity.CARRYING_GOLD
+
+    def is_pulling_up(self):
+        return self.activity == Activity.PULLING_UP
+
+    def is_pushing_wheelbarrow(self):
+        return self.activity == Activity.PUSHING_WHEELBARROW
+
 
 # Enums
 class Activity(object):
+    CARRYING_GOLD = "carrying_gold"
     CLIMBING = "climbing"
     IDLE = "idle"
     PASSED_OUT = "passed_out"
@@ -419,15 +444,10 @@ while game_is_running:
     # Apply gravity to all sprites. This will also update sprite animations.
     gravity()
 
-    #if player.collides(not_player):
-    #   print("Player collided with another sprite")
-
+    # Check if the player is caught by a miner
     if player.collides(miners):
         #lives -= 1
         player.update(Animation.PASSED_OUT)
-
-
-
 
     # Draw sprites and update the screen
     screen.blit(room.background_img, (0, 0))
