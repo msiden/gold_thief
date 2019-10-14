@@ -370,7 +370,8 @@ SPRITE_ANIMATIONS = {
     SpriteName.GOLD: {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.GOLD)},
     SpriteName.MINER: {
-        Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER)},
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER),
+        Animation.WALKING: load_images(Animation.WALKING, SpriteName.MINER)},
     SpriteName.PLAYER: {
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER),
