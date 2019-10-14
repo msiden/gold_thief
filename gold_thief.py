@@ -85,6 +85,9 @@ def key_presses():
     """Check key presses and control the player sprite"""
     key_press = pygame.key.get_pressed()
 
+    if player.activity == Activity.PASSED_OUT:
+        return
+
     # Player is idle if no keys are pressed
     if not any([key_press[k] for k in SUPPORTED_KEY_PRESSES]):
         player.update(Activity.IDLE)
@@ -128,7 +131,8 @@ def load_images(animation, sprite_name):
     folder = {
         Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
         Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name),
-        Animation.CLIMBING: Folder.CLIMBING_IMGS.format(sprite_name)}[animation]
+        Animation.CLIMBING: Folder.CLIMBING_IMGS.format(sprite_name),
+        Animation.PASSED_OUT: Folder.PASSED_OUT_IMGS.format(sprite_name)}[animation]
     if not os.path.exists(folder):
         return
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), SPRITE_SIZE) for i in os.listdir(folder)]
@@ -286,8 +290,7 @@ class Sprite(pygame.sprite.Sprite):
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
                 activity = Activity.CLIMBING if self.activity == Activity.CLIMBING else Activity.IDLE
                 break
-        if activity:
-            self.update(activity)
+        self.update(activity if activity else self.activity)
 
     def update(self, activity):
         """Update the sprite animation"""
@@ -303,8 +306,8 @@ class Sprite(pygame.sprite.Sprite):
             self.image = next(self.animation)
             self.next_img = now + self.animation_freq_ms
             self.image.set_colorkey(Color.WHITE)
-        if self.is_facing_left:
-            self.image = pygame.transform.flip(self.image, True, False)
+            if self.is_facing_left:
+                self.image = pygame.transform.flip(self.image, True, False)
 
 
 # Enums
@@ -346,6 +349,7 @@ class Folder(object):
     TEXTURES = IMAGES + "textures" + os.sep
     WALKING_IMGS = SPRITES + "{}" + os.sep + "walking" + os.sep
     CLIMBING_IMGS = SPRITES + "{}" + os.sep + "climbing" + os.sep
+    PASSED_OUT_IMGS = SPRITES + "{}" + os.sep + "passed_out" + os.sep
 
 
 class FileName(object):
@@ -375,15 +379,17 @@ SPRITE_ANIMATIONS = {
     SpriteName.PLAYER: {
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER),
-        Animation.CLIMBING: load_images(Animation.CLIMBING, SpriteName.PLAYER)}}
+        Animation.CLIMBING: load_images(Animation.CLIMBING, SpriteName.PLAYER),
+        Animation.PASSED_OUT: load_images(Animation.PASSED_OUT, SpriteName.PLAYER)}}
 
 # Variables and objects
 clock = pygame.time.Clock()
 game_is_running = True
 room = Rooms()
 room.load(1, 3)
-players = generate_sprites(room, SpriteName.PLAYER)
+players = generate_sprites(room, SpriteName.PLAYER, animation_freq_ms=8)
 player = players.sprites()[0]
+lives = 5
 miners = generate_sprites(room, SpriteName.MINER)
 gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
@@ -399,12 +405,7 @@ next_ = 0
 while game_is_running:
 
     clock.tick(FPS)
-    #import copy
-    #update_ms = 10000
-    #now = pygame.time.get_ticks()
-    #print(now, end=" - ")
-    #next_ = now + update_ms
-    #print(next_)
+
     # Check for quit game request from user
     for event in pygame.event.get():
         game_is_running = \
@@ -421,14 +422,12 @@ while game_is_running:
     #if player.collides(not_player):
     #   print("Player collided with another sprite")
 
-    # Update animations
-    """for s in gold_sacks.sprites():
-        print(now, next_)
-        if now >= next_:
-            print("UPDATE")
-            #s.update(Activity.IDLE)
-            #next_ = now + update_ms
-    """
+    if player.collides(miners):
+        #lives -= 1
+        player.update(Animation.PASSED_OUT)
+
+
+
 
     # Draw sprites and update the screen
     screen.blit(room.background_img, (0, 0))
