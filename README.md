@@ -8,7 +8,7 @@ TODO:
     - [x] Walking
     - [x] Climbing
     - [ ] Pulling up
-    - [ ] Passed out
+    - [x] Passed out
     - [ ] Idle carrying sack
     - [ ] Walking carrying sack
     - [ ] Climbing carrying sack
@@ -18,10 +18,10 @@ TODO:
 - [ ] More player abilities
     - [x] Climb
     - [ ] Carry sack
-    - [ ] Die if fall to far
+    - [x] Die if fall to far
     - [ ] Push wheelbarrow
     - [ ] Ride cart   
-    - [ ] Die if caught by miner 
+    - [x] Die if caught by miner 
 - [ ] Design real levels
 - [X] Nicer granite texture
 - [ ] More textures
@@ -35,6 +35,8 @@ TODO:
     - [ ] Elevator
     - [ ] Handle
 - [ ] Make miners move
-- [ ] Make player able to move between different rooms 
+- [ ] Make player able to move between different rooms
+- [ ] Print number of lives etc to the top of the screen
+- [x] Game over if no lives left 
 
  

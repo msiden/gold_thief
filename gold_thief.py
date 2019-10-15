@@ -7,10 +7,13 @@ import ctypes
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
+MAX_FALL_PIX = 100
 PLAYER_SPEED = 8
+PLAYER_LIVES = 5
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
 SUPPORTED_KEY_PRESSES = (pygame.K_DOWN, pygame.K_UP, pygame.K_LEFT, pygame.K_RIGHT)
+WAKE_UP_TIME_MS = 5000
 
 # Make sure we get the right screen resolution
 ctypes.windll.user32.SetProcessDPIAware()
@@ -138,6 +141,16 @@ def load_images(animation, sprite_name):
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), SPRITE_SIZE) for i in os.listdir(folder)]
 
 
+def pass_out():
+    """Make the player pass out, remove one life etc"""
+    player.update(Animation.PASSED_OUT)
+    player.lives -= 1
+    print(player.lives)
+    if not player.lives:
+        print("GAME OVER!")
+        quit()
+
+
 # Classes
 class Rooms(object):
     """Class for loading a room layout from a level setup json-file"""
@@ -215,6 +228,8 @@ class Sprite(pygame.sprite.Sprite):
         self.animation_freq_ms = animation_freq_ms
         self.next_img = 0
         self.wake_up_time = 0
+        self.fall_pix = 0
+        self.lives = PLAYER_LIVES
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -270,6 +285,13 @@ class Sprite(pygame.sprite.Sprite):
             if self.collides(room.layouts):
                 climbed = False
 
+                # Check if the sprite has fallen too far
+                if self.fall_pix >= MAX_FALL_PIX:
+                    pass_out()
+
+                # Reset fall distance count
+                self.fall_pix = 0 if vertical else self.fall_pix
+
                 # Try climbing up slope
                 for _ in range(CLIMBABLE_PIX):
                     self.rect.move_ip(0, -1)
@@ -281,10 +303,14 @@ class Sprite(pygame.sprite.Sprite):
                 else:
                     self.rect.move_ip(0, CLIMBABLE_PIX)
 
-                # Stop the sprite if impossible to get pass obstacle
+                # Stop the sprite if impossible to get passed obstacle
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
                 activity = Activity.CLIMBING if self.activity == Activity.CLIMBING else Activity.IDLE
                 break
+
+            # Keep track of how many pixels the sprite has fallen
+            elif vertical and self.v_direction == Direction.DOWN and not self.collides(ladders):
+                self.fall_pix += 1
         self.update(activity if activity else self.activity)
 
     def update(self, activity):
@@ -295,16 +321,23 @@ class Sprite(pygame.sprite.Sprite):
         self.is_facing_right = self.h_direction == Direction.RIGHT
         self.is_facing_up = self.v_direction == Direction.UP
 
+        # Check if the sprite activity has changed and if so change animation
         if activity != self.activity:
             self.animation = animation_loop(self.animations[activity])
+
+            # Start the wake up timer if the player is passed out
             if activity == Activity.PASSED_OUT:
-                self.wake_up_time = now + 5000
-        elif activity == Activity.PASSED_OUT and now >= self.wake_up_time:
+                self.wake_up_time = now + WAKE_UP_TIME_MS
+
+        # Check if it's time to wake up the player from passed out state
+        elif self.is_passed_out() and now >= self.wake_up_time:
             activity = Activity.IDLE
-            self.rect.x -= 100
-            print("WAKE UP")
+            self.animation = animation_loop(self.animations[activity])
+            self.rect.x -= 100  # This is temporary and will be removed when miners can move
 
         self.activity = activity
+
+        # Load the next image in the animation
         if now >= self.next_img:
             self.image = next(self.animation)
             self.next_img = now + self.animation_freq_ms
@@ -407,23 +440,28 @@ SPRITE_ANIMATIONS = {
         Animation.CLIMBING: load_images(Animation.CLIMBING, SpriteName.PLAYER),
         Animation.PASSED_OUT: load_images(Animation.PASSED_OUT, SpriteName.PLAYER)}}
 
+# Initialize PyGame
+pygame.init()
+
 # Variables and objects
 clock = pygame.time.Clock()
+
+font = pygame.font.Font('freesansbold.ttf', 32)
+text = font.render('Gold Thief', True, (0, 255, 0))
+textRect = text.get_rect()
+textRect.center = (SCREEN_SIZE[0] // 2, 40)
+
 game_is_running = True
 room = Rooms()
 room.load(1, 3)
 players = generate_sprites(room, SpriteName.PLAYER, animation_freq_ms=8)
 player = players.sprites()[0]
-lives = 5
 miners = generate_sprites(room, SpriteName.MINER)
 gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
 all_sprites = (miners, gold_sacks, ladders, players)
 not_player = (miners, gold_sacks, ladders)
 
-# Initialize PyGame
-pygame.init()
-next_ = 0
 ########################################################################################################################
 # MAIN LOOP
 ########################################################################################################################
@@ -445,13 +483,13 @@ while game_is_running:
     gravity()
 
     # Check if the player is caught by a miner
-    if player.collides(miners):
-        #lives -= 1
-        player.update(Animation.PASSED_OUT)
+    if player.collides(miners) and not player.is_passed_out():
+        pass_out()
 
     # Draw sprites and update the screen
     screen.blit(room.background_img, (0, 0))
     screen.blit(room.texture_img, (0, 0))
+    screen.blit(text, textRect)
     for s in all_sprites:
         s.draw(screen)
     pygame.display.flip()
