@@ -151,6 +151,17 @@ def pass_out():
         quit()
 
 
+def update_text(text):
+    """
+    Update on-screen text
+
+    - text -- (String. Mandatory) The new text
+
+    Returns: text object
+    """
+    return font.render(text, True, Color.GREEN)
+
+
 # Classes
 class Rooms(object):
     """Class for loading a room layout from a level setup json-file"""
@@ -386,6 +397,7 @@ class Animation(Activity):
 class Color(object):
     BLACK = (0, 0, 0)
     BLUE = (0, 0, 255)
+    GREEN = (0, 255, 0)
     RED = (255, 0, 0)
     WHITE = (255, 255, 255)
 
@@ -443,17 +455,15 @@ SPRITE_ANIMATIONS = {
 # Initialize PyGame
 pygame.init()
 
-# Variables and objects
+# Various variables and objects
 clock = pygame.time.Clock()
-
-font = pygame.font.Font('freesansbold.ttf', 32)
-text = font.render('Gold Thief', True, (0, 255, 0))
-textRect = text.get_rect()
-textRect.center = (SCREEN_SIZE[0] // 2, 40)
-
 game_is_running = True
+
+# Load mine and room
 room = Rooms()
 room.load(1, 3)
+
+# Generate sprites
 players = generate_sprites(room, SpriteName.PLAYER, animation_freq_ms=8)
 player = players.sprites()[0]
 miners = generate_sprites(room, SpriteName.MINER)
@@ -461,6 +471,16 @@ gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
 all_sprites = (miners, gold_sacks, ladders, players)
 not_player = (miners, gold_sacks, ladders)
+
+# On-screen text
+font = pygame.font.Font('freesansbold.ttf', 25)
+title_text = update_text("- GOLD THIEF -")
+title_text_rect = title_text.get_rect()
+title_text_rect.center = (SCREEN_SIZE[0] // 2, 40)
+lives_text = update_text("Lives: {}".format(player.lives))
+lives_text_rect = title_text.get_rect()
+lives_text_rect.center = (SCREEN_SIZE[0] - 150, 40)
+
 
 ########################################################################################################################
 # MAIN LOOP
@@ -484,13 +504,21 @@ while game_is_running:
 
     # Check if the player is caught by a miner
     if player.collides(miners) and not player.is_passed_out():
+        lives_text = update_text("Lives: {}".format(player.lives))
         pass_out()
 
-    # Draw sprites and update the screen
+    # Draw background and walls
     screen.blit(room.background_img, (0, 0))
     screen.blit(room.texture_img, (0, 0))
-    screen.blit(text, textRect)
+
+    # Draw sprites
     for s in all_sprites:
         s.draw(screen)
+
+    # Draw text
+    screen.blit(title_text, title_text_rect)
+    screen.blit(lives_text, lives_text_rect)
+
+    # Update the screen
     pygame.display.flip()
 
