@@ -145,21 +145,9 @@ def pass_out():
     """Make the player pass out, remove one life etc"""
     player.update(Animation.PASSED_OUT)
     player.lives -= 1
-    print(player.lives)
     if not player.lives:
         print("GAME OVER!")
         quit()
-
-
-def update_text(text):
-    """
-    Update on-screen text
-
-    - text -- (String. Mandatory) The new text
-
-    Returns: text object
-    """
-    return font.render(text, True, Color.GREEN)
 
 
 # Classes
@@ -473,14 +461,16 @@ all_sprites = (miners, gold_sacks, ladders, players)
 not_player = (miners, gold_sacks, ladders)
 
 # On-screen text
-font = pygame.font.Font('freesansbold.ttf', 25)
-title_text = update_text("- GOLD THIEF -")
+default_font = "comicsansms"
+font_name = default_font if default_font in pygame.font.get_fonts() else "freesansbold.ttf"
+font = pygame.font.SysFont(font_name, 30)
+font.set_bold(True)
+title_text = font.render("- GOLD THIEF -", True, Color.GREEN)
 title_text_rect = title_text.get_rect()
 title_text_rect.center = (SCREEN_SIZE[0] // 2, 40)
-lives_text = update_text("Lives: {}".format(player.lives))
+lives_text = font.render("Lives: {}".format(player.lives), True, Color.GREEN)
 lives_text_rect = title_text.get_rect()
 lives_text_rect.center = (SCREEN_SIZE[0] - 150, 40)
-
 
 ########################################################################################################################
 # MAIN LOOP
@@ -504,7 +494,6 @@ while game_is_running:
 
     # Check if the player is caught by a miner
     if player.collides(miners) and not player.is_passed_out():
-        lives_text = update_text("Lives: {}".format(player.lives))
         pass_out()
 
     # Draw background and walls
@@ -516,6 +505,7 @@ while game_is_running:
         s.draw(screen)
 
     # Draw text
+    lives_text = font.render("Lives: {}".format(player.lives), True, Color.GREEN)
     screen.blit(title_text, title_text_rect)
     screen.blit(lives_text, lives_text_rect)
 

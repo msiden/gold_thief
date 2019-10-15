@@ -37,7 +37,7 @@ TODO:
     - [ ] Handle
 - [ ] Make miners move
 - [ ] Make player able to move between different rooms
-- [ ] Print number of lives etc to the top of the screen
+- [x] Print number of lives etc to the top of the screen
 - [x] Game over if no lives left
 - [ ] Player should not be able to move while falling
    
