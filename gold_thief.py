@@ -93,7 +93,10 @@ def key_presses():
 
     # Player is idle if no keys are pressed
     if not any([key_press[k] for k in SUPPORTED_KEY_PRESSES]):
-        player.update(Activity.IDLE)
+        if player.collides(ladders):
+            player.update(Activity.IDLE_CLIMBING)
+        else:
+            player.update(Activity.IDLE)
 
     # Move up and down
     if key_press[pygame.K_DOWN] and player.collides(ladders):
@@ -132,10 +135,15 @@ def load_images(animation, sprite_name):
     Returns: List
     """
     folder = {
-        Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
-        Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name),
         Animation.CLIMBING: Folder.CLIMBING_IMGS.format(sprite_name),
-        Animation.PASSED_OUT: Folder.PASSED_OUT_IMGS.format(sprite_name)}[animation]
+        Animation.CLIMBING_WITH_GOLD: Folder.CLIMBING_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name),
+        Animation.IDLE_CLIMBING: Folder.IDLE_CLIMBING_IMGS.format(sprite_name),
+        Animation.IDLE_CLIMBING_WITH_GOLD: Folder.IDLE_CLIMBING_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.IDLE_WITH_GOLD: Folder.IDLE_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.PASSED_OUT: Folder.PASSED_OUT_IMGS.format(sprite_name),
+        Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
+        Animation.WALKING_WITH_GOLD: Folder.WALKING_WITH_GOLD_IMGS.format(sprite_name)}[animation]
     if not os.path.exists(folder):
         return
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), SPRITE_SIZE) for i in os.listdir(folder)]
@@ -370,12 +378,18 @@ class Sprite(pygame.sprite.Sprite):
 class Activity(object):
     CARRYING_GOLD = "carrying_gold"
     CLIMBING = "climbing"
+    CLIMBING_WITH_GOLD = "climbing_with_gold"
     IDLE = "idle"
+    IDLE_CLIMBING = "idle_climbing"
+    IDLE_CLIMBING_WITH_GOLD = "idle_climbing_with_gold"
+    IDLE_WITH_GOLD = "idle_with_gold"
+    IDLE_WITH_WHEELBARROW = "idle_with_wheelbarrow"
     PASSED_OUT = "passed_out"
     PULLING_UP = "pulling_up"
     PUSHING_WHEELBARROW = "pushing_wheelbarrow"
     RIDING_CART = "riding cart"
     WALKING = "walking"
+    WALKING_WITH_GOLD = "walking_with_gold"
 
 
 class Animation(Activity):
@@ -403,11 +417,16 @@ class Folder(object):
     LAYOUTS = IMAGES + "layouts" + os.sep
     LEVELS = "levels" + os.sep
     SPRITES = IMAGES + "sprites" + os.sep
-    IDLE_IMGS = SPRITES + "{}" + os.sep + "idle" + os.sep
     TEXTURES = IMAGES + "textures" + os.sep
-    WALKING_IMGS = SPRITES + "{}" + os.sep + "walking" + os.sep
     CLIMBING_IMGS = SPRITES + "{}" + os.sep + "climbing" + os.sep
+    CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "climbing_with_gold" + os.sep
+    IDLE_IMGS = SPRITES + "{}" + os.sep + "idle" + os.sep
+    IDLE_CLIMBING_IMGS = SPRITES + "{}" + os.sep + "idle_climbing" + os.sep
+    IDLE_CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "idle_climbing_with_gold" + os.sep
+    IDLE_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "idle_with_gold" + os.sep
     PASSED_OUT_IMGS = SPRITES + "{}" + os.sep + "passed_out" + os.sep
+    WALKING_IMGS = SPRITES + "{}" + os.sep + "walking" + os.sep
+    WALKING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "walking_with_gold" + os.sep
 
 
 class FileName(object):
@@ -435,10 +454,15 @@ SPRITE_ANIMATIONS = {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER),
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.MINER)},
     SpriteName.PLAYER: {
-        Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
-        Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER),
         Animation.CLIMBING: load_images(Animation.CLIMBING, SpriteName.PLAYER),
-        Animation.PASSED_OUT: load_images(Animation.PASSED_OUT, SpriteName.PLAYER)}}
+        Animation.CLIMBING_WITH_GOLD: load_images(Animation.CLIMBING_WITH_GOLD, SpriteName.PLAYER),
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER),
+        Animation.IDLE_CLIMBING: load_images(Animation.IDLE_CLIMBING, SpriteName.PLAYER),
+        Animation.IDLE_CLIMBING_WITH_GOLD: load_images(Animation.IDLE_CLIMBING_WITH_GOLD, SpriteName.PLAYER),
+        Animation.IDLE_WITH_GOLD: load_images(Animation.IDLE_WITH_GOLD, SpriteName.PLAYER),
+        Animation.PASSED_OUT: load_images(Animation.PASSED_OUT, SpriteName.PLAYER),
+        Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
+        Animation.WALKING_WITH_GOLD: load_images(Animation.WALKING_WITH_GOLD, SpriteName.PLAYER)}}
 
 # Initialize PyGame
 pygame.init()
@@ -511,4 +535,3 @@ while game_is_running:
 
     # Update the screen
     pygame.display.flip()
-
