@@ -9,6 +9,7 @@ FPS = 25
 GRAVITY = 20
 MAX_FALL_PIX = 100
 PLAYER_SPEED = 8
+PLAYER_SPEED_WHEN_CARRYING_GOLD = 5
 PLAYER_LIVES = 5
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
@@ -41,6 +42,7 @@ def drop_gold_sack():
     player.gold_sack_sprite.rect.x = player.rect.x
     player.gold_sack_sprite.rect.y = player.rect.y
     gold_sacks.add(player.gold_sack_sprite)
+    player.speed = PLAYER_SPEED
 
 
 def flatten_list(l):
@@ -83,7 +85,7 @@ def generate_sprites(room_obj, name, image=None, animation_freq_ms=0):
 
 
 def gravity():
-    """Apply gravity effect to all sprites"""
+    """Apply gravity effect to all affected sprites"""
     for sp in affected_by_gravity:
         for spr in sp.sprites():
             if not (spr.collides(ladders) and spr.can_climb_ladders) or not spr.can_climb_ladders:
@@ -110,7 +112,7 @@ def key_presses(interact_with_gold_sack):
     move_horizontal = left or right
 
     # No interaction is possible if the player is passed out
-    if player.activity == Activity.PASSED_OUT:
+    if player.is_passed_out():
         return
 
     # Player is idle if no keys are pressed
@@ -135,7 +137,8 @@ def key_presses(interact_with_gold_sack):
     # Move left and right
     if move_horizontal:
         if player.is_carrying_gold():
-            activity = Activity.CLIMBING_WITH_GOLD if player.is_climbing() and player.collides(ladders) else Activity.WALKING_WITH_GOLD
+            activity = Activity.CLIMBING_WITH_GOLD \
+                if player.is_climbing() and player.collides(ladders) else Activity.WALKING_WITH_GOLD
         else:
             activity = Activity.CLIMBING if player.is_climbing() and player.collides(ladders) else Activity.WALKING
         direction = Direction.LEFT if left else Direction.RIGHT
@@ -148,6 +151,7 @@ def key_presses(interact_with_gold_sack):
             if g.collides(players):
                 player.gold_sack_sprite = g
                 g.remove(gold_sacks)
+                player.speed = PLAYER_SPEED_WHEN_CARRYING_GOLD
                 break
     elif drop_gold:
         drop_gold_sack()
@@ -191,6 +195,8 @@ def load_images(animation, sprite_name):
 
 def pass_out():
     """Make the player pass out, remove one life etc"""
+    if player.is_passed_out():
+        return
     if player.gold_sack_sprite:
         drop_gold_sack()
     player.update(Animation.PASSED_OUT)
@@ -362,6 +368,8 @@ class Sprite(pygame.sprite.Sprite):
                     activity = Activity.CLIMBING
                 elif self.is_carrying_gold():
                     activity = Activity.IDLE_WITH_GOLD
+                elif self.is_passed_out():
+                    activity = Activity.PASSED_OUT
                 else:
                     activity = Activity.IDLE
                 break
@@ -600,4 +608,4 @@ while game_is_running:
 
     # Update the screen
     pygame.display.flip()
-    #print(player.activity)
+    print(player.activity)

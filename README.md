@@ -18,11 +18,14 @@ TODO:
     - [ ] Riding cart
 - [ ] More player abilities
     - [x] Climb
-    - [ ] Carry sack
+    - [x] Carry sack
     - [x] Die if fall to far
+    - [ ] Pull up
     - [ ] Push wheelbarrow
     - [ ] Ride cart   
     - [x] Die if caught by miner 
+    - [ ] Use axe
+    - [ ] Ride elevator
 - [ ] Design real levels
 - [X] Nicer granite texture
 - [ ] More textures
@@ -39,7 +42,7 @@ TODO:
 - [ ] Make player able to move between different rooms
 - [x] Print number of lives etc to the top of the screen
 - [x] Game over if no lives left
-- [ ] Player should not be able to move while falling
+- [ ] Player should not be able to move while falling/move slower
    
 
  
