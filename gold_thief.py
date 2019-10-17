@@ -36,6 +36,13 @@ def animation_loop(imgs):
         i = i + 1 if i + 1 < len(imgs) else 0
 
 
+def drop_gold_sack():
+    player.update(Activity.IDLE)
+    player.gold_sack_sprite.rect.x = player.rect.x
+    player.gold_sack_sprite.rect.y = player.rect.y
+    gold_sacks.add(player.gold_sack_sprite)
+
+
 def flatten_list(l):
     """
     Make a list of lists into a single list. CURRENTLY NOT IN USE!
@@ -77,31 +84,28 @@ def generate_sprites(room_obj, name, image=None, animation_freq_ms=0):
 
 def gravity():
     """Apply gravity effect to all sprites"""
-    for sp in all_sprites:
+    for sp in affected_by_gravity:
         for spr in sp.sprites():
-            if not spr.collides(ladders):
+            if not (spr.collides(ladders) and spr.can_climb_ladders) or not spr.can_climb_ladders:
                 spr.move(Direction.DOWN, GRAVITY)
 
 
-def key_presses():
-    """Check key presses and control the player sprite"""
+def key_presses(interact_with_gold_sack):
+    """
+    Check key presses and control the player sprite
+
+    - interact_with_gold_sack -- (Boolean. Mandatory) Specifies whether the user wants to pick up or drop a gold sack.
+    """
 
     # Get key presses
     key_press = pygame.key.get_pressed()
     down = key_press[pygame.K_DOWN] and player.collides(ladders)
-    l_alt = key_press[pygame.K_LALT]
-    l_control = key_press[pygame.K_LCTRL]
     left = key_press[pygame.K_LEFT]
-    r_alt = key_press[pygame.K_RALT]
-    r_control = key_press[pygame.K_RCTRL]
     right = key_press[pygame.K_RIGHT]
-    space = key_press[pygame.K_SPACE]
     up = key_press[pygame.K_UP] and player.collides(ladders)
-    pick_up_gold = \
-        any((l_alt, l_control, r_alt, r_control, space)) and player.collides(gold_sacks) \
-        and not player.is_carrying_gold()
-    drop_gold = any((l_alt, l_control, r_alt, r_control, space)) and player.is_carrying_gold()
-    no_key_presses = not any((down, l_alt, l_control, left, r_alt, r_control, right, space, up))
+    pick_up_gold = interact_with_gold_sack and player.collides(gold_sacks) and not player.is_carrying_gold()
+    drop_gold = interact_with_gold_sack and player.is_carrying_gold()
+    no_key_presses = not any((down, left, right, up))
     move_vertical = up or down
     move_horizontal = left or right
 
@@ -142,9 +146,11 @@ def key_presses():
         player.update(Activity.IDLE_WITH_GOLD)
         for g in gold_sacks:
             if g.collides(players):
+                player.gold_sack_sprite = g
                 g.remove(gold_sacks)
+                break
     elif drop_gold:
-        print("DROP GOLD SACK")
+        drop_gold_sack()
 
 
 def load_db(database):
@@ -185,6 +191,8 @@ def load_images(animation, sprite_name):
 
 def pass_out():
     """Make the player pass out, remove one life etc"""
+    if player.gold_sack_sprite:
+        drop_gold_sack()
     player.update(Animation.PASSED_OUT)
     player.lives -= 1
     if not player.lives:
@@ -271,6 +279,8 @@ class Sprite(pygame.sprite.Sprite):
         self.wake_up_time = 0
         self.fall_pix = 0
         self.lives = PLAYER_LIVES
+        self.gold_sack_sprite = None
+        self.can_climb_ladders = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -417,7 +427,7 @@ class Sprite(pygame.sprite.Sprite):
         return self.activity == Activity.PULLING_UP
 
     def is_pushing_wheelbarrow(self):
-        return self.activity == Activity.PUSHING_WHEELBARROW
+        return self.activity in (Activity.PUSHING_WHEELBARROW, Activity.IDLE_WITH_WHEELBARROW)
 
 
 # Enums
@@ -526,8 +536,9 @@ player = players.sprites()[0]
 miners = generate_sprites(room, SpriteName.MINER)
 gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
-all_sprites = (miners, gold_sacks, ladders, players)
+all_sprites = (ladders, miners, gold_sacks, players)
 not_player = (miners, gold_sacks, ladders)
+affected_by_gravity = (miners, gold_sacks, players)
 
 # On-screen text
 default_font = "comicsansms"
@@ -547,15 +558,25 @@ lives_text_rect.center = (SCREEN_SIZE[0] - 150, 40)
 while game_is_running:
 
     clock.tick(FPS)
+    gold_sack_interaction = False
 
-    # Check for quit game request from user
+    # Read events
     for event in pygame.event.get():
+
+        # Check for quit game request from user
         game_is_running = \
             not (event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE))
-        #print(event.type == pygame.KEYUP and event.key == pygame.K_j)
+
+        # Check whether one of the gold sack interaction buttons are pressed
+        l_control = event.type == pygame.KEYUP and event.key == pygame.K_LCTRL
+        l_alt = event.type == pygame.KEYUP and event.key == pygame.K_LALT
+        space = event.type == pygame.KEYUP and event.key == pygame.K_SPACE
+        r_control = event.type == pygame.KEYUP and event.key == pygame.K_RCTRL
+        r_alt = event.type == pygame.KEYUP and event.key == pygame.K_RALT
+        gold_sack_interaction = any((l_control, l_alt, space, r_control, r_alt))
 
     # Read key presses and move the player
-    key_presses()
+    key_presses(gold_sack_interaction)
 
     # Apply gravity to all sprites. This will also update sprite animations.
     gravity()
