@@ -12,7 +12,6 @@ PLAYER_SPEED = 8
 PLAYER_LIVES = 5
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
-SUPPORTED_KEY_PRESSES = (pygame.K_DOWN, pygame.K_UP, pygame.K_LEFT, pygame.K_RIGHT)
 WAKE_UP_TIME_MS = 5000
 
 # Make sure we get the right screen resolution
@@ -86,31 +85,66 @@ def gravity():
 
 def key_presses():
     """Check key presses and control the player sprite"""
-    key_press = pygame.key.get_pressed()
 
+    # Get key presses
+    key_press = pygame.key.get_pressed()
+    down = key_press[pygame.K_DOWN] and player.collides(ladders)
+    l_alt = key_press[pygame.K_LALT]
+    l_control = key_press[pygame.K_LCTRL]
+    left = key_press[pygame.K_LEFT]
+    r_alt = key_press[pygame.K_RALT]
+    r_control = key_press[pygame.K_RCTRL]
+    right = key_press[pygame.K_RIGHT]
+    space = key_press[pygame.K_SPACE]
+    up = key_press[pygame.K_UP] and player.collides(ladders)
+    pick_up_gold = \
+        any((l_alt, l_control, r_alt, r_control, space)) and player.collides(gold_sacks) \
+        and not player.is_carrying_gold()
+    drop_gold = any((l_alt, l_control, r_alt, r_control, space)) and player.is_carrying_gold()
+    no_key_presses = not any((down, l_alt, l_control, left, r_alt, r_control, right, space, up))
+    move_vertical = up or down
+    move_horizontal = left or right
+
+    # No interaction is possible if the player is passed out
     if player.activity == Activity.PASSED_OUT:
         return
 
     # Player is idle if no keys are pressed
-    if not any([key_press[k] for k in SUPPORTED_KEY_PRESSES]):
-        if player.collides(ladders):
+    if no_key_presses:
+        if player.is_carrying_gold() and player.is_climbing():
+            player.update(Activity.IDLE_CLIMBING_WITH_GOLD)
+        elif player.is_climbing():
             player.update(Activity.IDLE_CLIMBING)
+        elif player.is_carrying_gold():
+            player.update(Activity.IDLE_WITH_GOLD)
+        elif player.is_pushing_wheelbarrow():
+            player.update(Activity.IDLE_WITH_WHEELBARROW)
         else:
             player.update(Activity.IDLE)
 
     # Move up and down
-    if key_press[pygame.K_DOWN] and player.collides(ladders):
-        player.move(Direction.DOWN, activity=Activity.CLIMBING)
-    elif key_press[pygame.K_UP] and player.collides(ladders):
-        player.move(Direction.UP, activity=Activity.CLIMBING)
+    if move_vertical:
+        direction = Direction.DOWN if down else Direction.UP
+        activity = Activity.CLIMBING_WITH_GOLD if player.is_carrying_gold() else Activity.CLIMBING
+        player.move(direction, activity=activity)
 
     # Move left and right
-    activity = \
-        Activity.CLIMBING if player.collides(ladders) and player.activity == Activity.CLIMBING else Activity.WALKING
-    if key_press[pygame.K_RIGHT]:
-        player.move(Direction.RIGHT, activity=activity)
-    elif key_press[pygame.K_LEFT]:
-        player.move(Direction.LEFT, activity=activity)
+    if move_horizontal:
+        if player.is_carrying_gold():
+            activity = Activity.CLIMBING_WITH_GOLD if player.is_climbing() and player.collides(ladders) else Activity.WALKING_WITH_GOLD
+        else:
+            activity = Activity.CLIMBING if player.is_climbing() and player.collides(ladders) else Activity.WALKING
+        direction = Direction.LEFT if left else Direction.RIGHT
+        player.move(direction, activity=activity)
+
+    # Pick up or drop a gold sack
+    if pick_up_gold:
+        player.update(Activity.IDLE_WITH_GOLD)
+        for g in gold_sacks:
+            if g.collides(players):
+                g.remove(gold_sacks)
+    elif drop_gold:
+        print("DROP GOLD SACK")
 
 
 def load_db(database):
@@ -312,7 +346,14 @@ class Sprite(pygame.sprite.Sprite):
 
                 # Stop the sprite if impossible to get passed obstacle
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
-                activity = Activity.CLIMBING if self.activity == Activity.CLIMBING else Activity.IDLE
+                if self.is_carrying_gold() and self.is_climbing():
+                    activity = Activity.CLIMBING_WITH_GOLD
+                elif self.is_climbing():
+                    activity = Activity.CLIMBING
+                elif self.is_carrying_gold():
+                    activity = Activity.IDLE_WITH_GOLD
+                else:
+                    activity = Activity.IDLE
                 break
 
             # Keep track of how many pixels the sprite has fallen
@@ -356,16 +397,21 @@ class Sprite(pygame.sprite.Sprite):
         return self.activity == Activity.PASSED_OUT
 
     def is_walking(self):
-        return self.activity == Activity.WALKING
+        return self.activity in (Activity.WALKING, Activity.WALKING_WITH_GOLD, Activity.PUSHING_WHEELBARROW)
 
     def is_climbing(self):
-        return self.activity == Activity.CLIMBING
+        return self.activity in (
+            Activity.CLIMBING, Activity.CLIMBING_WITH_GOLD, Activity.IDLE_CLIMBING, Activity.IDLE_CLIMBING_WITH_GOLD)
 
     def is_idle(self):
-        return self.activity == Activity.IDLE
+        return self.activity in (
+            Activity.IDLE, Activity.IDLE_CLIMBING_WITH_GOLD, Activity.IDLE_CLIMBING, Activity.IDLE_WITH_GOLD,
+            Activity.IDLE_WITH_WHEELBARROW)
 
     def is_carrying_gold(self):
-        return self.activity == Activity.CARRYING_GOLD
+        return self.activity in (
+            Activity.WALKING_WITH_GOLD, Activity.IDLE_WITH_GOLD, Activity.IDLE_CLIMBING_WITH_GOLD,
+            Activity.CLIMBING_WITH_GOLD)
 
     def is_pulling_up(self):
         return self.activity == Activity.PULLING_UP
@@ -376,7 +422,6 @@ class Sprite(pygame.sprite.Sprite):
 
 # Enums
 class Activity(object):
-    CARRYING_GOLD = "carrying_gold"
     CLIMBING = "climbing"
     CLIMBING_WITH_GOLD = "climbing_with_gold"
     IDLE = "idle"
@@ -507,8 +552,7 @@ while game_is_running:
     for event in pygame.event.get():
         game_is_running = \
             not (event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE))
-        if event.type == pygame.KEYUP and event.key in (pygame.K_UP, pygame.K_DOWN):
-            player.v_direction = Direction.NONE
+        #print(event.type == pygame.KEYUP and event.key == pygame.K_j)
 
     # Read key presses and move the player
     key_presses()
@@ -535,3 +579,4 @@ while game_is_running:
 
     # Update the screen
     pygame.display.flip()
+    #print(player.activity)

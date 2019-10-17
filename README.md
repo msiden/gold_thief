@@ -7,12 +7,12 @@ TODO:
     - [x] Idle
     - [x] Walking
     - [x] Climbing
-    - [ ] Idle while climbing
+    - [x] Idle while climbing
     - [ ] Pulling up
     - [x] Passed out
-    - [ ] Idle carrying sack
-    - [ ] Walking carrying sack
-    - [ ] Climbing carrying sack
+    - [x] Idle carrying sack
+    - [x] Walking carrying sack
+    - [x] Climbing carrying sack
     - [ ] Walking pushing wheelbarrow
     - [ ] Idle pushing wheelbarrow
     - [ ] Riding cart
