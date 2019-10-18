@@ -26,6 +26,7 @@ TODO:
     - [x] Die if caught by miner 
     - [ ] Use axe
     - [ ] Ride elevator
+    - [ ] Empty gold in truck and collect points
 - [ ] Design real levels
 - [X] Nicer granite texture
 - [ ] More textures
@@ -38,11 +39,11 @@ TODO:
     - [ ] Axe
     - [ ] Elevator
     - [ ] Handle
+    - [ ] Truck    
 - [ ] Make miners move
 - [ ] Make player able to move between different rooms
 - [x] Print number of lives etc to the top of the screen
 - [x] Game over if no lives left
-- [ ] Player should not be able to move while falling/move slower
-   
-
+- [x] Player should not be able to move while falling
+- [x] Player should not be able to move outside screen
  

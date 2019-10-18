@@ -8,6 +8,7 @@ CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
 MAX_FALL_PIX = 100
+MAX_CONTROL_WHILE_FALLING_PIX = 50
 PLAYER_SPEED = 8
 PLAYER_SPEED_WHEN_CARRYING_GOLD = 5
 PLAYER_LIVES = 5
@@ -43,6 +44,7 @@ def drop_gold_sack():
     player.gold_sack_sprite.rect.y = player.rect.y
     gold_sacks.add(player.gold_sack_sprite)
     player.speed = PLAYER_SPEED
+    player.gold_sack_sprite = None
 
 
 def flatten_list(l):
@@ -102,8 +104,8 @@ def key_presses(interact_with_gold_sack):
     # Get key presses
     key_press = pygame.key.get_pressed()
     down = key_press[pygame.K_DOWN] and player.collides(ladders)
-    left = key_press[pygame.K_LEFT]
-    right = key_press[pygame.K_RIGHT]
+    left = key_press[pygame.K_LEFT] and not player.is_falling()
+    right = key_press[pygame.K_RIGHT] and not player.is_falling()
     up = key_press[pygame.K_UP] and player.collides(ladders)
     pick_up_gold = interact_with_gold_sack and player.collides(gold_sacks) and not player.is_carrying_gold()
     drop_gold = interact_with_gold_sack and player.is_carrying_gold()
@@ -130,9 +132,8 @@ def key_presses(interact_with_gold_sack):
 
     # Move up and down
     if move_vertical:
-        direction = Direction.DOWN if down else Direction.UP
         activity = Activity.CLIMBING_WITH_GOLD if player.is_carrying_gold() else Activity.CLIMBING
-        player.move(direction, activity=activity)
+        player.move(Direction.DOWN if down else Direction.UP, activity=activity)
 
     # Move left and right
     if move_horizontal:
@@ -141,8 +142,7 @@ def key_presses(interact_with_gold_sack):
                 if player.is_climbing() and player.collides(ladders) else Activity.WALKING_WITH_GOLD
         else:
             activity = Activity.CLIMBING if player.is_climbing() and player.collides(ladders) else Activity.WALKING
-        direction = Direction.LEFT if left else Direction.RIGHT
-        player.move(direction, activity=activity)
+        player.move(Direction.LEFT if left else Direction.RIGHT, activity=activity)
 
     # Pick up or drop a gold sack
     if pick_up_gold:
@@ -181,6 +181,7 @@ def load_images(animation, sprite_name):
     folder = {
         Animation.CLIMBING: Folder.CLIMBING_IMGS.format(sprite_name),
         Animation.CLIMBING_WITH_GOLD: Folder.CLIMBING_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.FALLING: Folder.IDLE_IMGS.format(sprite_name),
         Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name),
         Animation.IDLE_CLIMBING: Folder.IDLE_CLIMBING_IMGS.format(sprite_name),
         Animation.IDLE_CLIMBING_WITH_GOLD: Folder.IDLE_CLIMBING_WITH_GOLD_IMGS.format(sprite_name),
@@ -199,7 +200,7 @@ def pass_out():
         return
     if player.gold_sack_sprite:
         drop_gold_sack()
-    player.update(Animation.PASSED_OUT)
+    player.update(Activity.PASSED_OUT)
     player.lives -= 1
     if not player.lives:
         print("GAME OVER!")
@@ -338,6 +339,11 @@ class Sprite(pygame.sprite.Sprite):
             # Move the sprite one pixel
             self.rect.move_ip(x, y)
 
+            # Check if sprite is outside of screen
+            if not (0 < self.rect.center[0] < SCREEN_SIZE[0]) and (0 < self.rect.center[1] < SCREEN_SIZE[1]):
+                self.rect.move_ip(-x, -y)
+                break
+
             # Check for wall collision
             if self.collides(room.layouts):
                 climbed = False
@@ -355,7 +361,7 @@ class Sprite(pygame.sprite.Sprite):
                     if not self.collides(room.layouts):
                         climbed = True
                         break
-                if climbed:
+                if climbed and not self.is_passed_out():
                     continue
                 else:
                     self.rect.move_ip(0, CLIMBABLE_PIX)
@@ -377,6 +383,8 @@ class Sprite(pygame.sprite.Sprite):
             # Keep track of how many pixels the sprite has fallen
             elif vertical and self.v_direction == Direction.DOWN and not self.collides(ladders):
                 self.fall_pix += 1
+                if self.fall_pix >= MAX_CONTROL_WHILE_FALLING_PIX:
+                    activity = Activity.FALLING_WITH_GOLD if self.is_carrying_gold() else Activity.FALLING
         self.update(activity if activity else self.activity)
 
     def update(self, activity):
@@ -421,6 +429,9 @@ class Sprite(pygame.sprite.Sprite):
         return self.activity in (
             Activity.CLIMBING, Activity.CLIMBING_WITH_GOLD, Activity.IDLE_CLIMBING, Activity.IDLE_CLIMBING_WITH_GOLD)
 
+    def is_falling(self):
+        return self.activity in (Activity.FALLING, Activity.FALLING_WITH_GOLD)
+
     def is_idle(self):
         return self.activity in (
             Activity.IDLE, Activity.IDLE_CLIMBING_WITH_GOLD, Activity.IDLE_CLIMBING, Activity.IDLE_WITH_GOLD,
@@ -429,7 +440,7 @@ class Sprite(pygame.sprite.Sprite):
     def is_carrying_gold(self):
         return self.activity in (
             Activity.WALKING_WITH_GOLD, Activity.IDLE_WITH_GOLD, Activity.IDLE_CLIMBING_WITH_GOLD,
-            Activity.CLIMBING_WITH_GOLD)
+            Activity.CLIMBING_WITH_GOLD, Activity.FALLING_WITH_GOLD)
 
     def is_pulling_up(self):
         return self.activity == Activity.PULLING_UP
@@ -442,6 +453,8 @@ class Sprite(pygame.sprite.Sprite):
 class Activity(object):
     CLIMBING = "climbing"
     CLIMBING_WITH_GOLD = "climbing_with_gold"
+    FALLING = "falling"
+    FALLING_WITH_GOLD = "falling_with_gold"
     IDLE = "idle"
     IDLE_CLIMBING = "idle_climbing"
     IDLE_CLIMBING_WITH_GOLD = "idle_climbing_with_gold"
@@ -519,6 +532,8 @@ SPRITE_ANIMATIONS = {
     SpriteName.PLAYER: {
         Animation.CLIMBING: load_images(Animation.CLIMBING, SpriteName.PLAYER),
         Animation.CLIMBING_WITH_GOLD: load_images(Animation.CLIMBING_WITH_GOLD, SpriteName.PLAYER),
+        Animation.FALLING: load_images(Animation.IDLE, SpriteName.PLAYER),
+        Animation.FALLING_WITH_GOLD: load_images(Animation.IDLE_WITH_GOLD, SpriteName.PLAYER),
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER),
         Animation.IDLE_CLIMBING: load_images(Animation.IDLE_CLIMBING, SpriteName.PLAYER),
         Animation.IDLE_CLIMBING_WITH_GOLD: load_images(Animation.IDLE_CLIMBING_WITH_GOLD, SpriteName.PLAYER),
