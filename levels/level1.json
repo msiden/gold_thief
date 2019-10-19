@@ -3,6 +3,8 @@
     "texture": "granite.jpg",
     "layout": "room1_3.png",
     "sprites": {
+      "truck":  [
+        {"position": [-130, -260], "h_direction": "right"}],
       "player":  [
         {"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
       "miner": [

@@ -58,7 +58,7 @@ def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
 
-def generate_sprites(room_obj, name, image=None, animation_freq_ms=0):
+def generate_sprites(room_obj, name, image=None, animation_freq_ms=0, size_x2=False):
     """
     Generate a sprites group from room setup dictionary
 
@@ -70,6 +70,8 @@ def generate_sprites(room_obj, name, image=None, animation_freq_ms=0):
 
     returns: An instance of pygame.sprites.Group()
     """
+    if name not in room_obj.database[str(room_obj.room)]["sprites"]:
+        return
     sprites_db = room_obj.database[str(room_obj.room)]["sprites"][name]
     sprites = []
     group = pygame.sprite.Group()
@@ -169,12 +171,13 @@ def load_db(database):
         return json.loads(f.read())
 
 
-def load_images(animation, sprite_name):
+def load_images(animation, sprite_name, multiply_size_by=1):
     """
     Read all image files in a folder and return as a list of pyGame images
 
     - animation -- (String. Mandatory) The name of the requested animation. Use Animation enum
     - sprite_name -- (String. Optional) The name of the sprite. Use SpriteName enum.
+    - multiply_size_by -- (Integer. Optional. Defaults to 1) Multiply the size of the sprite with the given number
 
     Returns: List
     """
@@ -189,9 +192,10 @@ def load_images(animation, sprite_name):
         Animation.PASSED_OUT: Folder.PASSED_OUT_IMGS.format(sprite_name),
         Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
         Animation.WALKING_WITH_GOLD: Folder.WALKING_WITH_GOLD_IMGS.format(sprite_name)}[animation]
+    size = (SPRITE_SIZE[0] * multiply_size_by, SPRITE_SIZE[1] * multiply_size_by)
     if not os.path.exists(folder):
         return
-    return [pygame.transform.scale(pygame.image.load(folder + i).convert(), SPRITE_SIZE) for i in os.listdir(folder)]
+    return [pygame.transform.scale(pygame.image.load(folder + i).convert(), size) for i in os.listdir(folder)]
 
 
 def pass_out():
@@ -407,7 +411,9 @@ class Sprite(pygame.sprite.Sprite):
         elif self.is_passed_out() and now >= self.wake_up_time:
             activity = Activity.IDLE
             self.animation = animation_loop(self.animations[activity])
-            self.rect.x -= 100  # This is temporary and will be removed when miners can move
+            # This is temporary and will be removed when miners can move
+            self.rect.x -= 10
+            self.rect.y -= 5
 
         self.activity = activity
 
@@ -518,6 +524,7 @@ class SpriteName(object):
     LADDER = "ladder"
     LAYOUT = "layout"
     PLAYER = "player"
+    TRUCK = "truck"
     MINER = "miner"
     WHEELBARROW = "wheelbarrow"
 
@@ -540,7 +547,9 @@ SPRITE_ANIMATIONS = {
         Animation.IDLE_WITH_GOLD: load_images(Animation.IDLE_WITH_GOLD, SpriteName.PLAYER),
         Animation.PASSED_OUT: load_images(Animation.PASSED_OUT, SpriteName.PLAYER),
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
-        Animation.WALKING_WITH_GOLD: load_images(Animation.WALKING_WITH_GOLD, SpriteName.PLAYER)}}
+        Animation.WALKING_WITH_GOLD: load_images(Animation.WALKING_WITH_GOLD, SpriteName.PLAYER)},
+    SpriteName.TRUCK: {
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.TRUCK, multiply_size_by=4)}}
 
 # Initialize PyGame
 pygame.init()
@@ -559,9 +568,10 @@ player = players.sprites()[0]
 miners = generate_sprites(room, SpriteName.MINER)
 gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
-all_sprites = (ladders, miners, gold_sacks, players)
-not_player = (miners, gold_sacks, ladders)
-affected_by_gravity = (miners, gold_sacks, players)
+trucks = generate_sprites(room, SpriteName.TRUCK)
+all_sprites = (ladders, miners, trucks, gold_sacks, players)
+not_player = (miners, gold_sacks, ladders, trucks)
+affected_by_gravity = (miners, gold_sacks, players, trucks)
 
 # On-screen text
 default_font = "comicsansms"

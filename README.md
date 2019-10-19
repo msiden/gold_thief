@@ -39,11 +39,19 @@ TODO:
     - [ ] Axe
     - [ ] Elevator
     - [ ] Handle
-    - [ ] Truck    
+    - [x] Truck
 - [ ] Make miners move
 - [ ] Make player able to move between different rooms
+- [ ] Make carts move
 - [x] Print number of lives etc to the top of the screen
 - [x] Game over if no lives left
 - [x] Player should not be able to move while falling
 - [x] Player should not be able to move outside screen
+- [ ] Points system:    
+    - Player has limited amount of time in each mine before Game Over
+    - Keep track of number of collected gold sacks
+    - More points if sacks are collected quickly
+    - Bonus for time left when mine is completed
+    - Print collected sacks, time left, bonus and total score on screen
+    
  
