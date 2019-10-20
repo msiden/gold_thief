@@ -26,7 +26,7 @@ TODO:
     - [x] Die if caught by miner 
     - [ ] Use axe
     - [ ] Ride elevator
-    - [ ] Empty gold in truck and collect points
+    - [x] Empty gold in truck and collect points
 - [ ] Design real levels
 - [X] Nicer granite texture
 - [ ] More textures

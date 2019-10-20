@@ -40,11 +40,15 @@ def animation_loop(imgs):
 
 def drop_gold_sack():
     player.update(Activity.IDLE)
-    player.gold_sack_sprite.rect.x = player.rect.x
-    player.gold_sack_sprite.rect.y = player.rect.y
-    gold_sacks.add(player.gold_sack_sprite)
     player.speed = PLAYER_SPEED
     player.gold_sack_sprite = None
+    if player.collides(trucks):
+        player.gold_delivered += 1
+        print(player.gold_delivered, "/", room.gold_sacks)
+    else:
+        player.gold_sack_sprite.rect.x = player.rect.x
+        player.gold_sack_sprite.rect.y = player.rect.y
+        gold_sacks.add(player.gold_sack_sprite)
 
 
 def flatten_list(l):
@@ -226,6 +230,7 @@ class Rooms(object):
         self.room = 1
         self.texture = None
         self.texture_img = None
+        self.gold_sacks = 0
 
     def load(self, level, room_):
         """Load a new room"""
@@ -249,6 +254,8 @@ class Rooms(object):
         self.layout_sprite.rect.x = self.layout_sprite.rect.y = 0
         self.layouts = pygame.sprite.Group()
         self.layouts.add(self.layout_sprite)
+        self.gold_sacks = \
+            len(self.database[str(room_)]["sprites"]["gold"]) if "gold" in self.database[str(room_)]["sprites"] else 0
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -292,6 +299,7 @@ class Sprite(pygame.sprite.Sprite):
         self.lives = PLAYER_LIVES
         self.gold_sack_sprite = None
         self.can_climb_ladders = self.name in (SpriteName.PLAYER, SpriteName.MINER)
+        self.gold_delivered = 0
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -633,4 +641,4 @@ while game_is_running:
 
     # Update the screen
     pygame.display.flip()
-    print(player.activity)
+    #print(player.activity)
