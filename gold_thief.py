@@ -39,16 +39,20 @@ def animation_loop(imgs):
 
 
 def drop_gold_sack():
+    dropped_in_truck = False
     player.update(Activity.IDLE)
     player.speed = PLAYER_SPEED
-    player.gold_sack_sprite = None
-    if player.collides(trucks):
-        player.gold_delivered += 1
-        print(player.gold_delivered, "/", room.gold_sacks)
-    else:
+    for t in trucks.sprites():
+        if t.collides(players):
+            player.gold_delivered += 1
+            print(player.gold_delivered, "/", room.gold_sacks)
+            t.update(Activity.IDLE_WITH_GOLD)
+            dropped_in_truck = True
+    if not dropped_in_truck:
         player.gold_sack_sprite.rect.x = player.rect.x
         player.gold_sack_sprite.rect.y = player.rect.y
         gold_sacks.add(player.gold_sack_sprite)
+    player.gold_sack_sprite = None
 
 
 def flatten_list(l):
@@ -62,7 +66,7 @@ def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
 
-def generate_sprites(room_obj, name, image=None, animation_freq_ms=0, size_x2=False):
+def generate_sprites(room_obj, name, image=None, animation_freq_ms=0):
     """
     Generate a sprites group from room setup dictionary
 
@@ -557,7 +561,8 @@ SPRITE_ANIMATIONS = {
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
         Animation.WALKING_WITH_GOLD: load_images(Animation.WALKING_WITH_GOLD, SpriteName.PLAYER)},
     SpriteName.TRUCK: {
-        Animation.IDLE: load_images(Animation.IDLE, SpriteName.TRUCK, multiply_size_by=4)}}
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.TRUCK, multiply_size_by=4),
+        Animation.IDLE_WITH_GOLD: load_images(Animation.IDLE_WITH_GOLD, SpriteName.TRUCK, multiply_size_by=4)}}
 
 # Initialize PyGame
 pygame.init()
@@ -576,7 +581,7 @@ player = players.sprites()[0]
 miners = generate_sprites(room, SpriteName.MINER)
 gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
-trucks = generate_sprites(room, SpriteName.TRUCK)
+trucks = generate_sprites(room, SpriteName.TRUCK, animation_freq_ms=100)
 all_sprites = (ladders, miners, trucks, gold_sacks, players)
 not_player = (miners, gold_sacks, ladders, trucks)
 affected_by_gravity = (miners, gold_sacks, players, trucks)
