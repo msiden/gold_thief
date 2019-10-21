@@ -11,7 +11,8 @@
         {"position": [700, 290], "h_direction": "left", "activity":  "idle"},
         {"position": [1250, 900], "h_direction": "right", "activity":  "idle"}],
       "gold": [
-        {"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}],
+        {"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}, {"position": [545, 80]},
+        {"position": [645, 80]}, {"position": [745, 80]}, {"position": [845, 80]}, {"position": [945, 80]}],
       "ladder": [
         {"position": [402, 200], "length":  820},
         {"position": [1055, 200], "length":  260},

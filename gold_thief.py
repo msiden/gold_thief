@@ -403,8 +403,13 @@ class Sprite(pygame.sprite.Sprite):
                     activity = Activity.FALLING_WITH_GOLD if self.is_carrying_gold() else Activity.FALLING
         self.update(activity if activity else self.activity)
 
-    def update(self, activity):
-        """Update the sprite animation"""
+    def update(self, activity, force_update=False):
+        """
+        Update the sprite animation
+
+        - activity -- (String. Mandatory) The new activity to assign the sprite
+        - force_update -- (Boolean. Optional. Defaults to False) Load the animation again even if activity is unchanged
+        """
         now = pygame.time.get_ticks()
         self.is_facing_down = self.v_direction == Direction.DOWN
         self.is_facing_left = self.h_direction == Direction.LEFT
@@ -412,10 +417,10 @@ class Sprite(pygame.sprite.Sprite):
         self.is_facing_up = self.v_direction == Direction.UP
 
         # Check if the sprite activity has changed and if so change animation
-        if activity != self.activity:
+        if (activity != self.activity) or force_update:
             self.animation = animation_loop(self.animations[activity])
 
-            # Start the wake up timer if the player is passed out
+            # Start the wake up timer if the sprite has passed out
             if activity == Activity.PASSED_OUT:
                 self.wake_up_time = now + WAKE_UP_TIME_MS
 
@@ -544,7 +549,8 @@ class SpriteName(object):
 # Load sprite animation images and store in a dict
 SPRITE_ANIMATIONS = {
     SpriteName.GOLD: {
-        Animation.IDLE: load_images(Animation.IDLE, SpriteName.GOLD)},
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.GOLD),
+        Animation.FALLING: load_images(Animation.IDLE, SpriteName.GOLD)},
     SpriteName.MINER: {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER),
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.MINER)},
