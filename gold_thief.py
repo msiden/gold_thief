@@ -46,7 +46,7 @@ def drop_gold_sack():
         if t.collides(players):
             player.gold_delivered += 1
             print(player.gold_delivered, "/", room.gold_sacks)
-            t.update(Activity.IDLE_WITH_GOLD)
+            t.update(Activity.LOADED_01)
             dropped_in_truck = True
     if not dropped_in_truck:
         player.gold_sack_sprite.rect.x = player.rect.x
@@ -197,6 +197,11 @@ def load_images(animation, sprite_name, multiply_size_by=1):
         Animation.IDLE_CLIMBING: Folder.IDLE_CLIMBING_IMGS.format(sprite_name),
         Animation.IDLE_CLIMBING_WITH_GOLD: Folder.IDLE_CLIMBING_WITH_GOLD_IMGS.format(sprite_name),
         Animation.IDLE_WITH_GOLD: Folder.IDLE_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.LOADED_01: Folder.LOADED_01.format(sprite_name),
+        Animation.LOADED_02: Folder.LOADED_02.format(sprite_name),
+        Animation.LOADED_03: Folder.LOADED_03.format(sprite_name),
+        Animation.LOADED_04: Folder.LOADED_04.format(sprite_name),
+        Animation.LOADED_05: Folder.LOADED_05.format(sprite_name),
         Animation.PASSED_OUT: Folder.PASSED_OUT_IMGS.format(sprite_name),
         Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
         Animation.WALKING_WITH_GOLD: Folder.WALKING_WITH_GOLD_IMGS.format(sprite_name)}[animation]
@@ -403,12 +408,11 @@ class Sprite(pygame.sprite.Sprite):
                     activity = Activity.FALLING_WITH_GOLD if self.is_carrying_gold() else Activity.FALLING
         self.update(activity if activity else self.activity)
 
-    def update(self, activity, force_update=False):
+    def update(self, activity):
         """
         Update the sprite animation
 
         - activity -- (String. Mandatory) The new activity to assign the sprite
-        - force_update -- (Boolean. Optional. Defaults to False) Load the animation again even if activity is unchanged
         """
         now = pygame.time.get_ticks()
         self.is_facing_down = self.v_direction == Direction.DOWN
@@ -417,7 +421,7 @@ class Sprite(pygame.sprite.Sprite):
         self.is_facing_up = self.v_direction == Direction.UP
 
         # Check if the sprite activity has changed and if so change animation
-        if (activity != self.activity) or force_update:
+        if activity != self.activity:
             self.animation = animation_loop(self.animations[activity])
 
             # Start the wake up timer if the sprite has passed out
@@ -483,6 +487,11 @@ class Activity(object):
     IDLE_CLIMBING_WITH_GOLD = "idle_climbing_with_gold"
     IDLE_WITH_GOLD = "idle_with_gold"
     IDLE_WITH_WHEELBARROW = "idle_with_wheelbarrow"
+    LOADED_01 = "loaded_01"
+    LOADED_02 = "loaded_02"
+    LOADED_03 = "loaded_03"
+    LOADED_04 = "loaded_04"
+    LOADED_05 = "loaded_05"
     PASSED_OUT = "passed_out"
     PULLING_UP = "pulling_up"
     PUSHING_WHEELBARROW = "pushing_wheelbarrow"
@@ -523,6 +532,11 @@ class Folder(object):
     IDLE_CLIMBING_IMGS = SPRITES + "{}" + os.sep + "idle_climbing" + os.sep
     IDLE_CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "idle_climbing_with_gold" + os.sep
     IDLE_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "idle_with_gold" + os.sep
+    LOADED_01 = SPRITES + "{}" + os.sep + "loaded_01" + os.sep
+    LOADED_02 = SPRITES + "{}" + os.sep + "loaded_02" + os.sep
+    LOADED_03 = SPRITES + "{}" + os.sep + "loaded_03" + os.sep
+    LOADED_04 = SPRITES + "{}" + os.sep + "loaded_04" + os.sep
+    LOADED_05 = SPRITES + "{}" + os.sep + "loaded_05" + os.sep
     PASSED_OUT_IMGS = SPRITES + "{}" + os.sep + "passed_out" + os.sep
     WALKING_IMGS = SPRITES + "{}" + os.sep + "walking" + os.sep
     WALKING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "walking_with_gold" + os.sep
@@ -568,7 +582,7 @@ SPRITE_ANIMATIONS = {
         Animation.WALKING_WITH_GOLD: load_images(Animation.WALKING_WITH_GOLD, SpriteName.PLAYER)},
     SpriteName.TRUCK: {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.TRUCK, multiply_size_by=4),
-        Animation.IDLE_WITH_GOLD: load_images(Animation.IDLE_WITH_GOLD, SpriteName.TRUCK, multiply_size_by=4)}}
+        Animation.LOADED_01: load_images(Animation.LOADED_01, SpriteName.TRUCK, multiply_size_by=4)}}
 
 # Initialize PyGame
 pygame.init()
