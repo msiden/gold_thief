@@ -4,7 +4,9 @@
     "layout": "room1_3.png",
     "sprites": {
       "truck":  [
-        {"position": [0, -260], "h_direction": "right"}],
+        {"position": [0, -260]}],
+      "wheelbarrow":  [
+        {"position": [1150, 100], "h_direction": "left"}],
       "player":  [
         {"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
       "miner": [

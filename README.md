@@ -53,5 +53,8 @@ TODO:
     - More points if sacks are collected quickly
     - Bonus for time left when mine is completed
     - Print collected sacks, time left, bonus and total score on screen
+- [ ] Start screen
+- [ ] High scores
+- [ ] Save game function 
     
  

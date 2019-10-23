@@ -42,16 +42,26 @@ def drop_gold_sack():
     dropped_in_truck = False
     player.update(Activity.IDLE)
     player.speed = PLAYER_SPEED
+
+    # Drop the gold sack in the truck
     for t in trucks.sprites():
         if t.collides(players):
             player.gold_delivered += 1
             print(player.gold_delivered, "/", room.gold_sacks)
-            t.update(Activity.LOADED_01)
+            t.update({
+                player.gold_delivered in range(0, 3): Activity.LOADED_01,
+                player.gold_delivered in range(3, 6): Activity.LOADED_02,
+                player.gold_delivered in range(6, 9): Activity.LOADED_03,
+                player.gold_delivered in range(9, 12): Activity.LOADED_04,
+                player.gold_delivered in range(12, 1000): Activity.LOADED_05}[True])
             dropped_in_truck = True
+
+    # Drop it on the floor
     if not dropped_in_truck:
         player.gold_sack_sprite.rect.x = player.rect.x
         player.gold_sack_sprite.rect.y = player.rect.y
         gold_sacks.add(player.gold_sack_sprite)
+
     player.gold_sack_sprite = None
 
 
@@ -179,13 +189,15 @@ def load_db(database):
         return json.loads(f.read())
 
 
-def load_images(animation, sprite_name, multiply_size_by=1):
+def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
     """
     Read all image files in a folder and return as a list of pyGame images
 
     - animation -- (String. Mandatory) The name of the requested animation. Use Animation enum
     - sprite_name -- (String. Optional) The name of the sprite. Use SpriteName enum.
-    - multiply_size_by -- (Integer. Optional. Defaults to 1) Multiply the size of the sprite with the given number
+    - multiply_x_by -- (Integer. Optional. Defaults to 1) Multiply the horizontal size of the image with the given
+        number
+    - multiply_y_by -- (Integer. Optional. Defaults to 1) Multiply the vertical size of the image with the given number
 
     Returns: List
     """
@@ -205,7 +217,7 @@ def load_images(animation, sprite_name, multiply_size_by=1):
         Animation.PASSED_OUT: Folder.PASSED_OUT_IMGS.format(sprite_name),
         Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
         Animation.WALKING_WITH_GOLD: Folder.WALKING_WITH_GOLD_IMGS.format(sprite_name)}[animation]
-    size = (SPRITE_SIZE[0] * multiply_size_by, SPRITE_SIZE[1] * multiply_size_by)
+    size = (SPRITE_SIZE[0] * multiply_x_by, SPRITE_SIZE[1] * multiply_y_by)
     if not os.path.exists(folder):
         return
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), size) for i in os.listdir(folder)]
@@ -581,8 +593,14 @@ SPRITE_ANIMATIONS = {
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
         Animation.WALKING_WITH_GOLD: load_images(Animation.WALKING_WITH_GOLD, SpriteName.PLAYER)},
     SpriteName.TRUCK: {
-        Animation.IDLE: load_images(Animation.IDLE, SpriteName.TRUCK, multiply_size_by=4),
-        Animation.LOADED_01: load_images(Animation.LOADED_01, SpriteName.TRUCK, multiply_size_by=4)}}
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
+        Animation.LOADED_01: load_images(Animation.LOADED_01, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
+        Animation.LOADED_02: load_images(Animation.LOADED_02, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
+        Animation.LOADED_03: load_images(Animation.LOADED_03, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
+        Animation.LOADED_04: load_images(Animation.LOADED_04, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
+        Animation.LOADED_05: load_images(Animation.LOADED_05, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4)},
+    SpriteName.WHEELBARROW: {
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.WHEELBARROW, multiply_x_by=2)}}
 
 # Initialize PyGame
 pygame.init()
@@ -602,9 +620,10 @@ miners = generate_sprites(room, SpriteName.MINER)
 gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
 trucks = generate_sprites(room, SpriteName.TRUCK, animation_freq_ms=100)
-all_sprites = (ladders, miners, trucks, gold_sacks, players)
-not_player = (miners, gold_sacks, ladders, trucks)
-affected_by_gravity = (miners, gold_sacks, players, trucks)
+wheelbarrows = generate_sprites(room, SpriteName.WHEELBARROW)
+all_sprites = (ladders, miners, trucks, gold_sacks, wheelbarrows, players)
+not_player = (miners, gold_sacks, ladders, trucks, wheelbarrows)
+affected_by_gravity = (miners, gold_sacks, players, trucks, wheelbarrows)
 
 # On-screen text
 default_font = "comicsansms"
