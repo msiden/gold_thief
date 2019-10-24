@@ -64,5 +64,6 @@ TODO:
     - Print collected sacks, time left, bonus and total score on screen
 - [ ] Start screen
 - [ ] High scores
-- [ ] Save game function 
+- [ ] Save game function
+- [ ] BUG FIX: Player dies if dropping gold sack 
     
