@@ -65,5 +65,4 @@ TODO:
 - [ ] Start screen
 - [ ] High scores
 - [ ] Save game function
-- [ ] BUG FIX: Player dies if dropping gold sack 
     

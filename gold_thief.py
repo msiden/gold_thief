@@ -87,15 +87,16 @@ def gravity():
                 spr.move(Direction.DOWN, GRAVITY)
 
 
-def interact_with_gold_sack(action):
+def interact_with_gold_sack(pick_up):
     """
     Pick up or drop a gold sack
 
-    - action -- (Boolean. Mandatory) True for picking up a gold sack and False for dropping a gold sack
+    - pick_up -- (Boolean. Mandatory) True for picking up a gold sack and False for dropping a gold sack
 
     Returns: None
     """
-    if action:
+    # Pick up a gold sack
+    if pick_up:
         player.update(Activity.IDLE_WITH_GOLD)
         for g in gold_sacks:
             if g.collides(players):
@@ -104,6 +105,8 @@ def interact_with_gold_sack(action):
                 player.speed = PLAYER_SPEED_WHEN_CARRYING_GOLD
                 player.carries_gold_sacks += 1
                 break
+
+    # Drop a gold sack
     else:
         dropped_on_ground = True
         player.update(Activity.IDLE)
@@ -116,11 +119,11 @@ def interact_with_gold_sack(action):
                 t.carries_gold_sacks += 1
                 print(t.carries_gold_sacks, "/", room.gold_sacks)
                 t.update({
-                             t.carries_gold_sacks in range(0, 3): Activity.LOADED_01,
-                             t.carries_gold_sacks in range(3, 6): Activity.LOADED_02,
-                             t.carries_gold_sacks in range(6, 9): Activity.LOADED_03,
-                             t.carries_gold_sacks in range(9, 12): Activity.LOADED_04,
-                             t.carries_gold_sacks in range(12, 1000): Activity.LOADED_05}[True])
+                    t.carries_gold_sacks in range(0, 3): Activity.LOADED_01,
+                    t.carries_gold_sacks in range(3, 6): Activity.LOADED_02,
+                    t.carries_gold_sacks in range(6, 9): Activity.LOADED_03,
+                    t.carries_gold_sacks in range(9, 12): Activity.LOADED_04,
+                    t.carries_gold_sacks in range(12, 1000): Activity.LOADED_05}[True])
                 dropped_on_ground = False
 
         # Drop it in a wheelbarrow
@@ -128,9 +131,9 @@ def interact_with_gold_sack(action):
             if w.collides(players) and w.carries_gold_sacks < 3:
                 w.carries_gold_sacks += 1
                 w.update({
-                             w.carries_gold_sacks == 1: Activity.LOADED_01,
-                             w.carries_gold_sacks == 2: Activity.LOADED_02,
-                             w.carries_gold_sacks == 3: Activity.LOADED_03}[True])
+                    w.carries_gold_sacks == 1: Activity.LOADED_01,
+                    w.carries_gold_sacks == 2: Activity.LOADED_02,
+                    w.carries_gold_sacks == 3: Activity.LOADED_03}[True])
                 dropped_on_ground = False
 
         # Drop it on the ground
@@ -280,19 +283,6 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), size) for i in os.listdir(folder)]
 
 
-def pass_out():
-    """Make the player pass out, remove one life etc"""
-    if player.is_passed_out():
-        return
-    if player.carries_gold_sacks:
-        drop_gold_sack()
-    player.update(Activity.PASSED_OUT)
-    player.lives -= 1
-    if not player.lives:
-        print("GAME OVER!")
-        quit()
-
-
 # Classes
 class Rooms(object):
     """Class for loading a room layout from a level setup json-file"""
@@ -369,6 +359,16 @@ class Sprite(pygame.sprite.Sprite):
         self.is_facing_right = None
         self.is_facing_up = None
         self.name = name
+        self.is_player = self.name == SpriteName.PLAYER
+        self.is_miner = self.name == SpriteName.MINER
+        self.is_gold_sack = self.name == SpriteName.GOLD
+        self.is_ladder = self.name == SpriteName.LADDER
+        self.is_truck = self.name == SpriteName.TRUCK
+        self.is_wheelbarrow = self.name == SpriteName.WHEELBARROW
+        self.is_axe = self.name == SpriteName.AXE
+        self.is_cart = self.name == SpriteName.CART
+        self.is_elevator = self.name == SpriteName.ELEVATOR
+        self.is_handle = self.name == SpriteName.HANDLE
         self.speed = PLAYER_SPEED
         self.animation_freq_ms = animation_freq_ms
         self.next_img = 0
@@ -439,8 +439,8 @@ class Sprite(pygame.sprite.Sprite):
                 climbed = False
 
                 # Check if the sprite has fallen too far
-                if self.fall_pix >= MAX_FALL_PIX:
-                    pass_out()
+                if self.fall_pix >= MAX_FALL_PIX and self.is_player:
+                    self.pass_out()
 
                 # Reset fall distance count
                 self.fall_pix = 0 if vertical else self.fall_pix
@@ -514,6 +514,18 @@ class Sprite(pygame.sprite.Sprite):
             self.image.set_colorkey(Color.WHITE)
             if self.is_facing_left:
                 self.image = pygame.transform.flip(self.image, True, False)
+
+    def pass_out(self):
+        """Make the sprite pass out, remove one life etc"""
+        if self.is_passed_out():
+            return
+        if self.carries_gold_sacks:
+            interact_with_gold_sack(False)
+        self.update(Activity.PASSED_OUT)
+        self.lives -= 1
+        if not self.lives:
+            print("GAME OVER!")
+            quit()
 
     def is_passed_out(self):
         return self.activity == Activity.PASSED_OUT
@@ -775,7 +787,7 @@ while game_is_running:
 
     # Check if the player is caught by a miner
     if player.collides(miners) and not player.is_passed_out():
-        pass_out()
+        player.pass_out()
 
     # Draw background and walls
     screen.blit(room.background_img, (0, 0))
