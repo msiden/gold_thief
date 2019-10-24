@@ -39,25 +39,36 @@ def animation_loop(imgs):
 
 
 def drop_gold_sack():
-    dropped_in_truck = False
+    dropped_on_ground = True
     player.update(Activity.IDLE)
     player.speed = PLAYER_SPEED
+    player.carries_gold_sacks = 0
 
     # Drop the gold sack in the truck
     for t in trucks.sprites():
         if t.collides(players):
-            player.gold_delivered += 1
-            print(player.gold_delivered, "/", room.gold_sacks)
+            t.carries_gold_sacks += 1
+            print(t.carries_gold_sacks, "/", room.gold_sacks)
             t.update({
-                player.gold_delivered in range(0, 3): Activity.LOADED_01,
-                player.gold_delivered in range(3, 6): Activity.LOADED_02,
-                player.gold_delivered in range(6, 9): Activity.LOADED_03,
-                player.gold_delivered in range(9, 12): Activity.LOADED_04,
-                player.gold_delivered in range(12, 1000): Activity.LOADED_05}[True])
-            dropped_in_truck = True
+                t.carries_gold_sacks in range(0, 3): Activity.LOADED_01,
+                t.carries_gold_sacks in range(3, 6): Activity.LOADED_02,
+                t.carries_gold_sacks in range(6, 9): Activity.LOADED_03,
+                t.carries_gold_sacks in range(9, 12): Activity.LOADED_04,
+                t.carries_gold_sacks in range(12, 1000): Activity.LOADED_05}[True])
+            dropped_on_ground = False
 
-    # Drop it on the floor
-    if not dropped_in_truck:
+    # Drop it in a wheelbarrow
+    for w in wheelbarrows.sprites():
+        if w.collides(players) and w.carries_gold_sacks < 3:
+            w.carries_gold_sacks += 1
+            w.update({
+                w.carries_gold_sacks == 1: Activity.LOADED_01,
+                w.carries_gold_sacks == 2: Activity.LOADED_02,
+                w.carries_gold_sacks == 3: Activity.LOADED_03}[True])
+            dropped_on_ground = False
+
+    # Drop it on the ground
+    if dropped_on_ground:
         player.gold_sack_sprite.rect.x = player.rect.x
         player.gold_sack_sprite.rect.y = player.rect.y
         gold_sacks.add(player.gold_sack_sprite)
@@ -145,8 +156,14 @@ def key_presses(interact_with_gold_sack):
             player.update(Activity.IDLE_CLIMBING)
         elif player.is_carrying_gold():
             player.update(Activity.IDLE_WITH_GOLD)
-        elif player.is_pushing_wheelbarrow():
-            player.update(Activity.IDLE_WITH_WHEELBARROW)
+        elif player.is_pushing_empty_wheelbarrow():
+            player.update(Activity.IDLE_WITH_EMPTY_WHEELBARROW)
+        elif player.is_pushing_loaded_01_wheelbarrow():
+            player.update(Activity.IDLE_WITH_LOADED_01_WHEELBARROW)
+        elif player.is_pushing_loaded_02_wheelbarrow():
+            player.update(Activity.IDLE_WITH_LOADED_02_WHEELBARROW)
+        elif player.is_pushing_loaded_03_wheelbarrow():
+            player.update(Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
         else:
             player.update(Activity.IDLE)
 
@@ -172,6 +189,7 @@ def key_presses(interact_with_gold_sack):
                 player.gold_sack_sprite = g
                 g.remove(gold_sacks)
                 player.speed = PLAYER_SPEED_WHEN_CARRYING_GOLD
+                player.carries_gold_sacks += 1
                 break
     elif drop_gold:
         drop_gold_sack()
@@ -208,13 +226,21 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
         Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name),
         Animation.IDLE_CLIMBING: Folder.IDLE_CLIMBING_IMGS.format(sprite_name),
         Animation.IDLE_CLIMBING_WITH_GOLD: Folder.IDLE_CLIMBING_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.IDLE_WITH_EMPTY_WHEELBARROW: Folder.IDLE_WITH_EMPTY_WHEELBARROW_IMGS.format(sprite_name),
         Animation.IDLE_WITH_GOLD: Folder.IDLE_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.IDLE_WITH_LOADED_01_WHEELBARROW: Folder.IDLE_WITH_LOADED_01_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.IDLE_WITH_LOADED_02_WHEELBARROW: Folder.IDLE_WITH_LOADED_02_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.IDLE_WITH_LOADED_03_WHEELBARROW: Folder.IDLE_WITH_LOADED_03_WHEELBARROW_IMGS.format(sprite_name),
         Animation.LOADED_01: Folder.LOADED_01.format(sprite_name),
         Animation.LOADED_02: Folder.LOADED_02.format(sprite_name),
         Animation.LOADED_03: Folder.LOADED_03.format(sprite_name),
         Animation.LOADED_04: Folder.LOADED_04.format(sprite_name),
         Animation.LOADED_05: Folder.LOADED_05.format(sprite_name),
         Animation.PASSED_OUT: Folder.PASSED_OUT_IMGS.format(sprite_name),
+        Animation.PUSHING_EMPTY_WHEELBARROW: Folder.PUSHING_EMPTY_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.PUSHING_LOADED_01_WHEELBARROW: Folder.PUSHING_LOADED_01_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.PUSHING_LOADED_02_WHEELBARROW: Folder.PUSHING_LOADED_02_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.PUSHING_LOADED_03_WHEELBARROW: Folder.PUSHING_LOADED_03_WHEELBARROW_IMGS.format(sprite_name),
         Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
         Animation.WALKING_WITH_GOLD: Folder.WALKING_WITH_GOLD_IMGS.format(sprite_name)}[animation]
     size = (SPRITE_SIZE[0] * multiply_x_by, SPRITE_SIZE[1] * multiply_y_by)
@@ -227,7 +253,7 @@ def pass_out():
     """Make the player pass out, remove one life etc"""
     if player.is_passed_out():
         return
-    if player.gold_sack_sprite:
+    if player.carries_gold_sacks:
         drop_gold_sack()
     player.update(Activity.PASSED_OUT)
     player.lives -= 1
@@ -320,7 +346,7 @@ class Sprite(pygame.sprite.Sprite):
         self.lives = PLAYER_LIVES
         self.gold_sack_sprite = None
         self.can_climb_ladders = self.name in (SpriteName.PLAYER, SpriteName.MINER)
-        self.gold_delivered = 0
+        self.carries_gold_sacks = 0
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -462,7 +488,10 @@ class Sprite(pygame.sprite.Sprite):
         return self.activity == Activity.PASSED_OUT
 
     def is_walking(self):
-        return self.activity in (Activity.WALKING, Activity.WALKING_WITH_GOLD, Activity.PUSHING_WHEELBARROW)
+        return self.activity in (
+            Activity.WALKING, Activity.WALKING_WITH_GOLD, Activity.PUSHING_EMPTY_WHEELBARROW,
+            Activity.PUSHING_LOADED_01_WHEELBARROW, Activity.PUSHING_LOADED_02_WHEELBARROW,
+            Activity.PUSHING_LOADED_03_WHEELBARROW)
 
     def is_climbing(self):
         return self.activity in (
@@ -474,7 +503,8 @@ class Sprite(pygame.sprite.Sprite):
     def is_idle(self):
         return self.activity in (
             Activity.IDLE, Activity.IDLE_CLIMBING_WITH_GOLD, Activity.IDLE_CLIMBING, Activity.IDLE_WITH_GOLD,
-            Activity.IDLE_WITH_WHEELBARROW)
+            Activity.IDLE_WITH_EMPTY_WHEELBARROW, Activity.IDLE_WITH_LOADED_01_WHEELBARROW,
+            Activity.IDLE_WITH_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
 
     def is_carrying_gold(self):
         return self.activity in (
@@ -484,8 +514,17 @@ class Sprite(pygame.sprite.Sprite):
     def is_pulling_up(self):
         return self.activity == Activity.PULLING_UP
 
-    def is_pushing_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_WHEELBARROW, Activity.IDLE_WITH_WHEELBARROW)
+    def is_pushing_empty_wheelbarrow(self):
+        return self.activity in (Activity.PUSHING_EMPTY_WHEELBARROW, Activity.IDLE_WITH_EMPTY_WHEELBARROW)
+
+    def is_pushing_loaded_01_wheelbarrow(self):
+        return self.activity in (Activity.PUSHING_LOADED_01_WHEELBARROW, Activity.IDLE_WITH_LOADED_01_WHEELBARROW)
+
+    def is_pushing_loaded_02_wheelbarrow(self):
+        return self.activity in (Activity.PUSHING_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
+
+    def is_pushing_loaded_03_wheelbarrow(self):
+        return self.activity in (Activity.PUSHING_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
 
 
 # Enums
@@ -497,8 +536,11 @@ class Activity(object):
     IDLE = "idle"
     IDLE_CLIMBING = "idle_climbing"
     IDLE_CLIMBING_WITH_GOLD = "idle_climbing_with_gold"
+    IDLE_WITH_EMPTY_WHEELBARROW = "idle_with_empty_wheelbarrow"
     IDLE_WITH_GOLD = "idle_with_gold"
-    IDLE_WITH_WHEELBARROW = "idle_with_wheelbarrow"
+    IDLE_WITH_LOADED_01_WHEELBARROW = "idle_with_loaded_01_wheelbarrow"
+    IDLE_WITH_LOADED_02_WHEELBARROW = "idle_with_loaded_02_wheelbarrow"
+    IDLE_WITH_LOADED_03_WHEELBARROW = "idle_with_loaded_03_wheelbarrow"
     LOADED_01 = "loaded_01"
     LOADED_02 = "loaded_02"
     LOADED_03 = "loaded_03"
@@ -506,7 +548,10 @@ class Activity(object):
     LOADED_05 = "loaded_05"
     PASSED_OUT = "passed_out"
     PULLING_UP = "pulling_up"
-    PUSHING_WHEELBARROW = "pushing_wheelbarrow"
+    PUSHING_EMPTY_WHEELBARROW = "pushing_empty_wheelbarrow"
+    PUSHING_LOADED_01_WHEELBARROW = "pushing_loaded_01_wheelbarrow"
+    PUSHING_LOADED_02_WHEELBARROW = "pushing_loaded_02_wheelbarrow"
+    PUSHING_LOADED_03_WHEELBARROW = "pushing_loaded_03_wheelbarrow"
     RIDING_CART = "riding cart"
     WALKING = "walking"
     WALKING_WITH_GOLD = "walking_with_gold"
@@ -543,12 +588,20 @@ class Folder(object):
     IDLE_IMGS = SPRITES + "{}" + os.sep + "idle" + os.sep
     IDLE_CLIMBING_IMGS = SPRITES + "{}" + os.sep + "idle_climbing" + os.sep
     IDLE_CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "idle_climbing_with_gold" + os.sep
+    IDLE_WITH_EMPTY_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_empty_wheelbarrow" + os.sep
     IDLE_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "idle_with_gold" + os.sep
+    IDLE_WITH_LOADED_01_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_loaded_01_wheelbarrow" + os.sep
+    IDLE_WITH_LOADED_02_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_loaded_02_wheelbarrow" + os.sep
+    IDLE_WITH_LOADED_03_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_loaded_03_wheelbarrow" + os.sep
     LOADED_01 = SPRITES + "{}" + os.sep + "loaded_01" + os.sep
     LOADED_02 = SPRITES + "{}" + os.sep + "loaded_02" + os.sep
     LOADED_03 = SPRITES + "{}" + os.sep + "loaded_03" + os.sep
     LOADED_04 = SPRITES + "{}" + os.sep + "loaded_04" + os.sep
     LOADED_05 = SPRITES + "{}" + os.sep + "loaded_05" + os.sep
+    PUSHING_EMPTY_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_empty_wheelbarrow" + os.sep
+    PUSHING_LOADED_01_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_loaded_01_wheelbarrow" + os.sep
+    PUSHING_LOADED_02_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_loaded_02_wheelbarrow" + os.sep
+    PUSHING_LOADED_03_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_loaded_03_wheelbarrow" + os.sep
     PASSED_OUT_IMGS = SPRITES + "{}" + os.sep + "passed_out" + os.sep
     WALKING_IMGS = SPRITES + "{}" + os.sep + "walking" + os.sep
     WALKING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "walking_with_gold" + os.sep
@@ -588,8 +641,22 @@ SPRITE_ANIMATIONS = {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER),
         Animation.IDLE_CLIMBING: load_images(Animation.IDLE_CLIMBING, SpriteName.PLAYER),
         Animation.IDLE_CLIMBING_WITH_GOLD: load_images(Animation.IDLE_CLIMBING_WITH_GOLD, SpriteName.PLAYER),
+        Animation.IDLE_WITH_EMPTY_WHEELBARROW: load_images(Animation.IDLE_WITH_EMPTY_WHEELBARROW, SpriteName.PLAYER),
         Animation.IDLE_WITH_GOLD: load_images(Animation.IDLE_WITH_GOLD, SpriteName.PLAYER),
+        Animation.IDLE_WITH_LOADED_01_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_LOADED_01_WHEELBARROW, SpriteName.PLAYER),
+        Animation.IDLE_WITH_LOADED_02_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_LOADED_02_WHEELBARROW, SpriteName.PLAYER),
+        Animation.IDLE_WITH_LOADED_03_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_LOADED_03_WHEELBARROW, SpriteName.PLAYER),
         Animation.PASSED_OUT: load_images(Animation.PASSED_OUT, SpriteName.PLAYER),
+        Animation.PUSHING_EMPTY_WHEELBARROW: load_images(Animation.PUSHING_EMPTY_WHEELBARROW, SpriteName.PLAYER),
+        Animation.PUSHING_LOADED_01_WHEELBARROW: load_images(
+            Animation.PUSHING_LOADED_01_WHEELBARROW, SpriteName.PLAYER),
+        Animation.PUSHING_LOADED_02_WHEELBARROW: load_images(
+            Animation.PUSHING_LOADED_02_WHEELBARROW, SpriteName.PLAYER),
+        Animation.PUSHING_LOADED_03_WHEELBARROW: load_images(
+            Animation.PUSHING_LOADED_03_WHEELBARROW, SpriteName.PLAYER),
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
         Animation.WALKING_WITH_GOLD: load_images(Animation.WALKING_WITH_GOLD, SpriteName.PLAYER)},
     SpriteName.TRUCK: {
@@ -600,7 +667,10 @@ SPRITE_ANIMATIONS = {
         Animation.LOADED_04: load_images(Animation.LOADED_04, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
         Animation.LOADED_05: load_images(Animation.LOADED_05, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4)},
     SpriteName.WHEELBARROW: {
-        Animation.IDLE: load_images(Animation.IDLE, SpriteName.WHEELBARROW, multiply_x_by=2)}}
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.WHEELBARROW, multiply_x_by=2),
+        Animation.LOADED_01: load_images(Animation.LOADED_01, SpriteName.WHEELBARROW, multiply_x_by=2),
+        Animation.LOADED_02: load_images(Animation.LOADED_02, SpriteName.WHEELBARROW, multiply_x_by=2),
+        Animation.LOADED_03: load_images(Animation.LOADED_03, SpriteName.WHEELBARROW, multiply_x_by=2)}}
 
 # Initialize PyGame
 pygame.init()

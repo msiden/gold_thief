@@ -13,9 +13,18 @@ TODO:
     - [x] Idle carrying sack
     - [x] Walking carrying sack
     - [x] Climbing carrying sack
-    - [ ] Walking pushing wheelbarrow
-    - [ ] Idle pushing wheelbarrow
+    - [x] Pushing empty wheelbarrow
+    - [ ] Pushing loaded 01 wheelbarrow
+    - [ ] Pushing loaded 02 wheelbarrow
+    - [ ] Pushing loaded 03 wheelbarrow
+    - [x] Idle with empty wheelbarrow
+    - [ ] Idle with loaded 01 wheelbarrow
+    - [ ] Idle with loaded 02 wheelbarrow
+    - [ ] Idle with loaded 03 wheelbarrow
     - [ ] Riding cart
+    - [ ] Idle with axe
+    - [ ] Walking with axe
+    - [ ] Using axe
 - [ ] More player abilities
     - [x] Climb
     - [x] Carry sack
@@ -35,7 +44,7 @@ TODO:
     - [X] Miner
     - [X] Gold sack
     - [ ] Cart
-    - [ ] Wheelbarrow
+    - [x] Wheelbarrow
     - [ ] Axe
     - [ ] Elevator
     - [ ] Handle
@@ -57,4 +66,3 @@ TODO:
 - [ ] High scores
 - [ ] Save game function 
     
- 
