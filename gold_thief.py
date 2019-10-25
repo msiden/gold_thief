@@ -103,7 +103,7 @@ def interact_with_gold_sack(pick_up):
                 player.saved_sprite = g
                 g.remove(gold_sacks)
                 player.speed = PLAYER_SPEED_WHEN_CARRYING_GOLD
-                player.carries_gold_sacks += 1
+                player.carries_gold_sacks = 1
                 break
 
     # Drop a gold sack
@@ -128,7 +128,7 @@ def interact_with_gold_sack(pick_up):
 
         # Drop it in a wheelbarrow
         for w in wheelbarrows.sprites():
-            if w.collides(players) and w.carries_gold_sacks < 3:
+            if w.collides(players) and w.carries_gold_sacks < 3 and not player.collides(trucks):
                 w.carries_gold_sacks += 1
                 w.update({
                     w.carries_gold_sacks == 1: Activity.LOADED_01,
@@ -143,6 +143,66 @@ def interact_with_gold_sack(pick_up):
             gold_sacks.add(player.saved_sprite)
 
         player.saved_sprite = None
+
+
+def interact_with_wheelbarrow(pick_up):
+    """
+    Pick up, drop or empty a wheelbarrow
+
+    - pick_up -- (Boolean. Mandatory) True for picking up a wheelbarrow and False for dropping or emptying
+
+    Returns: None
+    """
+
+    # Pick up a wheelbarrow
+    if pick_up:
+        for w in wheelbarrows.sprites():
+            if w.collides(players):
+                player.saved_sprite = w
+                w.remove(wheelbarrows)
+                player.update({
+                    w.carries_gold_sacks == 0: Activity.IDLE_WITH_EMPTY_WHEELBARROW,
+                    w.carries_gold_sacks == 1: Activity.IDLE_WITH_LOADED_01_WHEELBARROW,
+                    w.carries_gold_sacks == 2: Activity.IDLE_WITH_LOADED_02_WHEELBARROW,
+                    w.carries_gold_sacks == 3: Activity.IDLE_WITH_LOADED_03_WHEELBARROW}[True])
+                break
+
+    # Drop or empty it
+    else:
+        dropped_in_truck = False
+
+        # Empty it in a truck
+        for t in trucks.sprites():
+            if t.collides(players) and player.is_pushing_loaded_wheelbarrow():
+                t.carries_gold_sacks += player.saved_sprite.carries_gold_sacks
+                print(t.carries_gold_sacks, "/", room.gold_sacks)
+                t.update({
+                    t.carries_gold_sacks in range(0, 3): Activity.LOADED_01,
+                    t.carries_gold_sacks in range(3, 6): Activity.LOADED_02,
+                    t.carries_gold_sacks in range(6, 9): Activity.LOADED_03,
+                    t.carries_gold_sacks in range(9, 12): Activity.LOADED_04,
+                    t.carries_gold_sacks in range(12, 1000): Activity.LOADED_05}[True])
+                dropped_in_truck = True
+                break
+        if dropped_in_truck:
+            player.update(Activity.IDLE_WITH_EMPTY_WHEELBARROW)
+            player.saved_sprite.carries_gold_sacks = 0
+            player.saved_sprite.update(Activity.IDLE)
+
+        # Drop the wheelbarrow
+        else:
+            player.saved_sprite.h_direction = player.h_direction
+            #player.saved_sprite.rect.center = player.rect.center
+            if player.is_facing_right:
+                player.saved_sprite.rect.x = player.rect.x
+                player.saved_sprite.rect.y = player.rect.y
+            else:
+                player.saved_sprite.rect.center = player.rect.center
+                #player.saved_sprite.rect.x = player.rect.x
+                #player.saved_sprite.rect.y = player.rect.y
+            player.update(Activity.IDLE)
+            wheelbarrows.add(player.saved_sprite)
+            player.saved_sprite = None
 
 
 def key_presses(interact_key_pressed):
@@ -205,6 +265,12 @@ def key_presses(interact_key_pressed):
                 if player.is_climbing() and player.collides(ladders) else Activity.WALKING_WITH_GOLD
         elif player.is_pushing_empty_wheelbarrow():
             activity = Activity.PUSHING_EMPTY_WHEELBARROW
+        elif player.is_pushing_loaded_01_wheelbarrow():
+            activity = Activity.PUSHING_LOADED_01_WHEELBARROW
+        elif player.is_pushing_loaded_02_wheelbarrow():
+            activity = Activity.PUSHING_LOADED_02_WHEELBARROW
+        elif player.is_pushing_loaded_03_wheelbarrow():
+            activity = Activity.PUSHING_LOADED_03_WHEELBARROW
         else:
             activity = Activity.CLIMBING if player.is_climbing() and player.collides(ladders) else Activity.WALKING
         player.move(Direction.LEFT if left else Direction.RIGHT, activity=activity)
@@ -214,19 +280,8 @@ def key_presses(interact_key_pressed):
         interact_with_gold_sack(pick_up_gold)
 
     # Pick up or drop a wheelbarrow
-    if pick_up_wheelbarrow:
-        for w in wheelbarrows.sprites():
-            if w.collides(players):
-                player.saved_sprite = w
-                w.remove(wheelbarrows)
-                player.update({
-                    w.carries_gold_sacks == 0: Activity.IDLE_WITH_EMPTY_WHEELBARROW,
-                    w.carries_gold_sacks == 1: Activity.IDLE_WITH_LOADED_01_WHEELBARROW,
-                    w.carries_gold_sacks == 2: Activity.IDLE_WITH_LOADED_02_WHEELBARROW,
-                    w.carries_gold_sacks == 3: Activity.IDLE_WITH_LOADED_03_WHEELBARROW}[True])
-                break
-    elif drop_or_empty_wheelbarrow:
-        pass
+    elif pick_up_empty_or_drop_wheelbarrow:
+        interact_with_wheelbarrow(pick_up_wheelbarrow)
 
 
 def load_db(database):
@@ -564,14 +619,17 @@ class Sprite(pygame.sprite.Sprite):
         return self.activity in (Activity.PUSHING_LOADED_01_WHEELBARROW, Activity.IDLE_WITH_LOADED_01_WHEELBARROW)
 
     def is_pushing_loaded_02_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
+        return self.activity in (Activity.PUSHING_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_02_WHEELBARROW)
 
     def is_pushing_loaded_03_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
+        return self.activity in (Activity.PUSHING_LOADED_03_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
+
+    def is_pushing_loaded_wheelbarrow(self):
+        return self.is_pushing_loaded_01_wheelbarrow() or self.is_pushing_loaded_02_wheelbarrow() \
+            or self.is_pushing_loaded_03_wheelbarrow()
 
     def is_pushing_wheelbarrow(self):
-        return self.is_pushing_empty_wheelbarrow() or self.is_pushing_loaded_01_wheelbarrow() \
-            or self.is_pushing_loaded_02_wheelbarrow() or self.is_pushing_loaded_03_wheelbarrow()
+        return self.is_pushing_empty_wheelbarrow() or self.is_pushing_loaded_wheelbarrow()
 
 
 # Enums

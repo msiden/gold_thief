@@ -14,13 +14,13 @@ TODO:
     - [x] Walking carrying sack
     - [x] Climbing carrying sack
     - [x] Pushing empty wheelbarrow
-    - [ ] Pushing loaded 01 wheelbarrow
-    - [ ] Pushing loaded 02 wheelbarrow
-    - [ ] Pushing loaded 03 wheelbarrow
+    - [x] Pushing loaded 01 wheelbarrow
+    - [x] Pushing loaded 02 wheelbarrow
+    - [x] Pushing loaded 03 wheelbarrow
     - [x] Idle with empty wheelbarrow
-    - [ ] Idle with loaded 01 wheelbarrow
-    - [ ] Idle with loaded 02 wheelbarrow
-    - [ ] Idle with loaded 03 wheelbarrow
+    - [x] Idle with loaded 01 wheelbarrow
+    - [x] Idle with loaded 02 wheelbarrow
+    - [x] Idle with loaded 03 wheelbarrow
     - [ ] Riding cart
     - [ ] Idle with axe
     - [ ] Walking with axe
@@ -30,7 +30,7 @@ TODO:
     - [x] Carry sack
     - [x] Die if fall to far
     - [ ] Pull up
-    - [ ] Push wheelbarrow
+    - [x] Push wheelbarrow
     - [ ] Ride cart   
     - [x] Die if caught by miner 
     - [ ] Use axe
