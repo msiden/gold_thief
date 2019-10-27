@@ -166,6 +166,8 @@ def interact_with_wheelbarrow(pick_up):
                     w.carries_gold_sacks == 2: Activity.IDLE_WITH_LOADED_02_WHEELBARROW,
                     w.carries_gold_sacks == 3: Activity.IDLE_WITH_LOADED_03_WHEELBARROW}[True])
                 break
+        if player.is_facing_left:
+            player.rect.x -= 120
 
     # Drop or empty it
     else:
@@ -195,11 +197,11 @@ def interact_with_wheelbarrow(pick_up):
             #player.saved_sprite.rect.center = player.rect.center
             if player.is_facing_right:
                 player.saved_sprite.rect.x = player.rect.x
-                player.saved_sprite.rect.y = player.rect.y
             else:
-                player.saved_sprite.rect.center = player.rect.center
-                #player.saved_sprite.rect.x = player.rect.x
-                #player.saved_sprite.rect.y = player.rect.y
+                #player.saved_sprite.rect.center = player.rect.center
+                player.rect.x += 120
+                player.saved_sprite.rect.x = player.rect.x - 118
+            player.saved_sprite.rect.y = player.rect.y
             player.update(Activity.IDLE)
             wheelbarrows.add(player.saved_sprite)
             player.saved_sprite = None
