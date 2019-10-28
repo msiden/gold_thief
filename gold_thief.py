@@ -166,8 +166,7 @@ def interact_with_wheelbarrow(pick_up):
                     w.carries_gold_sacks == 2: Activity.IDLE_WITH_LOADED_02_WHEELBARROW,
                     w.carries_gold_sacks == 3: Activity.IDLE_WITH_LOADED_03_WHEELBARROW}[True])
                 break
-        if player.is_facing_left:
-            player.rect.x -= 120
+        player.rect.x -= 120 if player.is_facing_left else 0
 
     # Drop or empty it
     else:
@@ -194,17 +193,12 @@ def interact_with_wheelbarrow(pick_up):
         # Drop the wheelbarrow
         else:
             player.saved_sprite.h_direction = player.h_direction
-            #player.saved_sprite.rect.center = player.rect.center
-            if player.is_facing_right:
-                player.saved_sprite.rect.x = player.rect.x
-            else:
-                #player.saved_sprite.rect.center = player.rect.center
-                player.rect.x += 120
-                player.saved_sprite.rect.x = player.rect.x - 118
+            player.saved_sprite.rect.x = player.rect.x
+            player.rect.x += 120 if player.is_facing_left else 0
             player.saved_sprite.rect.y = player.rect.y
-            player.update(Activity.IDLE)
             wheelbarrows.add(player.saved_sprite)
             player.saved_sprite = None
+            player.update(Activity.IDLE)
 
 
 def key_presses(interact_key_pressed):
@@ -562,15 +556,15 @@ class Sprite(pygame.sprite.Sprite):
             self.rect.x -= 10
             self.rect.y -= 5
 
-        self.activity = activity
-
         # Load the next image in the animation
-        if now >= self.next_img:
+        if (now >= self.next_img) or (activity != self.activity):
             self.image = next(self.animation)
             self.next_img = now + self.animation_freq_ms
             self.image.set_colorkey(Color.WHITE)
             if self.is_facing_left:
                 self.image = pygame.transform.flip(self.image, True, False)
+
+        self.activity = activity
 
     def pass_out(self):
         """Make the sprite pass out, remove one life etc"""
