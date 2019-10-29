@@ -9,8 +9,8 @@ FPS = 25
 GRAVITY = 20
 MAX_FALL_PIX = 100
 MAX_CONTROL_WHILE_FALLING_PIX = 50
-PLAYER_SPEED = 9
-PLAYER_SPEED_WHEN_CARRYING_GOLD = 5
+STANDARD_SPEED = 9
+SPEED_WHEN_CARRYING_GOLD = 5
 PLAYER_LIVES = 5
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
@@ -87,129 +87,6 @@ def gravity():
                 spr.move(Direction.DOWN, GRAVITY)
 
 
-def interact_with_gold_sack(pick_up):
-    """
-    Pick up or drop a gold sack
-
-    - pick_up -- (Boolean. Mandatory) True for picking up a gold sack and False for dropping a gold sack
-
-    Returns: None
-    """
-    # Pick up a gold sack
-    if pick_up:
-        player.pick_up(gold_sacks)
-        return
-        player.update(Activity.IDLE_WITH_GOLD)
-        for g in gold_sacks:
-            if g.collides(players):
-                player.saved_sprite = g
-                g.remove(gold_sacks)
-                player.speed = PLAYER_SPEED_WHEN_CARRYING_GOLD
-                player.carries_gold_sacks = 1
-                break
-
-    # Drop a gold sack
-    else:
-        player.drop_sprite()
-        return
-        dropped_on_ground = True
-        player.update(Activity.IDLE)
-        player.speed = PLAYER_SPEED
-        player.carries_gold_sacks = 0
-
-        # Drop the gold sack in the truck
-        for t in trucks.sprites():
-            if t.collides(players):
-                t.carries_gold_sacks += 1
-                print(t.carries_gold_sacks, "/", room.gold_sacks)
-                t.update({
-                    t.carries_gold_sacks in range(0, 3): Activity.LOADED_01,
-                    t.carries_gold_sacks in range(3, 6): Activity.LOADED_02,
-                    t.carries_gold_sacks in range(6, 9): Activity.LOADED_03,
-                    t.carries_gold_sacks in range(9, 12): Activity.LOADED_04,
-                    t.carries_gold_sacks in range(12, 1000): Activity.LOADED_05}[True])
-                dropped_on_ground = False
-
-        # Drop it in a wheelbarrow
-        for w in wheelbarrows.sprites():
-            if w.collides(players) and w.carries_gold_sacks < 3 and not player.collides(trucks):
-                w.carries_gold_sacks += 1
-                w.update({
-                    w.carries_gold_sacks == 1: Activity.LOADED_01,
-                    w.carries_gold_sacks == 2: Activity.LOADED_02,
-                    w.carries_gold_sacks == 3: Activity.LOADED_03}[True])
-                dropped_on_ground = False
-
-        # Drop it on the ground
-        if dropped_on_ground:
-            player.saved_sprite.rect.x = player.rect.x
-            player.saved_sprite.rect.y = player.rect.y
-            gold_sacks.add(player.saved_sprite)
-
-        player.saved_sprite = None
-
-
-def interact_with_wheelbarrow(pick_up):
-    """
-    Pick up, drop or empty a wheelbarrow
-
-    - pick_up -- (Boolean. Mandatory) True for picking up a wheelbarrow and False for dropping or emptying
-
-    Returns: None
-    """
-
-    # Pick up a wheelbarrow
-    if pick_up:
-        player.pick_up(wheelbarrows)
-        return
-        for w in wheelbarrows.sprites():
-            if w.collides(players):
-                player.saved_sprite = w
-                w.remove(wheelbarrows)
-                player.update({
-                    w.carries_gold_sacks == 0: Activity.IDLE_WITH_EMPTY_WHEELBARROW,
-                    w.carries_gold_sacks == 1: Activity.IDLE_WITH_LOADED_01_WHEELBARROW,
-                    w.carries_gold_sacks == 2: Activity.IDLE_WITH_LOADED_02_WHEELBARROW,
-                    w.carries_gold_sacks == 3: Activity.IDLE_WITH_LOADED_03_WHEELBARROW}[True])
-                break
-        player.rect.x -= 120 if player.is_facing_left else 0
-
-    # Drop or empty it
-    else:
-
-        player.drop_sprite()
-        return
-        dropped_in_truck = False
-
-        # Empty it in a truck
-        for t in trucks.sprites():
-            if t.collides(players) and player.is_pushing_loaded_wheelbarrow():
-                t.carries_gold_sacks += player.saved_sprite.carries_gold_sacks
-                print(t.carries_gold_sacks, "/", room.gold_sacks)
-                t.update({
-                    t.carries_gold_sacks in range(0, 3): Activity.LOADED_01,
-                    t.carries_gold_sacks in range(3, 6): Activity.LOADED_02,
-                    t.carries_gold_sacks in range(6, 9): Activity.LOADED_03,
-                    t.carries_gold_sacks in range(9, 12): Activity.LOADED_04,
-                    t.carries_gold_sacks in range(12, 1000): Activity.LOADED_05}[True])
-                dropped_in_truck = True
-                break
-        if dropped_in_truck:
-            player.update(Activity.IDLE_WITH_EMPTY_WHEELBARROW)
-            player.saved_sprite.carries_gold_sacks = 0
-            player.saved_sprite.update(Activity.IDLE)
-
-        # Drop the wheelbarrow
-        else:
-            player.saved_sprite.h_direction = player.h_direction
-            player.saved_sprite.rect.x = player.rect.x
-            player.rect.x += 120 if player.is_facing_left else 0
-            player.saved_sprite.rect.y = player.rect.y
-            wheelbarrows.add(player.saved_sprite)
-            player.saved_sprite = None
-            player.update(Activity.IDLE)
-
-
 def key_presses(interact_key_pressed):
     """
     Check key presses and control the player sprite
@@ -223,14 +100,11 @@ def key_presses(interact_key_pressed):
     left = key_press[pygame.K_LEFT] and not player.is_falling()
     right = key_press[pygame.K_RIGHT] and not player.is_falling()
     up = key_press[pygame.K_UP] and player.collides(ladders)
-    pick_up_gold = interact_key_pressed and player.collides(gold_sacks) and not player.is_carrying_gold() \
-        and not player.is_pushing_wheelbarrow()
+    pick_up_gold = interact_key_pressed and player.collides(gold_sacks) and not player.saved_sprite
     drop_gold = interact_key_pressed and player.is_carrying_gold()
-    pick_up_or_drop_gold_sack = drop_gold or pick_up_gold
-    pick_up_wheelbarrow = interact_key_pressed and player.collides(wheelbarrows) and not player.is_carrying_gold() \
-        and not player.is_pushing_wheelbarrow()
+    pick_up_wheelbarrow = interact_key_pressed and player.collides(wheelbarrows) and not player.saved_sprite
     drop_or_empty_wheelbarrow = interact_key_pressed and player.is_pushing_wheelbarrow()
-    pick_up_empty_or_drop_wheelbarrow = pick_up_wheelbarrow or drop_or_empty_wheelbarrow
+    drop = drop_gold or drop_or_empty_wheelbarrow
     no_key_presses = not any((down, left, right, up))
     move_vertical = up or down and not player.is_pushing_wheelbarrow()
     move_horizontal = left or right
@@ -280,13 +154,13 @@ def key_presses(interact_key_pressed):
             activity = Activity.CLIMBING if player.is_climbing() and player.collides(ladders) else Activity.WALKING
         player.move(Direction.LEFT if left else Direction.RIGHT, activity=activity)
 
-    # Pick up or drop a gold sack
-    if pick_up_or_drop_gold_sack:
-        interact_with_gold_sack(pick_up_gold)
-
-    # Pick up or drop a wheelbarrow
-    elif pick_up_empty_or_drop_wheelbarrow:
-        interact_with_wheelbarrow(pick_up_wheelbarrow)
+    # Pick up or drop another sprite
+    if pick_up_gold:
+        player.pick_up(gold_sacks)
+    elif pick_up_wheelbarrow:
+        player.pick_up(wheelbarrows)
+    elif drop:
+        player.drop_sprite()
 
 
 def load_db(database):
@@ -429,7 +303,7 @@ class Sprite(pygame.sprite.Sprite):
         self.is_cart = self.name == SpriteName.CART
         self.is_elevator = self.name == SpriteName.ELEVATOR
         self.is_handle = self.name == SpriteName.HANDLE
-        self.speed = PLAYER_SPEED
+        self.speed = STANDARD_SPEED
         self.animation_freq_ms = animation_freq_ms
         self.next_img = 0
         self.wake_up_time = 0
@@ -583,7 +457,7 @@ class Sprite(pygame.sprite.Sprite):
         if self.is_passed_out():
             return
         if self.carries_gold_sacks:
-            interact_with_gold_sack(False)
+            self.drop_sprite()
         self.update(Activity.PASSED_OUT)
         self.lives -= 1
         if not self.lives:
@@ -598,104 +472,94 @@ class Sprite(pygame.sprite.Sprite):
 
         Returns: None
         """
+
+        # You can't pick up a sprite if you're already carrying one
+        if self.saved_sprite:
+            return
+
+        # Activities
         activity = None
+        activities = {
+            0: Activity.IDLE_WITH_EMPTY_WHEELBARROW, 1: Activity.IDLE_WITH_LOADED_01_WHEELBARROW,
+            2: Activity.IDLE_WITH_LOADED_02_WHEELBARROW, 3: Activity.IDLE_WITH_LOADED_03_WHEELBARROW}
+
+        # Pick up the correct sprite
         for sprite in sprites_group:
             if sprite.collides(self):
                 self.saved_sprite = sprite
                 sprite.remove(sprites_group)
 
                 if sprite.is_gold_sack:
-                    self.speed = PLAYER_SPEED_WHEN_CARRYING_GOLD
+                    self.speed = SPEED_WHEN_CARRYING_GOLD
                     self.carries_gold_sacks = 1
                     activity = Activity.IDLE_WITH_GOLD
 
                 elif sprite.is_wheelbarrow:
-                    activity = {
-                        sprite.carries_gold_sacks == 0: Activity.IDLE_WITH_EMPTY_WHEELBARROW,
-                        sprite.carries_gold_sacks == 1: Activity.IDLE_WITH_LOADED_01_WHEELBARROW,
-                        sprite.carries_gold_sacks == 2: Activity.IDLE_WITH_LOADED_02_WHEELBARROW,
-                        sprite.carries_gold_sacks == 3: Activity.IDLE_WITH_LOADED_03_WHEELBARROW}[True]
+                    activity = activities[sprite.carries_gold_sacks]
                     self.rect.x -= 120 if self.is_facing_left else 0
+
                 break
 
         if activity:
             self.update(activity)
 
     def drop_sprite(self):
+        """Write a docstring!!!"""
 
+        # You can't drop a sprite if you're not carrying one
+        if not self.saved_sprite:
+            return
+
+        # Set various start values
+        loaded_truck = {
+            range(0, 3): Activity.LOADED_01, range(3, 6): Activity.LOADED_02, range(6, 9): Activity.LOADED_03,
+            range(9, 12): Activity.LOADED_04, range(12, 1000): Activity.LOADED_05}
+        loaded_wheelbarrow = {1: Activity.LOADED_01, 2: Activity.LOADED_02, 3: Activity.LOADED_03}
+        dropped_in_truck = False
+        dropped_in_wheelbarrow = False
+        group = {self.saved_sprite.is_gold_sack: gold_sacks, self.saved_sprite.is_wheelbarrow: wheelbarrows}[True]
+
+        # Empty gold in the truck
+        for t in trucks.sprites():
+            if t.collides(self):
+                t.carries_gold_sacks += self.saved_sprite.carries_gold_sacks \
+                    if self.saved_sprite.is_wheelbarrow else 1
+                print(t.carries_gold_sacks, "/", room.gold_sacks)
+                t.update([loaded_truck[a] for a in loaded_truck if t.carries_gold_sacks in a][0])
+                dropped_in_truck = True
+                break
+
+        # Drop gold in a wheelbarrow
         if self.saved_sprite.is_gold_sack:
-            dropped_on_ground = True
-            self.update(Activity.IDLE)
-            if self.saved_sprite.is_gold_sack:
-                self.carries_gold_sacks = 0
-                self.speed = PLAYER_SPEED
-
-            # Drop the gold sack in the truck
-            for t in trucks.sprites():
-                if t.collides(self):
-                    t.carries_gold_sacks += 1
-                    print(t.carries_gold_sacks, "/", room.gold_sacks)
-                    t.update({
-                        t.carries_gold_sacks in range(0, 3): Activity.LOADED_01,
-                        t.carries_gold_sacks in range(3, 6): Activity.LOADED_02,
-                        t.carries_gold_sacks in range(6, 9): Activity.LOADED_03,
-                        t.carries_gold_sacks in range(9, 12): Activity.LOADED_04,
-                        t.carries_gold_sacks in range(12, 1000): Activity.LOADED_05}[True])
-                    dropped_on_ground = False
-                    break
-
-            # Drop it in a wheelbarrow
             for w in wheelbarrows.sprites():
                 if w.collides(self) and w.carries_gold_sacks < 3 and not self.collides(trucks):
                     w.carries_gold_sacks += 1
-                    w.update({
-                        w.carries_gold_sacks == 1: Activity.LOADED_01,
-                        w.carries_gold_sacks == 2: Activity.LOADED_02,
-                        w.carries_gold_sacks == 3: Activity.LOADED_03}[True])
-                    dropped_on_ground = False
+                    w.update(loaded_wheelbarrow[w.carries_gold_sacks])
+                    dropped_in_wheelbarrow = True
                     break
 
-            # Drop it on the ground
-            if dropped_on_ground:
-                self.saved_sprite.rect.center = self.rect.center
-                if self.saved_sprite.is_gold_sack:
-                    gold_sacks.add(self.saved_sprite)
-                elif self.saved_sprite.is_wheelbarrow:
-                    wheelbarrows.add(self.saved_sprite)
+        # Drop the sprite on the ground
+        if not (dropped_in_wheelbarrow or dropped_in_truck):
+            self.saved_sprite.rect.center = self.rect.center
+            group.add(self.saved_sprite)
+            if self.saved_sprite.is_wheelbarrow:
+                self.saved_sprite.h_direction = self.h_direction
+                self.saved_sprite.rect.x = self.rect.x
+                self.rect.x += 120 if self.is_facing_left else 0
+                self.saved_sprite.rect.y = self.rect.y
 
+        if self.saved_sprite.is_gold_sack:
+            self.carries_gold_sacks = 0
+            self.update(Activity.IDLE)
             self.saved_sprite = None
-
+            self.speed = STANDARD_SPEED
         elif self.saved_sprite.is_wheelbarrow:
-
-            dropped_in_truck = False
-
-            # Empty it in a truck
-            for t in trucks.sprites():
-                if t.collides(players) and player.is_pushing_loaded_wheelbarrow():
-                    t.carries_gold_sacks += player.saved_sprite.carries_gold_sacks
-                    print(t.carries_gold_sacks, "/", room.gold_sacks)
-                    t.update({
-                                 t.carries_gold_sacks in range(0, 3): Activity.LOADED_01,
-                                 t.carries_gold_sacks in range(3, 6): Activity.LOADED_02,
-                                 t.carries_gold_sacks in range(6, 9): Activity.LOADED_03,
-                                 t.carries_gold_sacks in range(9, 12): Activity.LOADED_04,
-                                 t.carries_gold_sacks in range(12, 1000): Activity.LOADED_05}[True])
-                    dropped_in_truck = True
-                    break
-                if dropped_in_truck:
-                    player.update(Activity.IDLE_WITH_EMPTY_WHEELBARROW)
-                    player.saved_sprite.carries_gold_sacks = 0
-                    player.saved_sprite.update(Activity.IDLE)
-
-                # Drop the wheelbarrow
-                else:
-                    player.saved_sprite.h_direction = player.h_direction
-                    player.saved_sprite.rect.x = player.rect.x
-                    player.rect.x += 120 if player.is_facing_left else 0
-                    player.saved_sprite.rect.y = player.rect.y
-                    wheelbarrows.add(player.saved_sprite)
-                    player.saved_sprite = None
-                    player.update(Activity.IDLE)
+            self.update(Activity.IDLE_WITH_EMPTY_WHEELBARROW if dropped_in_truck else Activity.IDLE)
+            if dropped_in_truck:
+                self.saved_sprite.update(Activity.IDLE)
+                self.saved_sprite.carries_gold_sacks = 0
+            else:
+                self.saved_sprite = None
 
     def is_passed_out(self):
         return self.activity == Activity.PASSED_OUT
