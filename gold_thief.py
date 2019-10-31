@@ -562,6 +562,10 @@ class Sprite(pygame.sprite.Sprite):
         self.speed = STANDARD_SPEED
         self.saved_sprite = self.saved_sprite if carries_wheelbarrow and dropped_in_truck else None
 
+    def move_cc(self):
+        """Move a computer controlled sprite"""
+        pass
+
     def is_passed_out(self):
         return self.activity == Activity.PASSED_OUT
 
@@ -716,6 +720,7 @@ SPRITE_ANIMATIONS = {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.GOLD),
         Animation.FALLING: load_images(Animation.IDLE, SpriteName.GOLD)},
     SpriteName.MINER: {
+        Animation.CLIMBING: load_images(Animation.CLIMBING, SpriteName.MINER),
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER),
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.MINER)},
     SpriteName.PLAYER: {
