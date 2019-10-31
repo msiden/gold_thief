@@ -10,7 +10,8 @@ GRAVITY = 20
 MAX_FALL_PIX = 100
 MAX_CONTROL_WHILE_FALLING_PIX = 50
 STANDARD_SPEED = 9
-SPEED_WHEN_CARRYING_GOLD = 5
+SLOW_SPEED = 5
+MINER_SPEED = 5
 PLAYER_LIVES = 5
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
@@ -38,6 +39,19 @@ def animation_loop(imgs):
         i = i + 1 if i + 1 < len(imgs) else 0
 
 
+def change_direction(direction):
+    """
+    Returns the opposite direction of received argument
+
+    - direction -- (String. Mandatory) Use Direction ENUM
+
+    Returns: String
+    """
+    return {
+        Direction.RIGHT: Direction.LEFT, Direction.LEFT: Direction.RIGHT, Direction.UP: Direction.DOWN,
+        Direction.DOWN: Direction.UP}[direction]
+
+
 def flatten_list(l):
     """
     Make a list of lists into a single list. CURRENTLY NOT IN USE!
@@ -49,7 +63,8 @@ def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
 
-def generate_sprites(room_obj, name, image=None, animation_freq_ms=0):
+def generate_sprites(
+        room_obj, name, image=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED):
     """
     Generate a sprites group from room setup dictionary
 
@@ -58,6 +73,10 @@ def generate_sprites(room_obj, name, image=None, animation_freq_ms=0):
     - image -- (String. Optional. Defaults to None) Use a specific image instead of an animation
     - animation_freq_ms -- (Integer. Optional. Defaults to 0) The update frequency of the sprite animation in
             milliseconds.
+    - standard_speed -- (Integer. Optional. Defaults to STANDARD_SPEED constant value) The sprite's speed when not
+            carrying a gold sack
+    - slow_speed -- (Integer. Optional. Defaults to SLOW_SPEED constant value) The sprite's speed when carrying a
+            gold sack
 
     returns: An instance of pygame.sprites.Group()
     """
@@ -73,7 +92,8 @@ def generate_sprites(room_obj, name, image=None, animation_freq_ms=0):
         length = spr["length"] if "length" in spr else None
         sprites.append(Sprite(
             name=name, position=spr["position"], image=image, activity=activity, h_direction=h_direction,
-            v_direction=v_direction, length=length, animation_freq_ms=animation_freq_ms))
+            v_direction=v_direction, length=length, animation_freq_ms=animation_freq_ms, standard_speed=standard_speed,
+            slow_speed=slow_speed))
     for spr in sprites:
         group.add(spr)
     return group
@@ -264,7 +284,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def __init__(
             self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none",
-            length=None, animation_freq_ms=0):
+            length=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED):
         """
         Create a new sprite
 
@@ -281,6 +301,10 @@ class Sprite(pygame.sprite.Sprite):
             the image will not be scaled.
         animation_freq_ms -- (Integer. Optional. Defaults to 0) The update frequency of the sprite animation in
             milliseconds.
+        standard_speed -- (Integer. Optional. Defaults to STANDARD_SPEED constant value) The sprite's speed when not
+            carrying a gold sack
+        slow_speed -- (Integer. Optional. Defaults to SLOW_SPEED constant value) The sprite's speed when carrying a
+            gold sack
         """
         pygame.sprite.Sprite.__init__(self)
 
@@ -303,7 +327,9 @@ class Sprite(pygame.sprite.Sprite):
         self.is_cart = self.name == SpriteName.CART
         self.is_elevator = self.name == SpriteName.ELEVATOR
         self.is_handle = self.name == SpriteName.HANDLE
-        self.speed = STANDARD_SPEED
+        self.standard_speed = standard_speed
+        self.slow_speed = slow_speed
+        self.speed = standard_speed
         self.animation_freq_ms = animation_freq_ms
         self.next_img = 0
         self.wake_up_time = 0
@@ -314,6 +340,7 @@ class Sprite(pygame.sprite.Sprite):
         self.carries_gold_sacks = 0
         self.group_single = pygame.sprite.GroupSingle()
         self.group_single.add(self)
+        self.is_computer_controlled = not self.is_player
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -393,7 +420,7 @@ class Sprite(pygame.sprite.Sprite):
                 else:
                     self.rect.move_ip(0, CLIMBABLE_PIX)
 
-                # Stop the sprite if impossible to get passed obstacle
+                # Stop the sprite or change direction if impossible to get passed obstacle
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
                 if self.is_carrying_gold() and self.is_climbing():
                     activity = Activity.CLIMBING_WITH_GOLD
@@ -403,6 +430,8 @@ class Sprite(pygame.sprite.Sprite):
                     activity = Activity.IDLE_WITH_GOLD
                 elif self.is_passed_out():
                     activity = Activity.PASSED_OUT
+                elif self.is_computer_controlled and self.is_walking():
+                    self.h_direction = change_direction(self.h_direction)
                 else:
                     activity = Activity.IDLE
                 break
@@ -413,6 +442,14 @@ class Sprite(pygame.sprite.Sprite):
                 if self.fall_pix >= MAX_CONTROL_WHILE_FALLING_PIX:
                     activity = Activity.FALLING_WITH_GOLD if self.is_carrying_gold() else Activity.FALLING
         self.update(activity if activity else self.activity)
+
+    def move_cc(self):
+        """Move a computer controlled sprite"""
+
+        if self.is_walking():
+            self.move(self.h_direction)
+
+
 
     def update(self, activity):
         """
@@ -490,7 +527,7 @@ class Sprite(pygame.sprite.Sprite):
                 sprite.remove(sprites_group)
 
                 if sprite.is_gold_sack:
-                    self.speed = SPEED_WHEN_CARRYING_GOLD
+                    self.speed = self.slow_speed
                     self.carries_gold_sacks = 1
                     activity = Activity.IDLE_WITH_GOLD
 
@@ -559,12 +596,8 @@ class Sprite(pygame.sprite.Sprite):
             self.saved_sprite.carries_gold_sacks = 0
         self.update(Activity.IDLE_WITH_EMPTY_WHEELBARROW if dropped_in_truck and carries_wheelbarrow else Activity.IDLE)
         self.carries_gold_sacks = 0
-        self.speed = STANDARD_SPEED
+        self.speed = self.standard_speed
         self.saved_sprite = self.saved_sprite if carries_wheelbarrow and dropped_in_truck else None
-
-    def move_cc(self):
-        """Move a computer controlled sprite"""
-        pass
 
     def is_passed_out(self):
         return self.activity == Activity.PASSED_OUT
@@ -778,7 +811,7 @@ room.load(1, 3)
 # Generate sprites
 players = generate_sprites(room, SpriteName.PLAYER, animation_freq_ms=8)
 player = players.sprites()[0]
-miners = generate_sprites(room, SpriteName.MINER)
+miners = generate_sprites(room, SpriteName.MINER, standard_speed=MINER_SPEED)
 gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
 trucks = generate_sprites(room, SpriteName.TRUCK, animation_freq_ms=100)
@@ -831,6 +864,10 @@ while game_is_running:
     # Check if the player is caught by a miner
     if player.collides(miners) and not player.is_passed_out():
         player.pass_out()
+
+    # Move miners
+    for m in miners.sprites():
+        m.move_cc()
 
     # Draw background and walls
     screen.blit(room.background_img, (0, 0))

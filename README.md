@@ -36,6 +36,7 @@ TODO:
     - [ ] Use axe
     - [ ] Ride elevator
     - [x] Empty gold in truck and collect points
+    - [ ] Kill miners if hitting with gold sack
 - [ ] Design real levels
 - [X] Nicer granite texture
 - [ ] More textures
