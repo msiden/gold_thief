@@ -2,6 +2,7 @@ import pygame
 import os
 import json
 import ctypes
+import random
 
 # Define Screen and sprite sizes and other constants
 CLIMBABLE_PIX = 1
@@ -11,7 +12,7 @@ MAX_FALL_PIX = 100
 MAX_CONTROL_WHILE_FALLING_PIX = 50
 STANDARD_SPEED = 9
 SLOW_SPEED = 5
-MINER_SPEED = 5
+MINER_SPEED = 8
 PLAYER_LIVES = 5
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
@@ -341,6 +342,9 @@ class Sprite(pygame.sprite.Sprite):
         self.group_single = pygame.sprite.GroupSingle()
         self.group_single.add(self)
         self.is_computer_controlled = not self.is_player
+        self.selection_memory = False
+        self.can_pass_out = self.name in (SpriteName.PLAYER, SpriteName.MINER)
+        self.is_mortal = self.name == SpriteName.PLAYER
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -403,7 +407,7 @@ class Sprite(pygame.sprite.Sprite):
                 climbed = False
 
                 # Check if the sprite has fallen too far
-                if self.fall_pix >= MAX_FALL_PIX and self.is_player:
+                if self.fall_pix >= MAX_FALL_PIX and self.can_pass_out:
                     self.pass_out()
 
                 # Reset fall distance count
@@ -446,10 +450,28 @@ class Sprite(pygame.sprite.Sprite):
     def move_cc(self):
         """Move a computer controlled sprite"""
 
+        ladder_center = [l.rect.center[0] for l in ladders.sprites() if l.collides(self)]
+        ladder_center = ladder_center[0] if ladder_center else 0
+        close_to_center = ladder_center in range(self.rect.center[0]-self.speed, self.rect.center[0]+self.speed)
+        can_climb_ladder = close_to_center and not self.is_climbing() and not self.selection_memory
+
+        if can_climb_ladder:
+            random_no = random.randrange(0, 3)
+            print(random_no)
+            direction = {0: self.h_direction, 1: Direction.UP, 2: Direction.DOWN}[random_no]
+            activity = {0: self.activity, 1: Activity.CLIMBING, 2: Activity.CLIMBING}[random_no]
+            self.update(activity)
+            self.h_direction = direction if random_no == 0 else self.h_direction
+            self.v_direction = direction if random_no in (1, 2) else self.v_direction
+            self.selection_memory = True
+        elif not self.collides(ladders):
+            self.selection_memory = False
+
         if self.is_walking():
             self.move(self.h_direction)
 
-
+        elif self.is_climbing():
+            self.move(self.v_direction)
 
     def update(self, activity):
         """
@@ -496,7 +518,7 @@ class Sprite(pygame.sprite.Sprite):
         if self.saved_sprite:
             self.drop_sprite()
         self.update(Activity.PASSED_OUT)
-        self.lives -= 1
+        self.lives -= 1 if self.is_mortal else 0
         if not self.lives:
             print("GAME OVER!")
             quit()
@@ -754,6 +776,7 @@ SPRITE_ANIMATIONS = {
         Animation.FALLING: load_images(Animation.IDLE, SpriteName.GOLD)},
     SpriteName.MINER: {
         Animation.CLIMBING: load_images(Animation.CLIMBING, SpriteName.MINER),
+        Animation.FALLING: load_images(Animation.IDLE, SpriteName.MINER),
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER),
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.MINER)},
     SpriteName.PLAYER: {
@@ -811,12 +834,12 @@ room.load(1, 3)
 # Generate sprites
 players = generate_sprites(room, SpriteName.PLAYER, animation_freq_ms=8)
 player = players.sprites()[0]
-miners = generate_sprites(room, SpriteName.MINER, standard_speed=MINER_SPEED)
+miners = generate_sprites(room, SpriteName.MINER, standard_speed=MINER_SPEED, animation_freq_ms=8)
 gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
 trucks = generate_sprites(room, SpriteName.TRUCK, animation_freq_ms=100)
 wheelbarrows = generate_sprites(room, SpriteName.WHEELBARROW)
-all_sprites = (ladders, miners, trucks, gold_sacks, wheelbarrows, players)
+all_sprites = (ladders, trucks, gold_sacks, wheelbarrows, miners, players)
 not_player = (miners, gold_sacks, ladders, trucks, wheelbarrows)
 affected_by_gravity = (miners, gold_sacks, players, trucks, wheelbarrows)
 
