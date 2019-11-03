@@ -50,6 +50,7 @@ TODO:
     - [ ] Elevator
     - [ ] Handle
     - [x] Truck
+    - [ ] Doors
 - [ ] Make miners move
 - [ ] Make player able to move between different rooms
 - [ ] Make carts move

@@ -450,14 +450,22 @@ class Sprite(pygame.sprite.Sprite):
     def move_cc(self):
         """Move a computer controlled sprite"""
 
-        ladder_center = [l.rect.center[0] for l in ladders.sprites() if l.collides(self)]
-        ladder_center = ladder_center[0] if ladder_center else 0
-        close_to_center = ladder_center in range(self.rect.center[0]-self.speed, self.rect.center[0]+self.speed)
+        # Get sprite position and size and calculate different movement possibilities
+        y_pos = self.rect.y
+        bottom_pos = self.rect.bottom - 1
+        x_pos = self.rect.center[0]
+        r_range = x_pos + 120
+        l_range = x_pos - 120
+        ladder_coordinates = [
+            (l.rect.center[0], l.rect.y, l.rect.bottom) for l in ladders.sprites() if l.collides(self)]
+        ladder_center = ladder_coordinates[0][0] if ladder_coordinates else 0
+        ladder_top = ladder_coordinates[0][1] if ladder_coordinates else 0
+        ladder_bottom = ladder_coordinates[0][2] if ladder_coordinates else 0
+        close_to_center = ladder_center in range(x_pos - self.speed, x_pos + self.speed)
         can_climb_ladder = close_to_center and not self.is_climbing() and not self.selection_memory
 
         if can_climb_ladder:
             random_no = random.randrange(0, 3)
-            print(random_no)
             direction = {0: self.h_direction, 1: Direction.UP, 2: Direction.DOWN}[random_no]
             activity = {0: self.activity, 1: Activity.CLIMBING, 2: Activity.CLIMBING}[random_no]
             self.update(activity)
@@ -471,6 +479,19 @@ class Sprite(pygame.sprite.Sprite):
             self.move(self.h_direction)
 
         elif self.is_climbing():
+            top_right = [room.layout_img.get_at([i, y_pos])[:3] for i in range(x_pos, r_range)]
+            bottom_right = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, r_range)]
+            top_left = [room.layout_img.get_at([i, y_pos])[:3] for i in range(l_range, x_pos)]
+            bottom_left = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, l_range)]
+            can_exit_right = (all([i == Color.WHITE for i in top_right + bottom_right]))
+            can_exit_left = (all([i == Color.WHITE for i in top_left + bottom_left]))
+            if can_exit_left:
+                print("Can exit left", y_pos, bottom_pos)
+                pygame.time.wait(1000)
+            if can_exit_right:
+                print("Can exit right", y_pos, bottom_pos)
+                pygame.time.wait(1000)
+
             self.move(self.v_direction)
 
     def update(self, activity):
@@ -495,11 +516,8 @@ class Sprite(pygame.sprite.Sprite):
 
         # Check if it's time to wake up the player from passed out state
         elif self.is_passed_out() and now >= self.wake_up_time:
-            activity = Activity.IDLE
+            activity = Activity.WALKING if self.is_computer_controlled else Activity.IDLE
             self.animation = animation_loop(self.animations[activity])
-            # This is temporary and will be removed when miners can move
-            self.rect.x -= 10
-            self.rect.y -= 5
 
         # Load the next image in the animation
         if (now >= self.next_img) or (activity != self.activity):
@@ -778,6 +796,7 @@ SPRITE_ANIMATIONS = {
         Animation.CLIMBING: load_images(Animation.CLIMBING, SpriteName.MINER),
         Animation.FALLING: load_images(Animation.IDLE, SpriteName.MINER),
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.MINER),
+        Animation.PASSED_OUT: load_images(Animation.PASSED_OUT, SpriteName.MINER),
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.MINER)},
     SpriteName.PLAYER: {
         Animation.CLIMBING: load_images(Animation.CLIMBING, SpriteName.PLAYER),
