@@ -454,8 +454,8 @@ class Sprite(pygame.sprite.Sprite):
         y_pos = self.rect.y
         bottom_pos = self.rect.bottom - 1
         x_pos = self.rect.center[0]
-        r_range = x_pos + 120
-        l_range = x_pos - 120
+        r_range = x_pos + SPRITE_SIZE[0]
+        l_range = x_pos - SPRITE_SIZE[0]
         ladder_coordinates = [
             (l.rect.center[0], l.rect.y, l.rect.bottom) for l in ladders.sprites() if l.collides(self)]
         ladder_center = ladder_coordinates[0][0] if ladder_coordinates else 0
@@ -481,15 +481,22 @@ class Sprite(pygame.sprite.Sprite):
         elif self.is_climbing():
             top_right = [room.layout_img.get_at([i, y_pos])[:3] for i in range(x_pos, r_range)]
             bottom_right = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, r_range)]
-            top_left = [room.layout_img.get_at([i, y_pos])[:3] for i in range(l_range, x_pos)]
-            bottom_left = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, l_range)]
-            can_exit_right = (all([i == Color.WHITE for i in top_right + bottom_right]))
-            can_exit_left = (all([i == Color.WHITE for i in top_left + bottom_left]))
-            if can_exit_left:
-                print("Can exit left", y_pos, bottom_pos)
-                pygame.time.wait(1000)
+            right_down_diagonal = [
+                room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
+                    x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(y_pos, y_pos + SPRITE_SIZE[1])])]
+            right_up_diagonal = [
+                room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
+                    x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(y_pos + SPRITE_SIZE[1], y_pos, -1)])]
+
+            #top_left = [room.layout_img.get_at([i, y_pos])[:3] for i in range(l_range, x_pos)]
+            #bottom_left = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, l_range)]
+            can_exit_right = all([i == Color.WHITE for i in top_right + right_up_diagonal + bottom_right + right_down_diagonal])
+            #can_exit_left = (all([i == Color.WHITE for i in top_left + bottom_left]))
+            #if can_exit_left:
+            #    print("Can exit left", y_pos, bottom_pos)
+            #    pygame.time.wait(1000)
             if can_exit_right:
-                print("Can exit right", y_pos, bottom_pos)
+                print("Can exit right", y_pos, bottom_pos, x_pos)
                 pygame.time.wait(1000)
 
             self.move(self.v_direction)
