@@ -481,23 +481,26 @@ class Sprite(pygame.sprite.Sprite):
         elif self.is_climbing():
             top_right = [room.layout_img.get_at([i, y_pos])[:3] for i in range(x_pos, r_range)]
             bottom_right = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, r_range)]
-            right_down_diagonal = [
-                room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
-                    x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(y_pos, y_pos + SPRITE_SIZE[1])])]
-            right_up_diagonal = [
-                room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
-                    x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(y_pos + SPRITE_SIZE[1], y_pos, -1)])]
-
-            #top_left = [room.layout_img.get_at([i, y_pos])[:3] for i in range(l_range, x_pos)]
-            #bottom_left = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, l_range)]
-            can_exit_right = all([i == Color.WHITE for i in top_right + right_up_diagonal + bottom_right + right_down_diagonal])
-            #can_exit_left = (all([i == Color.WHITE for i in top_left + bottom_left]))
-            #if can_exit_left:
-            #    print("Can exit left", y_pos, bottom_pos)
-            #    pygame.time.wait(1000)
-            if can_exit_right:
+            down_right_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
+                x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(y_pos, bottom_pos)])]
+            up_right_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
+                x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(bottom_pos, y_pos, -1)])]
+            top_left = [room.layout_img.get_at([i, y_pos])[:3] for i in range(l_range, x_pos)]
+            bottom_left = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(l_range, x_pos)]
+            down_left_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
+                x_pos - SPRITE_SIZE[0], x_pos)], [n for n in range(bottom_pos, y_pos, -1)])]
+            up_left_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
+                x_pos - SPRITE_SIZE[0], x_pos)], [n for n in range(y_pos, bottom_pos)])]
+            can_exit_right = all(
+                [i == Color.WHITE for i in top_right + up_right_diagonal + bottom_right + down_right_diagonal])
+            can_exit_left = all(
+                [i == Color.WHITE for i in top_left + bottom_left + up_left_diagonal + down_left_diagonal])
+            if can_exit_left and can_exit_right:
+                print("Can exit left and right", y_pos, bottom_pos, x_pos)
+            elif can_exit_left:
+                print("Can exit left", y_pos, bottom_pos, x_pos)
+            elif can_exit_right:
                 print("Can exit right", y_pos, bottom_pos, x_pos)
-                pygame.time.wait(1000)
 
             self.move(self.v_direction)
 
