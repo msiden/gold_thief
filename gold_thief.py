@@ -342,7 +342,8 @@ class Sprite(pygame.sprite.Sprite):
         self.group_single = pygame.sprite.GroupSingle()
         self.group_single.add(self)
         self.is_computer_controlled = not self.is_player
-        self.selection_memory = False
+        self.ladder_selection = False
+        self.ladder_exit_pos = [None, None]
         self.can_pass_out = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         self.is_mortal = self.name == SpriteName.PLAYER
         if image:
@@ -462,8 +463,8 @@ class Sprite(pygame.sprite.Sprite):
         ladder_top = ladder_coordinates[0][1] if ladder_coordinates else 0
         ladder_bottom = ladder_coordinates[0][2] if ladder_coordinates else 0
         close_to_center = ladder_center in range(x_pos - self.speed, x_pos + self.speed)
-        can_climb_ladder = close_to_center and not self.is_climbing() and not self.selection_memory
-
+        can_climb_ladder = close_to_center and not self.is_climbing() and not self.ladder_selection
+        print(self.ladder_exit_pos)
         if can_climb_ladder:
             random_no = random.randrange(0, 3)
             direction = {0: self.h_direction, 1: Direction.UP, 2: Direction.DOWN}[random_no]
@@ -471,9 +472,9 @@ class Sprite(pygame.sprite.Sprite):
             self.update(activity)
             self.h_direction = direction if random_no == 0 else self.h_direction
             self.v_direction = direction if random_no in (1, 2) else self.v_direction
-            self.selection_memory = True
+            self.ladder_selection = True
         elif not self.collides(ladders):
-            self.selection_memory = False
+            self.ladder_selection = False
 
         if self.is_walking():
             self.move(self.h_direction)
@@ -495,12 +496,21 @@ class Sprite(pygame.sprite.Sprite):
                 [i == Color.WHITE for i in top_right + up_right_diagonal + bottom_right + down_right_diagonal])
             can_exit_left = all(
                 [i == Color.WHITE for i in top_left + bottom_left + up_left_diagonal + down_left_diagonal])
-            if can_exit_left and can_exit_right:
-                print("Can exit left and right", y_pos, bottom_pos, x_pos)
-            elif can_exit_left:
-                print("Can exit left", y_pos, bottom_pos, x_pos)
-            elif can_exit_right:
-                print("Can exit right", y_pos, bottom_pos, x_pos)
+            can_exit_ladder = can_exit_right or can_exit_left
+            if can_exit_ladder:
+                random_no = random.randrange(0, 3)
+                if can_exit_left and can_exit_right:
+                    print("Can exit left and right", y_pos, bottom_pos, x_pos)
+                    self.ladder_exit_pos = [True, True]
+                elif can_exit_left:
+                    print("Can exit left", y_pos, bottom_pos, x_pos)
+                    self.ladder_exit_pos = [True, False]
+                elif can_exit_right and not self.ladder_exit_pos[1]:
+                    print("Can exit right", y_pos, bottom_pos, x_pos)
+                    self.ladder_exit_pos = [False, True]
+                pygame.time.wait(1000)
+            else:
+                self.ladder_exit_pos = [False, False]
 
             self.move(self.v_direction)
 
