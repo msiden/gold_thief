@@ -342,8 +342,9 @@ class Sprite(pygame.sprite.Sprite):
         self.group_single = pygame.sprite.GroupSingle()
         self.group_single.add(self)
         self.is_computer_controlled = not self.is_player
-        self.ladder_selection = False
-        self.ladder_exit_pos = [None, None]
+        self.ladder_enter_selection = False
+        self.ladder_exit_selection = [False, False]
+        self.just_entered_ladder = False
         self.can_pass_out = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         self.is_mortal = self.name == SpriteName.PLAYER
         if image:
@@ -463,8 +464,10 @@ class Sprite(pygame.sprite.Sprite):
         ladder_top = ladder_coordinates[0][1] if ladder_coordinates else 0
         ladder_bottom = ladder_coordinates[0][2] if ladder_coordinates else 0
         close_to_center = ladder_center in range(x_pos - self.speed, x_pos + self.speed)
-        can_climb_ladder = close_to_center and not self.is_climbing() and not self.ladder_selection
-        print(self.ladder_exit_pos)
+        can_climb_ladder = close_to_center and not self.is_climbing() and not self.ladder_enter_selection
+
+        # If the sprite is currently able to start climbing a ladder then make a random selection whether to start
+        # climbing and if so, if what direction, or to keep walking
         if can_climb_ladder:
             random_no = random.randrange(0, 3)
             direction = {0: self.h_direction, 1: Direction.UP, 2: Direction.DOWN}[random_no]
@@ -472,14 +475,22 @@ class Sprite(pygame.sprite.Sprite):
             self.update(activity)
             self.h_direction = direction if random_no == 0 else self.h_direction
             self.v_direction = direction if random_no in (1, 2) else self.v_direction
-            self.ladder_selection = True
-        elif not self.collides(ladders):
-            self.ladder_selection = False
+            self.ladder_enter_selection = True
+            self.just_entered_ladder = True if random_no > 0 else False
 
+        elif not self.collides(ladders):
+            self.ladder_enter_selection = False
+
+        # If the sprite is walking, then just keep walking
         if self.is_walking():
             self.move(self.h_direction)
 
+        # If the sprite is currently climbing a ladder then look for points where the sprite can exit the ladder and
+        # make a random selection whether to exit or keep climbing.
         elif self.is_climbing():
+
+            # Check whether the sprite can exit the ladder from the current position by checking if the background
+            # color in the room layout image to the left and right of the sprite is white.
             top_right = [room.layout_img.get_at([i, y_pos])[:3] for i in range(x_pos, r_range)]
             bottom_right = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, r_range)]
             down_right_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
@@ -496,21 +507,39 @@ class Sprite(pygame.sprite.Sprite):
                 [i == Color.WHITE for i in top_right + up_right_diagonal + bottom_right + down_right_diagonal])
             can_exit_left = all(
                 [i == Color.WHITE for i in top_left + bottom_left + up_left_diagonal + down_left_diagonal])
-            can_exit_ladder = can_exit_right or can_exit_left
-            if can_exit_ladder:
-                random_no = random.randrange(0, 3)
-                if can_exit_left and can_exit_right:
-                    print("Can exit left and right", y_pos, bottom_pos, x_pos)
-                    self.ladder_exit_pos = [True, True]
-                elif can_exit_left:
-                    print("Can exit left", y_pos, bottom_pos, x_pos)
-                    self.ladder_exit_pos = [True, False]
-                elif can_exit_right and not self.ladder_exit_pos[1]:
-                    print("Can exit right", y_pos, bottom_pos, x_pos)
-                    self.ladder_exit_pos = [False, True]
-                pygame.time.wait(1000)
-            else:
-                self.ladder_exit_pos = [False, False]
+
+            if self.just_entered_ladder and (can_exit_right or can_exit_left):
+                can_exit_right = can_exit_left = False
+            elif self.just_entered_ladder and not (can_exit_left or can_exit_right):
+                self.just_entered_ladder = False
+
+            # If it's possible to exit the ladder make a random selection and remember the selection for the current
+            # position.
+            if can_exit_right and not self.ladder_exit_selection[1]:
+                print("Can exit right", y_pos, bottom_pos, x_pos)
+                self.ladder_exit_selection[1] = can_exit_right = True
+            elif not can_exit_right:
+                self.ladder_exit_selection[1] = can_exit_right = False
+            if can_exit_left and not self.ladder_exit_selection[0]:
+                print("Can exit left", y_pos, bottom_pos, x_pos)
+                self.ladder_exit_selection[0] = can_exit_left = True
+            elif not can_exit_left:
+                self.ladder_exit_selection[0] = can_exit_left = False
+
+            if can_exit_left or can_exit_right:
+                options = [0]
+                options += [1] if can_exit_right else []
+                options += [2] if can_exit_left else []
+                random_no = random.randrange(0, len(options))
+                option = options[random_no]
+                direction = {0: self.v_direction, 1: Direction.RIGHT, 2: Direction.LEFT}[option]
+                activity = {0: self.activity, 1: Activity.WALKING, 2: Activity.WALKING}[option]
+                self.h_direction = direction if option > 0 else self.h_direction
+                self.v_direction = direction if option == 0 else self.v_direction
+                self.update(activity)
+                if option > 0:
+                    self.ladder_exit_selection = [False, False]
+                    return
 
             self.move(self.v_direction)
 
