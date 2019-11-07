@@ -69,6 +69,7 @@ TODO:
 - [ ] Save game function
     
 KNOWN ISSUES
-* Incorrect animation when dropping gold in wheelbarrow
+* Incorrect animation when dropping gold in wheelbarrow or truck - check gravity()
 * Can't drop empty wheelbarrow when in front of truck
 * Animation doesn't update when passed out while climbing
+* Miner sometimes get stuck in a route. How random is randomness?

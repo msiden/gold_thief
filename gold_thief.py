@@ -5,7 +5,7 @@ import ctypes
 import random
 
 # Define Screen and sprite sizes and other constants
-CHEAT_MODE = True
+CHICKEN_MODE = True
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
@@ -968,7 +968,7 @@ while game_is_running:
     gravity()
 
     # Check if the player is caught by a miner
-    if player.collides(miners) and not player.is_passed_out() and not CHEAT_MODE:
+    if player.collides(miners) and not player.is_passed_out() and not CHICKEN_MODE:
         player.pass_out()
 
     # Move miners
@@ -993,3 +993,4 @@ while game_is_running:
     #print(miners.sprites()[0].activity)
     #print(player.activity)
     #print(miners.sprites()[0].v_direction)
+    #print(wheelbarrows.sprites()[0].activity)
