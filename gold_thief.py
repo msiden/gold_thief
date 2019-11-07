@@ -5,6 +5,7 @@ import ctypes
 import random
 
 # Define Screen and sprite sizes and other constants
+CHEAT_MODE = True
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
@@ -393,7 +394,7 @@ class Sprite(pygame.sprite.Sprite):
         self.v_direction = direction if vertical else self.v_direction
         self.h_direction = direction if horizontal else self.h_direction
 
-        # Move the sprite one pixel at a time and check for wall collisions
+        # Move the sprite one pixel at a time and check for wall collisions etc
         for i in range(1, speed + 1):
 
             # Move the sprite one pixel
@@ -402,6 +403,11 @@ class Sprite(pygame.sprite.Sprite):
             # Check if sprite is outside of screen
             if not (0 < self.rect.center[0] < SCREEN_SIZE[0]) and (0 < self.rect.center[1] < SCREEN_SIZE[1]):
                 self.rect.move_ip(-x, -y)
+
+                # Change direction for computer controlled sprites
+                if self.is_computer_controlled:
+                    self.v_direction = change_direction(self.v_direction)
+                    self.h_direction = change_direction(self.h_direction)
                 break
 
             # Check for wall collision
@@ -416,15 +422,16 @@ class Sprite(pygame.sprite.Sprite):
                 self.fall_pix = 0 if vertical else self.fall_pix
 
                 # Try climbing up slope
-                for _ in range(CLIMBABLE_PIX):
-                    self.rect.move_ip(0, -1)
-                    if not self.collides(room.layouts):
-                        climbed = True
-                        break
-                if climbed and not self.is_passed_out():
-                    continue
-                else:
-                    self.rect.move_ip(0, CLIMBABLE_PIX)
+                if self.is_walking() or self.is_idle():
+                    for _ in range(CLIMBABLE_PIX):
+                        self.rect.move_ip(0, -1)
+                        if not self.collides(room.layouts):
+                            climbed = True
+                            break
+                    if climbed:
+                        continue
+                    else:
+                        self.rect.move_ip(0, CLIMBABLE_PIX)
 
                 # Stop the sprite or change direction if impossible to get passed obstacle
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
@@ -432,6 +439,8 @@ class Sprite(pygame.sprite.Sprite):
                     activity = Activity.CLIMBING_WITH_GOLD
                 elif self.is_climbing():
                     activity = Activity.CLIMBING
+                    self.v_direction = \
+                        change_direction(self.v_direction) if self.is_computer_controlled else self.v_direction
                 elif self.is_carrying_gold():
                     activity = Activity.IDLE_WITH_GOLD
                 elif self.is_passed_out():
@@ -439,7 +448,7 @@ class Sprite(pygame.sprite.Sprite):
                 elif self.is_computer_controlled and self.is_walking():
                     self.h_direction = change_direction(self.h_direction)
                 else:
-                    activity = Activity.IDLE
+                    activity = Activity.WALKING if self.is_miner else Activity.IDLE
                 break
 
             # Keep track of how many pixels the sprite has fallen
@@ -447,6 +456,7 @@ class Sprite(pygame.sprite.Sprite):
                 self.fall_pix += 1
                 if self.fall_pix >= MAX_CONTROL_WHILE_FALLING_PIX:
                     activity = Activity.FALLING_WITH_GOLD if self.is_carrying_gold() else Activity.FALLING
+
         self.update(activity if activity else self.activity)
 
     def move_cc(self):
@@ -460,9 +470,9 @@ class Sprite(pygame.sprite.Sprite):
         l_range = x_pos - SPRITE_SIZE[0]
         ladder_coordinates = [
             (l.rect.center[0], l.rect.y, l.rect.bottom) for l in ladders.sprites() if l.collides(self)]
-        ladder_center = ladder_coordinates[0][0] if ladder_coordinates else 0
-        ladder_top = ladder_coordinates[0][1] if ladder_coordinates else 0
-        ladder_bottom = ladder_coordinates[0][2] if ladder_coordinates else 0
+        ladder_center = ladder_coordinates[0][0] if ladder_coordinates else -10
+        #ladder_top = ladder_coordinates[0][1] if ladder_coordinates else 0
+        #ladder_bottom = ladder_coordinates[0][2] if ladder_coordinates else 0
         close_to_center = ladder_center in range(x_pos - self.speed, x_pos + self.speed)
         can_climb_ladder = close_to_center and not self.is_climbing() and not self.ladder_enter_selection
 
@@ -491,41 +501,44 @@ class Sprite(pygame.sprite.Sprite):
 
             # Check whether the sprite can exit the ladder from the current position by checking if the background
             # color in the room layout image to the left and right of the sprite is white.
-            top_right = [room.layout_img.get_at([i, y_pos])[:3] for i in range(x_pos, r_range)]
-            bottom_right = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, r_range)]
-            down_right_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
-                x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(y_pos, bottom_pos)])]
-            up_right_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
-                x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(bottom_pos, y_pos, -1)])]
-            top_left = [room.layout_img.get_at([i, y_pos])[:3] for i in range(l_range, x_pos)]
-            bottom_left = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(l_range, x_pos)]
-            down_left_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
-                x_pos - SPRITE_SIZE[0], x_pos)], [n for n in range(bottom_pos, y_pos, -1)])]
-            up_left_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
-                x_pos - SPRITE_SIZE[0], x_pos)], [n for n in range(y_pos, bottom_pos)])]
-            can_exit_right = all(
-                [i == Color.WHITE for i in top_right + up_right_diagonal + bottom_right + down_right_diagonal])
-            can_exit_left = all(
-                [i == Color.WHITE for i in top_left + bottom_left + up_left_diagonal + down_left_diagonal])
+            if SPRITE_SIZE[0] <= x_pos <= (SCREEN_SIZE[0]-SPRITE_SIZE[0]):
+                top_right = [room.layout_img.get_at([i, y_pos])[:3] for i in range(x_pos, r_range)]
+                bottom_right = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, r_range)]
+                down_right_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
+                    x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(y_pos, bottom_pos)])]
+                up_right_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
+                    x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(bottom_pos, y_pos, -1)])]
+                top_left = [room.layout_img.get_at([i, y_pos])[:3] for i in range(l_range, x_pos)]
+                bottom_left = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(l_range, x_pos)]
+                down_left_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
+                    x_pos - SPRITE_SIZE[0], x_pos)], [n for n in range(bottom_pos, y_pos, -1)])]
+                up_left_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
+                    x_pos - SPRITE_SIZE[0], x_pos)], [n for n in range(y_pos, bottom_pos)])]
+                can_exit_right = all(
+                    [i == Color.WHITE for i in top_right + up_right_diagonal + bottom_right + down_right_diagonal])
+                can_exit_left = all(
+                    [i == Color.WHITE for i in top_left + bottom_left + up_left_diagonal + down_left_diagonal])
+            else:
+                can_exit_left = can_exit_right = False
 
+            # Prevent the sprite from immediately exiting the ladder it just entered
             if self.just_entered_ladder and (can_exit_right or can_exit_left):
                 can_exit_right = can_exit_left = False
             elif self.just_entered_ladder and not (can_exit_left or can_exit_right):
                 self.just_entered_ladder = False
 
-            # If it's possible to exit the ladder make a random selection and remember the selection for the current
-            # position.
+            # Make sure the sprite only gets to make one exit/keep climbing choice per exit
             if can_exit_right and not self.ladder_exit_selection[1]:
-                print("Can exit right", y_pos, bottom_pos, x_pos)
                 self.ladder_exit_selection[1] = can_exit_right = True
             elif not can_exit_right:
                 self.ladder_exit_selection[1] = can_exit_right = False
             if can_exit_left and not self.ladder_exit_selection[0]:
-                print("Can exit left", y_pos, bottom_pos, x_pos)
                 self.ladder_exit_selection[0] = can_exit_left = True
             elif not can_exit_left:
                 self.ladder_exit_selection[0] = can_exit_left = False
 
+            # If it's possible to exit the ladder make a random selection and remember the selection for the current
+            # position.
             if can_exit_left or can_exit_right:
                 options = [0]
                 options += [1] if can_exit_right else []
@@ -953,7 +966,7 @@ while game_is_running:
     gravity()
 
     # Check if the player is caught by a miner
-    if player.collides(miners) and not player.is_passed_out():
+    if player.collides(miners) and not player.is_passed_out() and not CHEAT_MODE:
         player.pass_out()
 
     # Move miners
@@ -975,4 +988,6 @@ while game_is_running:
 
     # Update the screen
     pygame.display.flip()
+    #print(miners.sprites()[0].activity)
     #print(player.activity)
+    #print(miners.sprites()[0].v_direction)

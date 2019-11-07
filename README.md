@@ -51,7 +51,7 @@ TODO:
     - [ ] Handle
     - [x] Truck
     - [ ] Doors
-- [ ] Make miners move
+- [x] Make miners move
 - [ ] Make player able to move between different rooms
 - [ ] Make carts move
 - [x] Print number of lives etc to the top of the screen
