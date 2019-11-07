@@ -68,3 +68,7 @@ TODO:
 - [ ] High scores
 - [ ] Save game function
     
+KNOWN ISSUES
+* Incorrect animation when dropping gold in wheelbarrow
+* Can't drop empty wheelbarrow when in front of truck
+* Animation doesn't update when passed out while climbing

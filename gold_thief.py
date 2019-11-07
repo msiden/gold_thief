@@ -468,11 +468,8 @@ class Sprite(pygame.sprite.Sprite):
         x_pos = self.rect.center[0]
         r_range = x_pos + SPRITE_SIZE[0]
         l_range = x_pos - SPRITE_SIZE[0]
-        ladder_coordinates = [
-            (l.rect.center[0], l.rect.y, l.rect.bottom) for l in ladders.sprites() if l.collides(self)]
-        ladder_center = ladder_coordinates[0][0] if ladder_coordinates else -10
-        #ladder_top = ladder_coordinates[0][1] if ladder_coordinates else 0
-        #ladder_bottom = ladder_coordinates[0][2] if ladder_coordinates else 0
+        ladder_center = [l.rect.center[0] for l in ladders.sprites() if l.collides(self)]
+        ladder_center = ladder_center[0] if ladder_center else -10
         close_to_center = ladder_center in range(x_pos - self.speed, x_pos + self.speed)
         can_climb_ladder = close_to_center and not self.is_climbing() and not self.ladder_enter_selection
 
@@ -487,7 +484,6 @@ class Sprite(pygame.sprite.Sprite):
             self.v_direction = direction if random_no in (1, 2) else self.v_direction
             self.ladder_enter_selection = True
             self.just_entered_ladder = True if random_no > 0 else False
-
         elif not self.collides(ladders):
             self.ladder_enter_selection = False
 
@@ -508,16 +504,22 @@ class Sprite(pygame.sprite.Sprite):
                     x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(y_pos, bottom_pos)])]
                 up_right_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
                     x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(bottom_pos, y_pos, -1)])]
+                right_vertical = [
+                    room.layout_img.get_at([x_pos + SPRITE_SIZE[0], i])[:3] for i in range(y_pos, bottom_pos)]
                 top_left = [room.layout_img.get_at([i, y_pos])[:3] for i in range(l_range, x_pos)]
                 bottom_left = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(l_range, x_pos)]
                 down_left_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
                     x_pos - SPRITE_SIZE[0], x_pos)], [n for n in range(bottom_pos, y_pos, -1)])]
                 up_left_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
                     x_pos - SPRITE_SIZE[0], x_pos)], [n for n in range(y_pos, bottom_pos)])]
-                can_exit_right = all(
-                    [i == Color.WHITE for i in top_right + up_right_diagonal + bottom_right + down_right_diagonal])
-                can_exit_left = all(
-                    [i == Color.WHITE for i in top_left + bottom_left + up_left_diagonal + down_left_diagonal])
+                left_vertical = [
+                    room.layout_img.get_at([x_pos - SPRITE_SIZE[0], i])[:3] for i in range(y_pos, bottom_pos)]
+                can_exit_right = all([
+                    i == Color.WHITE for i in
+                    top_right + up_right_diagonal + bottom_right + down_right_diagonal + right_vertical])
+                can_exit_left = all([
+                    i == Color.WHITE for i in
+                    top_left + bottom_left + up_left_diagonal + down_left_diagonal + left_vertical])
             else:
                 can_exit_left = can_exit_right = False
 

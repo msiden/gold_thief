@@ -9,10 +9,9 @@
         {"position": [1150, 100], "h_direction": "left"}],
       "player":  [
         {"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
-      "xminer": [
-        {"position": [700, 290], "h_direction": "left", "activity":  "walking"}],
       "miner": [
-        {"position": [635, 500], "h_direction": "left", "activity":  "walking"}],
+        {"position": [700, 290], "h_direction": "left", "activity":  "walking"},
+        {"position": [635, 500], "h_direction": "right", "activity":  "walking"}],
       "gold": [
         {"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}, {"position": [545, 80]},
         {"position": [845, 80]}, {"position": [945, 80]}],
