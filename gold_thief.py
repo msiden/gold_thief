@@ -83,8 +83,11 @@ def generate_sprites(
     returns: An instance of pygame.sprites.Group()
     """
     if name not in room_obj.database[str(room_obj.room)]["sprites"]:
-        return
-    sprites_db = room_obj.database[str(room_obj.room)]["sprites"][name]
+        name = SpriteName.PLACEHOLDER
+        sprites_db = [{"position": [-10, -10]}]
+        image = FileName.PLACEHOLDER_IMG
+    else:
+        sprites_db = room_obj.database[str(room_obj.room)]["sprites"][name]
     sprites = []
     group = pygame.sprite.Group()
     for spr in sprites_db:
@@ -105,7 +108,9 @@ def gravity():
     """Apply gravity effect to all affected sprites"""
     for sp in affected_by_gravity:
         for spr in sp.sprites():
-            if not (spr.can_climb_ladders and spr.collides(ladders)) or not spr.can_climb_ladders or spr.is_passed_out():
+            print(spr.name, spr.is_placeholder)
+            if not (spr.can_climb_ladders and spr.collides(ladders)) \
+                    or not spr.can_climb_ladders or spr.is_passed_out():
                 spr.move(Direction.DOWN, GRAVITY)
 
 
@@ -348,6 +353,7 @@ class Sprite(pygame.sprite.Sprite):
         self.just_entered_ladder = False
         self.can_pass_out = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         self.is_mortal = self.name == SpriteName.PLAYER
+        self.is_placeholder = self.name == SpriteName.PLACEHOLDER
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -840,7 +846,7 @@ class Folder(object):
 
 class FileName(object):
     LEVEL_DB = Folder.LEVELS + "level{}.json"
-
+    PLACEHOLDER_IMG = Folder.IDLE_IMGS.format("placeholder") + "001.png"
 
 class SpriteName(object):
     AXE = "axe"
@@ -850,6 +856,7 @@ class SpriteName(object):
     HANDLE = "handle"
     LADDER = "ladder"
     LAYOUT = "layout"
+    PLACEHOLDER = "placeholder"
     PLAYER = "player"
     TRUCK = "truck"
     MINER = "miner"
@@ -917,7 +924,7 @@ game_is_running = True
 
 # Load mine and room
 room = Rooms()
-room.load(1, 1)
+room.load(1, 2)
 
 # Generate sprites
 players = generate_sprites(room, SpriteName.PLAYER, animation_freq_ms=8)
