@@ -71,4 +71,5 @@ TODO:
 KNOWN ISSUES
 * AttributeError when certain types of sprites is not present on screen
     Create a placeholder sprite and return this instead of None
+    No gravity effect on placeholders.
 * Miner sometimes get stuck in a route. How random is randomness?
