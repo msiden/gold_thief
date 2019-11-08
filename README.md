@@ -69,7 +69,6 @@ TODO:
 - [ ] Save game function
     
 KNOWN ISSUES
-* Incorrect animation when dropping gold in wheelbarrow or truck - check gravity()
-* Can't drop empty wheelbarrow when in front of truck
-* Animation doesn't update when passed out while climbing
+* AttributeError when certain types of sprites is not present on screen
+    Create a placeholder sprite and return this instead of None
 * Miner sometimes get stuck in a route. How random is randomness?

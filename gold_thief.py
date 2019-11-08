@@ -5,7 +5,7 @@ import ctypes
 import random
 
 # Define Screen and sprite sizes and other constants
-CHICKEN_MODE = True
+CHICKEN_MODE = False
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
@@ -105,7 +105,7 @@ def gravity():
     """Apply gravity effect to all affected sprites"""
     for sp in affected_by_gravity:
         for spr in sp.sprites():
-            if not (spr.collides(ladders) and spr.can_climb_ladders) or not spr.can_climb_ladders:
+            if not (spr.can_climb_ladders and spr.collides(ladders)) or not spr.can_climb_ladders or spr.is_passed_out():
                 spr.move(Direction.DOWN, GRAVITY)
 
 
@@ -445,6 +445,8 @@ class Sprite(pygame.sprite.Sprite):
                     activity = Activity.IDLE_WITH_GOLD
                 elif self.is_passed_out():
                     activity = Activity.PASSED_OUT
+                elif self.is_loaded():
+                    activity = self.activity
                 elif self.is_computer_controlled and self.is_walking():
                     self.h_direction = change_direction(self.h_direction)
                 else:
@@ -668,7 +670,7 @@ class Sprite(pygame.sprite.Sprite):
 
         # Empty gold in the truck
         for t in trucks.sprites():
-            if t.collides(self):
+            if t.collides(self) and not self.is_pushing_empty_wheelbarrow():
                 t.carries_gold_sacks += self.saved_sprite.carries_gold_sacks if carries_wheelbarrow else 1
                 print(t.carries_gold_sacks, "/", room.gold_sacks)
                 t.update([loaded_truck[a] for a in loaded_truck if t.carries_gold_sacks in a][0])
@@ -751,6 +753,9 @@ class Sprite(pygame.sprite.Sprite):
 
     def is_pushing_wheelbarrow(self):
         return self.is_pushing_empty_wheelbarrow() or self.is_pushing_loaded_wheelbarrow()
+
+    def is_loaded(self):
+        return "loaded" in self.activity
 
 
 # Enums
@@ -912,7 +917,7 @@ game_is_running = True
 
 # Load mine and room
 room = Rooms()
-room.load(1, 3)
+room.load(1, 1)
 
 # Generate sprites
 players = generate_sprites(room, SpriteName.PLAYER, animation_freq_ms=8)
