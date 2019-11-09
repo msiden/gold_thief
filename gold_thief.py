@@ -108,7 +108,6 @@ def gravity():
     """Apply gravity effect to all affected sprites"""
     for sp in affected_by_gravity:
         for spr in sp.sprites():
-            print(spr.name, spr.is_placeholder)
             if not (spr.can_climb_ladders and spr.collides(ladders)) \
                     or not spr.can_climb_ladders or spr.is_passed_out():
                 spr.move(Direction.DOWN, GRAVITY)
@@ -354,6 +353,7 @@ class Sprite(pygame.sprite.Sprite):
         self.can_pass_out = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         self.is_mortal = self.name == SpriteName.PLAYER
         self.is_placeholder = self.name == SpriteName.PLACEHOLDER
+        self.is_static = bool(image)
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -572,6 +572,10 @@ class Sprite(pygame.sprite.Sprite):
 
         - activity -- (String. Mandatory) The new activity to assign the sprite
         """
+        # Static sprites can't be updated
+        if self.is_static:
+            return
+
         now = pygame.time.get_ticks()
         self.is_facing_down = self.v_direction == Direction.DOWN
         self.is_facing_left = self.h_direction == Direction.LEFT
@@ -1004,5 +1008,5 @@ while game_is_running:
     pygame.display.flip()
     #print(miners.sprites()[0].activity)
     #print(player.activity)
-    #print(miners.sprites()[0].v_direction)
-    #print(wheelbarrows.sprites()[0].activity)
+    #print(miners.sprites()[0].rect.y)
+    #print(wheelbarrows.sprites()[0].rect.y)
