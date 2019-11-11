@@ -67,6 +67,10 @@ TODO:
 - [ ] Start screen
 - [ ] High scores
 - [ ] Save game function
+- [ ] Re-think room config json layouts.
+    - Rename ladder "length" to "height"
+    - Miners to be placed randomly or enter through doors
+    - Player always starts in same position as truck
     
 KNOWN ISSUES
-* Miner sometimes get stuck in a route. How random is randomness?
+

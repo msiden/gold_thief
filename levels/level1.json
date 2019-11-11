@@ -21,7 +21,8 @@
         {"position": [402, 200], "length":  820},
         {"position": [1055, 200], "length":  260},
         {"position": [95, 385], "length":  443},
-        {"position": [880, 520], "length":  265}]}
+        {"position": [880, 520], "length":  265}],
+      "door": [{"position": [1420, 110]}]}
   },
   "2": {
     "texture": "granite.jpg",
@@ -29,16 +30,19 @@
     "sprites": {
       "player":  [
         {"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
-      "xminer": [
-        {"position": [700, 290], "h_direction": "left", "activity":  "walking"},
-        {"position": [635, 500], "h_direction": "right", "activity":  "walking"}],
+      "miner": [
+        {"position": [1330, 100], "h_direction": "left", "activity":  "walking"},
+        {"position": [1080, 630], "h_direction": "right", "activity":  "walking"},
+        {"position": [500, 465], "h_direction": "right", "activity":  "walking"}],
       "gold": [
         {"position": [740, 280]}, {"position": [515, 460]}, {"position": [1170, 460]}, {"position": [1130, 630]},
         {"position": [250, 890]}],
       "ladder": [
-        {"position": [402, 200], "length":  820},
-        {"position": [1055, 200], "length":  260},
-        {"position": [95, 385], "length":  443},
-        {"position": [880, 520], "length":  265}]}
+        {"position": [385, 200], "length":  210},
+        {"position": [45, 285], "length":  300},
+        {"position": [365, 630], "length":  390},
+        {"position": [887, 200], "length":  565},
+        {"position": [1034, 280], "length":  295},
+        {"position": [1302, 280], "length":  635}]}
   }
 }

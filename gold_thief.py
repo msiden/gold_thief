@@ -5,7 +5,7 @@ import ctypes
 import random
 
 # Define Screen and sprite sizes and other constants
-CHICKEN_MODE = False
+CHICKEN_MODE = True
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
@@ -505,7 +505,8 @@ class Sprite(pygame.sprite.Sprite):
 
             # Check whether the sprite can exit the ladder from the current position by checking if the background
             # color in the room layout image to the left and right of the sprite is white.
-            if SPRITE_SIZE[0] <= x_pos <= (SCREEN_SIZE[0]-SPRITE_SIZE[0]):
+            can_exit_left = can_exit_right = False
+            if x_pos <= (SCREEN_SIZE[0]-SPRITE_SIZE[0]):
                 top_right = [room.layout_img.get_at([i, y_pos])[:3] for i in range(x_pos, r_range)]
                 bottom_right = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(x_pos, r_range)]
                 down_right_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
@@ -514,6 +515,10 @@ class Sprite(pygame.sprite.Sprite):
                     x_pos, x_pos + SPRITE_SIZE[0])], [n for n in range(bottom_pos, y_pos, -1)])]
                 right_vertical = [
                     room.layout_img.get_at([x_pos + SPRITE_SIZE[0], i])[:3] for i in range(y_pos, bottom_pos)]
+                can_exit_right = all([
+                    i == Color.WHITE for i in
+                    top_right + up_right_diagonal + bottom_right + down_right_diagonal + right_vertical])
+            if SPRITE_SIZE[0] <= x_pos:
                 top_left = [room.layout_img.get_at([i, y_pos])[:3] for i in range(l_range, x_pos)]
                 bottom_left = [room.layout_img.get_at([i, bottom_pos])[:3] for i in range(l_range, x_pos)]
                 down_left_diagonal = [room.layout_img.get_at(z)[:3] for z in zip([i for i in range(
@@ -522,14 +527,9 @@ class Sprite(pygame.sprite.Sprite):
                     x_pos - SPRITE_SIZE[0], x_pos)], [n for n in range(y_pos, bottom_pos)])]
                 left_vertical = [
                     room.layout_img.get_at([x_pos - SPRITE_SIZE[0], i])[:3] for i in range(y_pos, bottom_pos)]
-                can_exit_right = all([
-                    i == Color.WHITE for i in
-                    top_right + up_right_diagonal + bottom_right + down_right_diagonal + right_vertical])
                 can_exit_left = all([
                     i == Color.WHITE for i in
                     top_left + bottom_left + up_left_diagonal + down_left_diagonal + left_vertical])
-            else:
-                can_exit_left = can_exit_right = False
 
             # Prevent the sprite from immediately exiting the ladder it just entered
             if self.just_entered_ladder and (can_exit_right or can_exit_left):
@@ -852,9 +852,11 @@ class FileName(object):
     LEVEL_DB = Folder.LEVELS + "level{}.json"
     PLACEHOLDER_IMG = Folder.IDLE_IMGS.format("placeholder") + "001.png"
 
+
 class SpriteName(object):
     AXE = "axe"
     CART = "cart"
+    DOOR = "door"
     ELEVATOR = "elevator"
     GOLD = "gold"
     HANDLE = "handle"
@@ -928,7 +930,7 @@ game_is_running = True
 
 # Load mine and room
 room = Rooms()
-room.load(1, 2)
+room.load(1, 1)
 
 # Generate sprites
 players = generate_sprites(room, SpriteName.PLAYER, animation_freq_ms=8)
@@ -938,6 +940,7 @@ gold_sacks = generate_sprites(room, SpriteName.GOLD, animation_freq_ms=500)
 ladders = generate_sprites(room, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
 trucks = generate_sprites(room, SpriteName.TRUCK, animation_freq_ms=100)
 wheelbarrows = generate_sprites(room, SpriteName.WHEELBARROW)
+doors = generate_sprites(room, SpriteName.DOOR, image=Folder.IDLE_IMGS.format(SpriteName.DOOR) + "001.png")
 all_sprites = (ladders, trucks, gold_sacks, wheelbarrows, miners, players)
 not_player = (miners, gold_sacks, ladders, trucks, wheelbarrows)
 affected_by_gravity = (miners, gold_sacks, players, trucks, wheelbarrows)
@@ -986,6 +989,11 @@ while game_is_running:
     # Check if the player is caught by a miner
     if player.collides(miners) and not player.is_passed_out() and not CHICKEN_MODE:
         player.pass_out()
+
+    # Check if the player walks through a door to a different room
+    if player.collides(doors):
+        print("DOOR")
+        #room.load(1, 2)
 
     # Move miners
     for m in miners.sprites():
