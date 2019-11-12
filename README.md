@@ -67,12 +67,12 @@ TODO:
 - [ ] Start screen
 - [ ] High scores
 - [ ] Save game function
-- [ ] Re-think room config json layouts.
-    - Rename ladder "length" to "height"
+- [ ] Re-think room config json layouts.    
     - Miners to be placed randomly or enter through doors
     - Player always starts in same position as truck
     
 KNOWN ISSUES
+* Wheelbarrow disappears when player hits wall
 
 FEATURES FROM ORIGINAL GAME TO BE IMPLEMENTED (?)
 * Player and miners are reset to original position after player is

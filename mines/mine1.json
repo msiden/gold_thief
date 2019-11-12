@@ -25,7 +25,7 @@
       "door": [
         {"position": [1420, 110], "exit_dir": "right", "leads_to": {"room":  2, "x": 1, "y":  110}},
         {"position": [1420, 280], "exit_dir": "right", "leads_to": {"room":  2, "x": 1, "y":  300}},
-        {"position": [1420, 630], "exit_dir": "right", "leads_to": {"room":  2, "x": 1, "y":  648}},
+        {"position": [1420, 630], "exit_dir": "right", "leads_to": {"room":  2, "x": 1, "y":  645}},
         {"position": [1420, 890], "exit_dir": "right", "leads_to": {"room":  2, "x": 1, "y":  902}}]}
   },
   "2": {
@@ -49,9 +49,9 @@
         {"position": [1034, 280], "height":  295},
         {"position": [1302, 280], "height":  635}],
       "door": [
-        {"position": [-100, 110], "exit_dir": "left", "leads_to": {"room":  1, "x": 1400, "y":  110}},
-        {"position": [-100, 280], "exit_dir": "left", "leads_to": {"room":  1, "x": 1400, "y":  300}},
-        {"position": [-100, 630], "exit_dir": "left", "leads_to": {"room":  1, "x": 1400, "y":  648}},
-        {"position": [-100, 890], "exit_dir": "left", "leads_to": {"room":  1, "x": 1400, "y":  902}}]}
+        {"position": [-100, 110], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  110}},
+        {"position": [-100, 280], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  293}},
+        {"position": [-100, 630], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  645}},
+        {"position": [-100, 890], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  902}}]}
   }
 }

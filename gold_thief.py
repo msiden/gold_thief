@@ -207,6 +207,14 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
 
 
 # Classes
+class Mines(object):
+    """Class for loading all rooms in a mine (level)"""
+
+    def __init__(self, number):
+        self.number = number
+        self.database = load_db(FileName.MINE_DB.format(self.number))
+
+
 class Rooms(object):
     """Class for loading a room layout from a mine setup json-file"""
 
@@ -221,7 +229,7 @@ class Rooms(object):
         self.room = 1
         self.texture = None
         self.texture_img = None
-        self.gold_sacks = 0
+        self.no_of_gold_sacks = 0
         self.players = None
         self.player = None
         self.miners = None
@@ -263,7 +271,7 @@ class Rooms(object):
         self.layout_sprite.rect.x = self.layout_sprite.rect.y = 0
         self.layouts = pygame.sprite.Group()
         self.layouts.add(self.layout_sprite)
-        self.gold_sacks = \
+        self.no_of_gold_sacks = \
             len(self.database[str(room_)]["sprites"]["gold"]) if "gold" in self.database[str(room_)]["sprites"] else 0
 
         # Load sprites
@@ -724,7 +732,7 @@ class Sprite(pygame.sprite.Sprite):
         for t in room.trucks.sprites():
             if t.collides(self) and not self.is_pushing_empty_wheelbarrow():
                 t.carries_gold_sacks += self.saved_sprite.carries_gold_sacks if carries_wheelbarrow else 1
-                print(t.carries_gold_sacks, "/", room.gold_sacks)
+                print(t.carries_gold_sacks, "/", room.no_of_gold_sacks)
                 t.update([loaded_truck[a] for a in loaded_truck if t.carries_gold_sacks in a][0])
                 dropped_in_truck = True
                 break
@@ -1025,6 +1033,10 @@ while game_is_running:
             room.load(1, d.leads_to["room"])
             room.player.rect.x = d.leads_to["x"]
             room.player.rect.y = d.leads_to["y"]
+            room.player.h_direction = \
+                d.exit_direction if d.exit_direction in (Direction.RIGHT, Direction.LEFT) else room.player.h_direction
+            room.player.v_direction = \
+                d.exit_direction if d.exit_direction in (Direction.UP, Direction.DOWN) else room.player.v_direction
 
     # Move miners
     for m in room.miners.sprites():
