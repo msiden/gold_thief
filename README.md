@@ -74,3 +74,14 @@ TODO:
     
 KNOWN ISSUES
 
+FEATURES FROM ORIGINAL GAME TO BE IMPLEMENTED (?)
+* Player and miners are reset to original position after player is
+passed out
+* Only two miners who start from a fixed position and move across
+all rooms
+* Miners can choose to wait for elevators
+* Miners keep moving when in another room and not visible
+* Bonus counts down every second from 3000 but is reset when 
+player is passed out 
+
+

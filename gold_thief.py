@@ -235,7 +235,14 @@ class Rooms(object):
         self.affected_by_gravity = None
 
     def load(self, mine, room_):
-        """Load a new room"""
+        """
+        Load a room and its sprites.
+
+        - mine -- (Integer. Mandatory) The mine (level) to load
+        - room_ -- (Integer. Mandatory) The room to load.
+        """
+
+        # Load room layout
         dark_overlay = pygame.Surface(SCREEN_SIZE, flags=pygame.SRCALPHA)
         dark_overlay.fill((90, 90, 90, 0))
         self.mine = mine
@@ -281,11 +288,11 @@ class Rooms(object):
         - name -- (String. Mandatory) The name of the sprite to generate. Use SpriteNames enum.
         - image -- (String. Optional. Defaults to None) Use a specific image instead of an animation
         - animation_freq_ms -- (Integer. Optional. Defaults to 0) The update frequency of the sprite animation in
-                milliseconds.
+            milliseconds.
         - standard_speed -- (Integer. Optional. Defaults to STANDARD_SPEED constant value) The sprite's speed when not
-                carrying a gold sack
+            carrying a gold sack
         - slow_speed -- (Integer. Optional. Defaults to SLOW_SPEED constant value) The sprite's speed when carrying a
-                gold sack
+            gold sack
 
         returns: An instance of pygame.sprites.Group()
         """
@@ -301,12 +308,14 @@ class Rooms(object):
             activity = spr["activity"] if "activity" in spr else Activity.IDLE
             h_direction = spr["h_direction"] if "h_direction" in spr else Direction.RIGHT
             v_direction = spr["v_direction"] if "v_direction" in spr else Direction.NONE
-            length = spr["length"] if "length" in spr else None
+            height = spr["height"] if "height" in spr else None
+            leads_to = spr["leads_to"] if "leads_to" in spr else None
+            exit_dir = spr["exit_dir"] if "exit_dir" in spr else None
             sprites.append(Sprite(
                 name=name, position=spr["position"], image=image, activity=activity, h_direction=h_direction,
-                v_direction=v_direction, length=length, animation_freq_ms=animation_freq_ms,
+                v_direction=v_direction, height=height, animation_freq_ms=animation_freq_ms,
                 standard_speed=standard_speed,
-                slow_speed=slow_speed))
+                slow_speed=slow_speed, leads_to=leads_to, exit_dir=exit_dir))
         for spr in sprites:
             group.add(spr)
         return group
@@ -316,27 +325,32 @@ class Sprite(pygame.sprite.Sprite):
 
     def __init__(
             self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none",
-            length=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED):
+            height=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED, leads_to=None,
+            exit_dir=None):
         """
         Create a new sprite
 
-        name -- (String. Mandatory) The sprite name. Use SpriteName enum
-        activity -- (String. Optional. Defaults to "idle") The current activity of the sprite. Use Activity enum
-        image -- (String. Optional. Defaults to None) Path to image file. If provided a static image will be used for
+        - name -- (String. Mandatory) The sprite name. Use SpriteName enum
+        - activity -- (String. Optional. Defaults to "idle") The current activity of the sprite. Use Activity enum
+        - image -- (String. Optional. Defaults to None) Path to image file. If provided a static image will be used for
             the sprite and animations will be disabled.
-        position -- (Tuple. Optional. Defaults to (0, 0)) The current position of the sprite
-        h_direction -- (String. Optional. Defaults to "right") The current horizontal direction the sprite is facing.
+        - position -- (Tuple. Optional. Defaults to (0, 0)) The current position of the sprite
+        - h_direction -- (String. Optional. Defaults to "right") The current horizontal direction the sprite is facing.
             Use Direction enum.
-        v_direction -- (String. Optional. Defaults to "right") The current vertical direction the sprite is moving in.
+        - v_direction -- (String. Optional. Defaults to "right") The current vertical direction the sprite is moving in.
             Use Direction enum.
-        length -- (Integer. Optional. Defaults to None) Crop the sprites image to a certain length. If this is provided
-            the image will not be scaled.
-        animation_freq_ms -- (Integer. Optional. Defaults to 0) The update frequency of the sprite animation in
+        - height -- (Integer. Optional. Defaults to None) Crop the sprites image to a certain height. If this is
+            provided the image will not be scaled.
+        - animation_freq_ms -- (Integer. Optional. Defaults to 0) The update frequency of the sprite animation in
             milliseconds.
-        standard_speed -- (Integer. Optional. Defaults to STANDARD_SPEED constant value) The sprite's speed when not
+        - standard_speed -- (Integer. Optional. Defaults to STANDARD_SPEED constant value) The sprite's speed when not
             carrying a gold sack
-        slow_speed -- (Integer. Optional. Defaults to SLOW_SPEED constant value) The sprite's speed when carrying a
+        - slow_speed -- (Integer. Optional. Defaults to SLOW_SPEED constant value) The sprite's speed when carrying a
             gold sack
+        - leads_to -- (Dict. Optional. Defaults to None) Only valid for door sprites. A dictionary containing the
+            room number and x/y-position to where the door leads
+        - exit_dir -- (String. Optional. Defaults to None) Only valid for door sprites. The direction the player must be
+            facing to go through the door.
         """
         pygame.sprite.Sprite.__init__(self)
 
@@ -380,11 +394,13 @@ class Sprite(pygame.sprite.Sprite):
         self.is_mortal = self.name == SpriteName.PLAYER
         self.is_placeholder = self.name == SpriteName.PLACEHOLDER
         self.is_static = bool(image)
+        self.leads_to = leads_to
+        self.exit_direction = exit_dir
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
-            if length:
-                cropped = pygame.Surface((self.image.get_size()[0], length))
+            if height:
+                cropped = pygame.Surface((self.image.get_size()[0], height))
                 cropped.blit(self.image, (0, 0))
                 self.image = cropped
             self.image.set_colorkey(Color.WHITE)
@@ -1004,8 +1020,11 @@ while game_is_running:
         room.player.pass_out()
 
     # Check if the player walks through a door to a different room
-    if room.player.collides(room.doors):
-        room.load(1, 2)
+    for d in room.doors.sprites():
+        if room.player.collides(d) and d.exit_direction in (room.player.h_direction, room.player.v_direction):
+            room.load(1, d.leads_to["room"])
+            room.player.rect.x = d.leads_to["x"]
+            room.player.rect.y = d.leads_to["y"]
 
     # Move miners
     for m in room.miners.sprites():
