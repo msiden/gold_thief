@@ -213,19 +213,21 @@ class Mines(object):
     def __init__(self, number):
         self.number = number
         self.database = load_db(FileName.MINE_DB.format(self.number))
+        self.room = {int(r): Rooms(self.database) for r in self.database}
+        for r in self.room:
+            self.room[r].load(r)
 
 
 class Rooms(object):
-    """Class for loading a room layout from a mine setup json-file"""
+    """Class for loading a room layout and it's sprites"""
 
-    def __init__(self):
+    def __init__(self, database):
         self.background_img = None
-        self.database = None
+        self.database = database
         self.layout = None
         self.layouts = None
         self.layout_img = None
         self.layout_sprite = None
-        self.mine = 1
         self.room = 1
         self.texture = None
         self.texture_img = None
@@ -242,21 +244,18 @@ class Rooms(object):
         self.not_player = None
         self.affected_by_gravity = None
 
-    def load(self, mine, room_):
+    def load(self, room_):
         """
         Load a room and its sprites.
 
-        - mine -- (Integer. Mandatory) The mine (level) to load
         - room_ -- (Integer. Mandatory) The room to load.
         """
 
         # Load room layout
         dark_overlay = pygame.Surface(SCREEN_SIZE, flags=pygame.SRCALPHA)
         dark_overlay.fill((90, 90, 90, 0))
-        self.mine = mine
         self.room = room_
-        self.database = load_db(FileName.MINE_DB.format(self.mine))
-        self.texture = Folder.TEXTURES + self.database[str(self.room)]["texture"]
+        self.texture = Folder.TEXTURES + self.database[str(room_)]["texture"]
         self.texture_img = pygame.image.load(self.texture)
         self.layout = Folder.LAYOUTS + self.database[str(self.room)]["layout"]
         self.background_img = pygame.image.load(self.texture)
@@ -979,8 +978,9 @@ clock = pygame.time.Clock()
 game_is_running = True
 
 # Load mine and room
-room = Rooms()
-room.load(1, 1)
+mine = Mines(1)
+room = mine.room[1]
+
 
 # On-screen text
 default_font = "comicsansms"
@@ -1030,7 +1030,8 @@ while game_is_running:
     # Check if the player walks through a door to a different room
     for d in room.doors.sprites():
         if room.player.collides(d) and d.exit_direction in (room.player.h_direction, room.player.v_direction):
-            room.load(1, d.leads_to["room"])
+            room = mine.room[d.leads_to["room"]]
+            #room.load(1, d.leads_to["room"])
             room.player.rect.x = d.leads_to["x"]
             room.player.rect.y = d.leads_to["y"]
             room.player.h_direction = \

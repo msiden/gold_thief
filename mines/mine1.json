@@ -1,7 +1,7 @@
 {
   "1": {
-    "texture": "granite.jpg",
     "layout": "room1_1.png",
+    "texture": "granite.jpg",
     "sprites": {
       "truck":  [
         {"position": [0, -260]}],
@@ -29,8 +29,8 @@
         {"position": [1420, 890], "exit_dir": "right", "leads_to": {"room":  2, "x": 1, "y":  902}}]}
   },
   "2": {
-    "texture": "granite.jpg",
     "layout": "room1_2.png",
+    "texture": "granite.jpg",
     "sprites": {
       "player":  [
         {"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
