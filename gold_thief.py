@@ -210,9 +210,9 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
 class Mines(object):
     """Class for loading all rooms in a mine (level)"""
 
-    def __init__(self, number):
-        self.number = number
-        self.database = load_db(FileName.MINE_DB.format(self.number))
+    def __init__(self, mine):
+        self.mine = mine
+        self.database = load_db(FileName.MINE_DB.format(self.mine))
         self.room = {int(r): Rooms(self.database) for r in self.database}
         for r in self.room:
             self.room[r].load(r)
@@ -1030,6 +1030,7 @@ while game_is_running:
     # Check if the player walks through a door to a different room
     for d in room.doors.sprites():
         if room.player.collides(d) and d.exit_direction in (room.player.h_direction, room.player.v_direction):
+            a = room.player.activity
             room = mine.room[d.leads_to["room"]]
             #room.load(1, d.leads_to["room"])
             room.player.rect.x = d.leads_to["x"]
@@ -1038,6 +1039,7 @@ while game_is_running:
                 d.exit_direction if d.exit_direction in (Direction.RIGHT, Direction.LEFT) else room.player.h_direction
             room.player.v_direction = \
                 d.exit_direction if d.exit_direction in (Direction.UP, Direction.DOWN) else room.player.v_direction
+            room.player.activity = a
 
     # Move miners
     for m in room.miners.sprites():
