@@ -207,28 +207,20 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
 
 
 # Classes
-class Mines(object):
-    """Class for loading all rooms in a mine (level)"""
-
-    def __init__(self, mine):
-        self.mine = mine
-        self.database = load_db(FileName.MINE_DB.format(self.mine))
-        self.room = {int(r): Rooms(self.database) for r in self.database}
-        for r in self.room:
-            self.room[r].load(r)
-
-
 class Rooms(object):
-    """Class for loading a room layout and it's sprites"""
+    """Class for loading all room layouts in a mine (level) and it's sprites"""
 
-    def __init__(self, database):
+    def __init__(self):
+
+        self.mine = None
+        self.room = None
+        self.database = None
+        self.rooms = {}
         self.background_img = None
-        self.database = database
         self.layout = None
         self.layouts = None
         self.layout_img = None
         self.layout_sprite = None
-        self.room = 1
         self.texture = None
         self.texture_img = None
         self.no_of_gold_sacks = 0
@@ -244,54 +236,106 @@ class Rooms(object):
         self.not_player = None
         self.affected_by_gravity = None
 
-    def load(self, room_):
+    def set(self, mine_, room_):
         """
-        Load a room and its sprites.
+        Set what mine and room is currently displayed on screen
 
-        - room_ -- (Integer. Mandatory) The room to load.
+        - mine -- (Integer. Mandatory) The requested mine
+        - room_ -- (Integer. Mandatory) The requested room
+
+        returns: None
         """
 
-        # Load room layout
+        # Load a new mine if requested
+        if mine_ != self.mine:
+            self.load(mine_)
+
+        # Point all class variables to the correct room in the rooms dictionary
+        self.room = room_
+        self.texture = self.rooms[str(self.room)]["texture"]
+        self.texture_img = self.rooms[str(self.room)]["texture_img"]
+        self.layout = self.rooms[str(self.room)]["layout"]
+        self.background_img = self.rooms[str(self.room)]["background_img"]
+        self.layout_img = self.rooms[str(self.room)]["layout_img"]
+        self.layout_sprite = self.rooms[str(self.room)]["layout_sprite"]
+        self.layouts = self.rooms[str(self.room)]["layouts"]
+        self.no_of_gold_sacks = self.rooms[str(self.room)]["no_of_gold_sacks"]
+        self.miners = self.rooms[str(self.room)]["miners"]
+        self.gold_sacks = self.rooms[str(self.room)]["gold_sacks"]
+        self.ladders = self.rooms[str(self.room)]["ladders"]
+        self.trucks = self.rooms[str(self.room)]["trucks"]
+        self.wheelbarrows = self.rooms[str(self.room)]["wheelbarrows"]
+        self.doors = self.rooms[str(self.room)]["doors"]
+        self.all_sprites = self.rooms[str(self.room)]["all_sprites"]
+        self.not_player = self.rooms[str(self.room)]["not_player"]
+        self.affected_by_gravity = self.rooms[str(self.room)]["affected_by_gravity"]
+        self.player = self.rooms[str(self.room)]["player"]
+        self.players = self.rooms[str(self.room)]["players"]
+
+    def load(self, mine_):
+        """
+        Load all rooms in a mine (level)
+
+        - mine -- (Integer. Mandatory) The requested mine
+
+        returns: None
+        """
+        print("Loading mine {}".format(mine_))
+        # Load mine database
+        self.mine = mine_
+        self.database = load_db(FileName.MINE_DB.format(self.mine))
+
+        # Load layout for each room in the mine
         dark_overlay = pygame.Surface(SCREEN_SIZE, flags=pygame.SRCALPHA)
         dark_overlay.fill((90, 90, 90, 0))
-        self.room = room_
-        self.texture = Folder.TEXTURES + self.database[str(room_)]["texture"]
-        self.texture_img = pygame.image.load(self.texture)
-        self.layout = Folder.LAYOUTS + self.database[str(self.room)]["layout"]
-        self.background_img = pygame.image.load(self.texture)
-        self.background_img = pygame.transform.scale(self.texture_img, SCREEN_SIZE)
-        self.background_img.blit(dark_overlay, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
-        self.layout_img = pygame.image.load(self.layout).convert()
-        self.layout_img.set_colorkey(Color.BLACK)
-        self.texture_img = pygame.transform.scale(self.texture_img, SCREEN_SIZE)
-        self.texture_img.blit(self.layout_img, (0, 0))
-        self.texture_img.set_colorkey(Color.WHITE)
-        self.layout_sprite = Sprite(SpriteName.LAYOUT, image=self.layout)
-        self.layout_sprite.rect.x = self.layout_sprite.rect.y = 0
-        self.layouts = pygame.sprite.Group()
-        self.layouts.add(self.layout_sprite)
-        self.no_of_gold_sacks = \
-            len(self.database[str(room_)]["sprites"]["gold"]) if "gold" in self.database[str(room_)]["sprites"] else 0
+        for r in self.database:
+            self.rooms[r] = {}
+        for r in self.database:
+            self.rooms[r]["texture"] = Folder.TEXTURES + self.database[r]["texture"]
+            self.rooms[r]["texture_img"] = pygame.image.load(self.rooms[r]["texture"])
+            self.rooms[r]["layout"] = Folder.LAYOUTS + self.database[r]["layout"]
+            self.rooms[r]["background_img"] = pygame.image.load(self.rooms[r]["texture"])
+            self.rooms[r]["background_img"] = pygame.transform.scale(self.rooms[r]["texture_img"], SCREEN_SIZE)
+            self.rooms[r]["background_img"].blit(dark_overlay, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+            self.rooms[r]["layout_img"] = pygame.image.load(self.rooms[r]["layout"]).convert()
+            self.rooms[r]["layout_img"].set_colorkey(Color.BLACK)
+            self.rooms[r]["texture_img"] = pygame.transform.scale(self.rooms[r]["texture_img"], SCREEN_SIZE)
+            self.rooms[r]["texture_img"].blit(self.rooms[r]["layout_img"], (0, 0))
+            self.rooms[r]["texture_img"].set_colorkey(Color.WHITE)
+            self.rooms[r]["layout_sprite"] = Sprite(SpriteName.LAYOUT, image=self.rooms[r]["layout"])
+            self.rooms[r]["layouts"] = pygame.sprite.Group()
+            self.rooms[r]["layouts"].add(self.rooms[r]["layout_sprite"])
+            self.rooms[r]["no_of_gold_sacks"] = \
+                len(self.database[r]["sprites"]["gold"]) if "gold" in self.database[r]["sprites"] else 0
 
-        # Load sprites
-        self.players = self.generate_sprites(SpriteName.PLAYER, animation_freq_ms=8)
-        self.player = self.players.sprites()[0]
-        self.miners = self.generate_sprites(SpriteName.MINER, standard_speed=MINER_SPEED, animation_freq_ms=8)
-        self.gold_sacks = self.generate_sprites(SpriteName.GOLD, animation_freq_ms=500)
-        self.ladders = self.generate_sprites(
-            SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
-        self.trucks = self.generate_sprites(SpriteName.TRUCK, animation_freq_ms=100)
-        self.wheelbarrows = self.generate_sprites(SpriteName.WHEELBARROW)
-        self.doors = self.generate_sprites(SpriteName.DOOR, image=Folder.IDLE_IMGS.format(SpriteName.DOOR) + "001.png")
-        self.all_sprites = (self.ladders, self.trucks, self.gold_sacks, self.wheelbarrows, self.miners, self.players)
-        self.not_player = (self.miners, self.gold_sacks, self.ladders, self.trucks, self.wheelbarrows)
-        self.affected_by_gravity = (self.miners, self.gold_sacks, self.players, self.trucks, self.wheelbarrows)
+            # Load sprites
+            self.rooms[r]["players"] = self.generate_sprites(r, SpriteName.PLAYER, animation_freq_ms=8)
+            self.rooms[r]["player"] = self.rooms[r]["players"].sprites()[0]
+            self.rooms[r]["miners"] = self.generate_sprites(
+                r, SpriteName.MINER, standard_speed=MINER_SPEED, animation_freq_ms=8)
+            self.rooms[r]["gold_sacks"] = self.generate_sprites(r, SpriteName.GOLD, animation_freq_ms=500)
+            self.rooms[r]["ladders"] = self.generate_sprites(
+                r, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
+            self.rooms[r]["trucks"] = self.generate_sprites(r, SpriteName.TRUCK, animation_freq_ms=100)
+            self.rooms[r]["wheelbarrows"] = self.generate_sprites(r, SpriteName.WHEELBARROW)
+            self.rooms[r]["doors"] = self.generate_sprites(
+                r, SpriteName.DOOR, image=Folder.IDLE_IMGS.format(SpriteName.DOOR) + "001.png")
+            self.rooms[r]["all_sprites"] = (
+                self.rooms[r]["ladders"], self.rooms[r]["trucks"], self.rooms[r]["gold_sacks"],
+                self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"], self.rooms[r]["players"])
+            self.rooms[r]["not_player"] = (
+                self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["ladders"], self.rooms[r]["trucks"],
+                self.rooms[r]["wheelbarrows"])
+            self.rooms[r]["affected_by_gravity"] = (
+                self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["players"], self.rooms[r]["trucks"],
+                self.rooms[r]["wheelbarrows"])
 
     def generate_sprites(
-            self, name, image=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED):
+            self, room_, name, image=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED):
         """
         Generate a sprites group from room setup dictionary
 
+        - room_
         - name -- (String. Mandatory) The name of the sprite to generate. Use SpriteNames enum.
         - image -- (String. Optional. Defaults to None) Use a specific image instead of an animation
         - animation_freq_ms -- (Integer. Optional. Defaults to 0) The update frequency of the sprite animation in
@@ -303,12 +347,12 @@ class Rooms(object):
 
         returns: An instance of pygame.sprites.Group()
         """
-        if name not in self.database[str(self.room)]["sprites"]:
+        if name not in self.database[str(room_)]["sprites"]:
             name = SpriteName.PLACEHOLDER
             sprites_db = [{"position": [-10, -10]}]
             image = FileName.PLACEHOLDER_IMG
         else:
-            sprites_db = self.database[str(self.room)]["sprites"][name]
+            sprites_db = self.database[str(room_)]["sprites"][name]
         sprites = []
         group = pygame.sprite.Group()
         for spr in sprites_db:
@@ -326,6 +370,23 @@ class Rooms(object):
         for spr in sprites:
             group.add(spr)
         return group
+
+    def check_doors(self):
+        """Check whether the player walks through a door and if so transport to a different room"""
+        for d in self.doors.sprites():
+            if self.player.collides(d) and d.exit_direction in (self.player.h_direction, self.player.v_direction):
+                #p = self.player
+                print(self.room, self.rooms)
+                self.rooms[str(self.room)]["player"] = self.player
+
+                self.player.rect.x = d.leads_to["x"]
+                self.player.rect.y = d.leads_to["y"]
+                self.player.h_direction = \
+                    d.exit_direction if d.exit_direction in (Direction.RIGHT, Direction.LEFT) else self.player.h_direction
+                self.player.v_direction = \
+                    d.exit_direction if d.exit_direction in (Direction.UP, Direction.DOWN) else self.player.v_direction
+                #self.player = p
+                self.set(self.mine, d.leads_to["room"])
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -977,10 +1038,9 @@ pygame.init()
 clock = pygame.time.Clock()
 game_is_running = True
 
-# Load mine and room
-mine = Mines(1)
-room = mine.room[1]
-
+# Load mine 1 and room 1
+room = Rooms()
+room.set(1, 1)
 
 # On-screen text
 default_font = "comicsansms"
@@ -1028,18 +1088,7 @@ while game_is_running:
         room.player.pass_out()
 
     # Check if the player walks through a door to a different room
-    for d in room.doors.sprites():
-        if room.player.collides(d) and d.exit_direction in (room.player.h_direction, room.player.v_direction):
-            a = room.player.activity
-            room = mine.room[d.leads_to["room"]]
-            #room.load(1, d.leads_to["room"])
-            room.player.rect.x = d.leads_to["x"]
-            room.player.rect.y = d.leads_to["y"]
-            room.player.h_direction = \
-                d.exit_direction if d.exit_direction in (Direction.RIGHT, Direction.LEFT) else room.player.h_direction
-            room.player.v_direction = \
-                d.exit_direction if d.exit_direction in (Direction.UP, Direction.DOWN) else room.player.v_direction
-            room.player.activity = a
+    room.check_doors()
 
     # Move miners
     for m in room.miners.sprites():

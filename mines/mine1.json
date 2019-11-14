@@ -32,8 +32,6 @@
     "layout": "room1_2.png",
     "texture": "granite.jpg",
     "sprites": {
-      "player":  [
-        {"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
       "miner": [
         {"position": [1330, 100], "h_direction": "left", "activity":  "walking"},
         {"position": [1080, 630], "h_direction": "right", "activity":  "walking"},
