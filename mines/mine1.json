@@ -8,7 +8,7 @@
       "wheelbarrow":  [
         {"position": [1150, 100], "h_direction": "left"}],
       "player":  [
-        {"position": [20, 20], "h_direction": "right", "activity":  "idle"}],
+        {"position": [1150, 20], "h_direction": "right", "activity":  "idle"}],
       "miner": [
         {"position": [700, 290], "h_direction": "left", "activity":  "walking"},
         {"position": [635, 500], "h_direction": "right", "activity":  "walking"},

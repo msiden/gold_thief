@@ -65,6 +65,29 @@ def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
 
+def go_through_door():
+    """Check whether the player walks through a door and if so transport to a different room"""
+    for d in room.doors.sprites():
+        if room.player.collides(d) and d.exit_direction in (room.player.h_direction, room.player.v_direction):
+            #p = self.player
+
+            #room.rooms["2"]["player"] = room.player
+
+            """room.player.h_direction = \
+                d.exit_direction if d.exit_direction in (Direction.RIGHT, Direction.LEFT) else room.player.h_direction
+            room.player.v_direction = \
+                d.exit_direction if d.exit_direction in (Direction.UP, Direction.DOWN) else room.player.v_direction
+            #self.player = p"""
+            room.set(room.mine, d.leads_to["room"])
+            print(room.player)
+            #print(room.all_sprites)
+            #room.players.add(room.player)
+            room.player.rect.x = d.leads_to["x"]
+            room.player.rect.y = d.leads_to["y"]
+            #print(room.player.rect.x, room.player.rect.y)
+            break
+
+
 def gravity():
     """Apply gravity effect to all affected sprites"""
     for sp in room.affected_by_gravity:
@@ -269,8 +292,8 @@ class Rooms(object):
         self.all_sprites = self.rooms[str(self.room)]["all_sprites"]
         self.not_player = self.rooms[str(self.room)]["not_player"]
         self.affected_by_gravity = self.rooms[str(self.room)]["affected_by_gravity"]
-        self.player = self.rooms[str(self.room)]["player"]
-        self.players = self.rooms[str(self.room)]["players"]
+        self.player = self.rooms[str(self.room)]["player"] if not self.player else self.player
+        self.players = self.rooms[str(self.room)]["players"] if not self.players else self.players
 
     def load(self, mine_):
         """
@@ -370,23 +393,6 @@ class Rooms(object):
         for spr in sprites:
             group.add(spr)
         return group
-
-    def check_doors(self):
-        """Check whether the player walks through a door and if so transport to a different room"""
-        for d in self.doors.sprites():
-            if self.player.collides(d) and d.exit_direction in (self.player.h_direction, self.player.v_direction):
-                #p = self.player
-                print(self.room, self.rooms)
-                self.rooms[str(self.room)]["player"] = self.player
-
-                self.player.rect.x = d.leads_to["x"]
-                self.player.rect.y = d.leads_to["y"]
-                self.player.h_direction = \
-                    d.exit_direction if d.exit_direction in (Direction.RIGHT, Direction.LEFT) else self.player.h_direction
-                self.player.v_direction = \
-                    d.exit_direction if d.exit_direction in (Direction.UP, Direction.DOWN) else self.player.v_direction
-                #self.player = p
-                self.set(self.mine, d.leads_to["room"])
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -1088,7 +1094,7 @@ while game_is_running:
         room.player.pass_out()
 
     # Check if the player walks through a door to a different room
-    room.check_doors()
+    go_through_door()
 
     # Move miners
     for m in room.miners.sprites():
