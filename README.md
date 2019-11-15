@@ -52,9 +52,8 @@ TODO:
     - [x] Truck
     - [ ] Doors
 - [x] Make miners move
-- [ ] Make player able to move between different rooms
-    - Only load player once for room 1
-    - Same sprite/activity must move between rooms
+- [x] Make player able to move between different rooms
+- [ ] Make other sprites (miners/carts) able to move between rooms)    
 - [ ] Make carts move
 - [x] Print number of lives etc to the top of the screen
 - [x] Game over if no lives left

@@ -69,28 +69,15 @@ def go_through_door():
     """Check whether the player walks through a door and if so transport to a different room"""
     for d in room.doors.sprites():
         if room.player.collides(d) and d.exit_direction in (room.player.h_direction, room.player.v_direction):
-            #p = self.player
-
-            #room.rooms["2"]["player"] = room.player
-
-            """room.player.h_direction = \
-                d.exit_direction if d.exit_direction in (Direction.RIGHT, Direction.LEFT) else room.player.h_direction
-            room.player.v_direction = \
-                d.exit_direction if d.exit_direction in (Direction.UP, Direction.DOWN) else room.player.v_direction
-            #self.player = p"""
             room.set(room.mine, d.leads_to["room"])
-            print(room.player)
-            #print(room.all_sprites)
-            #room.players.add(room.player)
             room.player.rect.x = d.leads_to["x"]
             room.player.rect.y = d.leads_to["y"]
-            #print(room.player.rect.x, room.player.rect.y)
             break
 
 
 def gravity():
     """Apply gravity effect to all affected sprites"""
-    for sp in room.affected_by_gravity:
+    for sp in room.affected_by_gravity + [room.players]:
         for spr in sp.sprites():
             if not (spr.can_climb_ladders and spr.collides(room.ladders)) \
                     or not spr.can_climb_ladders or spr.is_passed_out():
@@ -303,7 +290,6 @@ class Rooms(object):
 
         returns: None
         """
-        print("Loading mine {}".format(mine_))
         # Load mine database
         self.mine = mine_
         self.database = load_db(FileName.MINE_DB.format(self.mine))
@@ -345,13 +331,13 @@ class Rooms(object):
                 r, SpriteName.DOOR, image=Folder.IDLE_IMGS.format(SpriteName.DOOR) + "001.png")
             self.rooms[r]["all_sprites"] = (
                 self.rooms[r]["ladders"], self.rooms[r]["trucks"], self.rooms[r]["gold_sacks"],
-                self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"], self.rooms[r]["players"])
+                self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"])
             self.rooms[r]["not_player"] = (
                 self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["ladders"], self.rooms[r]["trucks"],
                 self.rooms[r]["wheelbarrows"])
-            self.rooms[r]["affected_by_gravity"] = (
-                self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["players"], self.rooms[r]["trucks"],
-                self.rooms[r]["wheelbarrows"])
+            self.rooms[r]["affected_by_gravity"] = [
+                self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["trucks"],
+                self.rooms[r]["wheelbarrows"]]
 
     def generate_sprites(
             self, room_, name, image=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED):
@@ -1107,6 +1093,7 @@ while game_is_running:
     # Draw sprites
     for s in room.all_sprites:
         s.draw(screen)
+    room.players.draw(screen)
 
     # Draw text
     lives_text = font.render("Lives: {}".format(room.player.lives), True, Color.GREEN)
