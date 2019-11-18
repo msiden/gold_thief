@@ -4,7 +4,7 @@
     "texture": "granite.jpg",
     "sprites": {
       "truck":  [
-        {"position": [0, -260]}],
+        {"position": [-100, -260]}],
       "wheelbarrow":  [
         {"position": [1150, 100], "h_direction": "left"}],
       "player":  [

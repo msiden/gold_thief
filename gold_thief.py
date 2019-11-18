@@ -5,7 +5,7 @@ import ctypes
 import random
 
 # Define Screen and sprite sizes and other constants
-CHICKEN_MODE = True
+CHICKEN_MODE = False
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
@@ -56,13 +56,20 @@ def change_direction(direction):
 
 def flatten_list(l):
     """
-    Make a list of lists into a single list. CURRENTLY NOT IN USE!
+    Make a list of lists into a single list.
 
     - l -- (List. Mandatory)
 
     Returns: List
     """
     return [item for sublist in l for item in sublist]
+
+
+def get_caught():
+    """Check whether the player is caught by a miner"""
+    for mi in room.miners.sprites():
+        if mi.collides(room.player) and not room.player.is_passed_out() and not mi.is_passed_out() and not CHICKEN_MODE:
+            room.player.pass_out()
 
 
 def go_through_door():
@@ -82,6 +89,16 @@ def gravity():
             if not (spr.can_climb_ladders and spr.collides(room.ladders)) \
                     or not spr.can_climb_ladders or spr.is_passed_out():
                 spr.move(Direction.DOWN, GRAVITY)
+
+
+def hit_miner():
+    """
+    Check if a miner is hit by a falling gold sack
+    """
+    for gold_ in room.gold_sacks.sprites():
+        for miner_ in room.miners.sprites():
+            if miner_.collides(gold_) and gold_.is_falling():
+                miner_.pass_out()
 
 
 def key_presses(interact_key_pressed):
@@ -245,6 +262,7 @@ class Rooms(object):
         self.all_sprites = None
         self.not_player = None
         self.affected_by_gravity = None
+        self.gold_delivered = 0
 
     def set(self, mine_, room_):
         """
@@ -269,7 +287,7 @@ class Rooms(object):
         self.layout_img = self.rooms[str(self.room)]["layout_img"]
         self.layout_sprite = self.rooms[str(self.room)]["layout_sprite"]
         self.layouts = self.rooms[str(self.room)]["layouts"]
-        self.no_of_gold_sacks = self.rooms[str(self.room)]["no_of_gold_sacks"]
+        #self.no_of_gold_sacks = self.rooms[str(self.room)]["no_of_gold_sacks"]
         self.miners = self.rooms[str(self.room)]["miners"]
         self.gold_sacks = self.rooms[str(self.room)]["gold_sacks"]
         self.ladders = self.rooms[str(self.room)]["ladders"]
@@ -293,6 +311,7 @@ class Rooms(object):
         # Load mine database
         self.mine = mine_
         self.database = load_db(FileName.MINE_DB.format(self.mine))
+        self.gold_delivered = 0
 
         # Load layout for each room in the mine
         dark_overlay = pygame.Surface(SCREEN_SIZE, flags=pygame.SRCALPHA)
@@ -314,8 +333,7 @@ class Rooms(object):
             self.rooms[r]["layout_sprite"] = Sprite(SpriteName.LAYOUT, image=self.rooms[r]["layout"])
             self.rooms[r]["layouts"] = pygame.sprite.Group()
             self.rooms[r]["layouts"].add(self.rooms[r]["layout_sprite"])
-            self.rooms[r]["no_of_gold_sacks"] = \
-                len(self.database[r]["sprites"]["gold"]) if "gold" in self.database[r]["sprites"] else 0
+            self.no_of_gold_sacks = len(flatten_list([self.database[r]["sprites"]["gold"] for r in self.database]))
 
             # Load sprites
             self.rooms[r]["players"] = self.generate_sprites(r, SpriteName.PLAYER, animation_freq_ms=8)
@@ -456,6 +474,7 @@ class Sprite(pygame.sprite.Sprite):
         self.is_static = bool(image)
         self.leads_to = leads_to
         self.exit_direction = exit_dir
+        self.max_control_while_falling_pix = 0 if self.name == SpriteName.GOLD else MAX_CONTROL_WHILE_FALLING_PIX
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -557,14 +576,17 @@ class Sprite(pygame.sprite.Sprite):
                     activity = self.activity
                 elif self.is_computer_controlled and self.is_walking():
                     self.h_direction = change_direction(self.h_direction)
+                elif self.is_pushing_wheelbarrow():
+                    activity = self.activity
                 else:
                     activity = Activity.WALKING if self.is_miner else Activity.IDLE
                 break
 
             # Keep track of how many pixels the sprite has fallen
-            elif vertical and self.v_direction == Direction.DOWN and not self.collides(room.ladders):
+            elif vertical and self.v_direction == Direction.DOWN and not (
+                    self.collides(room.ladders) and self.can_climb_ladders):
                 self.fall_pix += 1
-                if self.fall_pix >= MAX_CONTROL_WHILE_FALLING_PIX:
+                if self.fall_pix >= self.max_control_while_falling_pix:
                     activity = Activity.FALLING_WITH_GOLD if self.is_carrying_gold() else Activity.FALLING
 
         self.update(activity if activity else self.activity)
@@ -784,7 +806,7 @@ class Sprite(pygame.sprite.Sprite):
         for t in room.trucks.sprites():
             if t.collides(self) and not self.is_pushing_empty_wheelbarrow():
                 t.carries_gold_sacks += self.saved_sprite.carries_gold_sacks if carries_wheelbarrow else 1
-                print(t.carries_gold_sacks, "/", room.no_of_gold_sacks)
+                room.gold_delivered += self.saved_sprite.carries_gold_sacks if carries_wheelbarrow else 1
                 t.update([loaded_truck[a] for a in loaded_truck if t.carries_gold_sacks in a][0])
                 dropped_in_truck = True
                 break
@@ -1045,6 +1067,11 @@ title_text_rect.center = (SCREEN_SIZE[0] // 2, 40)
 lives_text = font.render("Lives: {}".format(room.player.lives), True, Color.GREEN)
 lives_text_rect = title_text.get_rect()
 lives_text_rect.center = (SCREEN_SIZE[0] - 150, 40)
+gold_delivered_text = font.render(
+    "Gold delivered: {0}/{1}".format(room.gold_delivered, room.no_of_gold_sacks), True, Color.GREEN)
+gold_delivered_rect = gold_delivered_text.get_rect()
+gold_delivered_rect.center = (250, 40)
+
 
 ########################################################################################################################
 # MAIN LOOP
@@ -1076,8 +1103,7 @@ while game_is_running:
     gravity()
 
     # Check if the player is caught by a miner
-    if room.player.collides(room.miners) and not room.player.is_passed_out() and not CHICKEN_MODE:
-        room.player.pass_out()
+    get_caught()
 
     # Check if the player walks through a door to a different room
     go_through_door()
@@ -1085,6 +1111,14 @@ while game_is_running:
     # Move miners
     for m in room.miners.sprites():
         m.move_cc()
+
+    # Check if a miner is hit by a falling gold sack
+    hit_miner()
+
+    # Check if player has collected all the gold in the mine
+    if room.gold_delivered >= room.no_of_gold_sacks:
+        print("Congratulations! Mine {} completed.".format(room.mine))
+        quit()
 
     # Draw background and walls
     screen.blit(room.background_img, (0, 0))
@@ -1097,8 +1131,11 @@ while game_is_running:
 
     # Draw text
     lives_text = font.render("Lives: {}".format(room.player.lives), True, Color.GREEN)
+    gold_delivered_text = font.render(
+        "Gold delivered: {0}/{1}".format(room.gold_delivered, room.no_of_gold_sacks), True, Color.GREEN)
     screen.blit(title_text, title_text_rect)
     screen.blit(lives_text, lives_text_rect)
+    screen.blit(gold_delivered_text, gold_delivered_rect)
 
     # Update the screen
     pygame.display.flip()

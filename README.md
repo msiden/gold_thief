@@ -36,7 +36,7 @@ TODO:
     - [ ] Use axe
     - [ ] Ride elevator
     - [x] Empty gold in truck and collect points
-    - [ ] Kill miners if hitting with gold sack
+    - [x] Kill miners if hitting with gold sack
 - [ ] Design real levels
 - [X] Nicer granite texture
 - [ ] More textures
@@ -55,6 +55,7 @@ TODO:
 - [x] Make player able to move between different rooms
 - [ ] Make other sprites (miners/carts) able to move between rooms)    
 - [ ] Make carts move
+- [ ] Miners (and carts) must keep moving when in another room
 - [x] Print number of lives etc to the top of the screen
 - [x] Game over if no lives left
 - [x] Player should not be able to move while falling
@@ -73,7 +74,12 @@ TODO:
     - Player always starts in same position as truck
     
 KNOWN ISSUES
-* Wheelbarrow disappears when player hits wall
+* Miners must avoid player while player is passed out. Avoid 
+"double-death". 
+* Player "double-dies" when caught by miner on ladder and then 
+falling far
+* Miners should not walk all the way to the edge of the screen to 
+avoid player from being caught directly when entering another room 
 
 FEATURES FROM ORIGINAL GAME TO BE IMPLEMENTED (?)
 * Player and miners are reset to original position after player is
