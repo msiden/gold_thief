@@ -82,15 +82,6 @@ def go_through_door():
             break
 
 
-def gravity():
-    """Apply gravity effect to all affected sprites"""
-    for sp in room.affected_by_gravity + [room.players]:
-        for spr in sp.sprites():
-            if not (spr.can_climb_ladders and spr.collides(room.ladders)) \
-                    or not spr.can_climb_ladders or spr.is_passed_out():
-                spr.move(Direction.DOWN, GRAVITY)
-
-
 def hit_miner():
     """
     Check if a miner is hit by a falling gold sack
@@ -233,6 +224,35 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), size) for i in os.listdir(folder)]
 
 
+def move_sprites():
+    """
+    Iterate though all rooms in the mine, move the miners and apply gravity to all applicable sprites
+    """
+
+    # Remember original room, i.e. the room where the player is
+    original_room = room.room
+
+    # Start iteration
+    for ro in range(1, room.no_of_rooms + 1):
+
+        # Change room temporarily
+        room.set(mine_=room.mine, room_=ro)
+
+        # Apply gravity to all sprites. This will also update sprite animations.
+        for sp in room.affected_by_gravity + ([room.players] if room.room == original_room else []):
+            for spr in sp.sprites():
+                if not (spr.can_climb_ladders and spr.collides(room.ladders)) \
+                        or not spr.can_climb_ladders or spr.is_passed_out():
+                    spr.move(Direction.DOWN, GRAVITY)
+
+        # Move miners
+        for m in room.miners.sprites():
+            m.move_cc()
+
+    # Change back to the original room where the player is
+    room.set(mine_=room.mine, room_=original_room)
+
+
 # Classes
 class Rooms(object):
     """Class for loading all room layouts in a mine (level) and it's sprites"""
@@ -263,6 +283,7 @@ class Rooms(object):
         self.not_player = None
         self.affected_by_gravity = None
         self.gold_delivered = 0
+        self.no_of_rooms = 0
 
     def set(self, mine_, room_):
         """
@@ -287,7 +308,6 @@ class Rooms(object):
         self.layout_img = self.rooms[str(self.room)]["layout_img"]
         self.layout_sprite = self.rooms[str(self.room)]["layout_sprite"]
         self.layouts = self.rooms[str(self.room)]["layouts"]
-        #self.no_of_gold_sacks = self.rooms[str(self.room)]["no_of_gold_sacks"]
         self.miners = self.rooms[str(self.room)]["miners"]
         self.gold_sacks = self.rooms[str(self.room)]["gold_sacks"]
         self.ladders = self.rooms[str(self.room)]["ladders"]
@@ -334,6 +354,7 @@ class Rooms(object):
             self.rooms[r]["layouts"] = pygame.sprite.Group()
             self.rooms[r]["layouts"].add(self.rooms[r]["layout_sprite"])
             self.no_of_gold_sacks = len(flatten_list([self.database[r]["sprites"]["gold"] for r in self.database]))
+            self.no_of_rooms = len(self.database)
 
             # Load sprites
             self.rooms[r]["players"] = self.generate_sprites(r, SpriteName.PLAYER, animation_freq_ms=8)
@@ -1099,18 +1120,14 @@ while game_is_running:
     # Read key presses and move the player
     key_presses(player_pressed_interact_key)
 
-    # Apply gravity to all sprites. This will also update sprite animations.
-    gravity()
+    # Move miners and apply gravity to all applicable sprites
+    move_sprites()
 
     # Check if the player is caught by a miner
     get_caught()
 
     # Check if the player walks through a door to a different room
     go_through_door()
-
-    # Move miners
-    for m in room.miners.sprites():
-        m.move_cc()
 
     # Check if a miner is hit by a falling gold sack
     hit_miner()
@@ -1139,7 +1156,3 @@ while game_is_running:
 
     # Update the screen
     pygame.display.flip()
-    #print(miners.sprites()[0].activity)
-    #print(player.activity)
-    #print(miners.sprites()[0].rect.y)
-    #print(wheelbarrows.sprites()[0].rect.y)
