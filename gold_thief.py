@@ -608,7 +608,12 @@ class Sprite(pygame.sprite.Sprite):
                     self.collides(room.ladders) and self.can_climb_ladders):
                 self.fall_pix += 1
                 if self.fall_pix >= self.max_control_while_falling_pix:
-                    activity = Activity.FALLING_WITH_GOLD if self.is_carrying_gold() else Activity.FALLING
+                    if self.is_passed_out():
+                        activity = Activity.PASSED_OUT
+                    elif self.is_carrying_gold():
+                        activity = Activity.FALLING_WITH_GOLD
+                    else:
+                        activity = Activity.FALLING
 
         self.update(activity if activity else self.activity)
 

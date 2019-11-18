@@ -76,8 +76,6 @@ TODO:
 KNOWN ISSUES
 * Miners must avoid player while player is passed out. Avoid 
 "double-death". 
-* Player "double-dies" when caught by miner on ladder and then 
-falling far
 * Miners should not walk all the way to the edge of the screen to 
 avoid player from being caught directly when entering another room 
 
