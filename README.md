@@ -37,7 +37,7 @@ TODO:
     - [ ] Ride elevator
     - [x] Empty gold in truck and collect points
     - [x] Kill miners if hitting with gold sack
-- [ ] Design real levels
+- [ ] Design levels
 - [X] Nicer granite texture
 - [ ] More textures
 - [ ] Create more sprites
@@ -53,7 +53,11 @@ TODO:
     - [ ] Door
 - [x] Make miners move
 - [x] Make player able to move between different rooms
-- [ ] Make other sprites (miners/carts) able to move between rooms)    
+- [ ] Make other sprites (miners/carts) able to move between rooms)  
+  - [ ] Reproduce bug where player is caught just when changing room
+  - [ ] Miners must change room also when not in the same room as player
+  - [ ] Randomly select whether miners should change room or turn around 
+  when colliding with door
 - [ ] Make carts move
 - [x] Miners (and carts) must keep moving when in another room    
 - [x] Print number of lives etc to the top of the screen
@@ -69,9 +73,7 @@ TODO:
 - [ ] Start screen
 - [ ] High scores
 - [ ] Save game function
-- [ ] Re-think room config json layouts.    
-    - Miners to be placed randomly or enter through doors
-    - Player always starts in same position as truck
+
     
 KNOWN ISSUES
 * Miners must avoid player while player is passed out. Avoid 

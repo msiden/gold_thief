@@ -73,13 +73,18 @@ def get_caught():
 
 
 def go_through_door():
-    """Check whether the player walks through a door and if so transport to a different room"""
+    """Check whether the player or a miner walks through a door and if so transport to a different room"""
     for d in room.doors.sprites():
-        if room.player.collides(d) and d.exit_direction in (room.player.h_direction, room.player.v_direction):
-            room.set(room.mine, d.leads_to["room"])
-            room.player.rect.x = d.leads_to["x"]
-            room.player.rect.y = d.leads_to["y"]
-            break
+        for spr in room.players.sprites() + room.miners.sprites():
+            if spr.collides(d) and d.exit_direction in (spr.h_direction, spr.v_direction):
+                if spr.is_player:
+                    room.set(room.mine, d.leads_to["room"])
+                elif spr.is_miner:
+                    spr.remove(room.rooms[str(room.room)]["miners"])
+                    room.rooms[str(d.leads_to["room"])]["miners"].add(spr)
+                spr.rect.x = d.leads_to["x"]
+                spr.rect.y = d.leads_to["y"]
+                break
 
 
 def hit_miner():
@@ -248,6 +253,8 @@ def move_sprites():
         # Move miners
         for m in room.miners.sprites():
             m.move_cc()
+
+        #go_through_door()
 
     # Change back to the original room where the player is
     room.set(mine_=room.mine, room_=original_room)
