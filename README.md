@@ -69,19 +69,19 @@ TODO:
 - [ ] Start screen
 - [ ] High scores
 - [ ] Save game function
+- [ ] Pause game function
+- [ ] Player and miners are reset to original position after player is
+    passed out
+  - [ ] Create a value called "self.original_pos" for each sprite
+    containing [room, x, y]. Reset to this value in room.reset. 
 
     
 KNOWN ISSUES
-* Miners must avoid player while player is passed out. Avoid 
-"double-death". 
-* Miners should not walk all the way to the edge of the screen to 
-avoid player from being caught directly when entering another room 
+- [ ] Miners should not walk all the way to the edge of the screen to 
+avoid player from being caught directly when entering another room or 
+when miner enters the same room as player 
 
 FEATURES FROM ORIGINAL GAME TO BE IMPLEMENTED (?)
-* Player and miners are reset to original position after player is
-passed out
-* Only two miners who start from a fixed position and move across
-all rooms
 * Miners can choose to wait for elevators
 * Miners keep moving when in another room and not visible
 * Bonus counts down every second from 3000 but is reset when 
