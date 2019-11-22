@@ -54,6 +54,32 @@ def change_direction(direction):
         Direction.DOWN: Direction.UP}[direction]
 
 
+def exit_room(exits_, sprites_):
+    """
+    Check whether a sprite walks through an exit and if so transport to a different room
+
+    - exits_ -- (List. Mandatory) A list of exit point sprites
+    - sprites_ -- (List. Mandatory) A list of sprites to check collision agains. Probably player or miners.
+
+    Returns: None
+    """
+    for e in exits_:
+        for spr in sprites_:
+            if spr.collides(e) and e.exit_direction in (spr.h_direction, spr.v_direction):
+                if spr.is_player:
+                    room.set(room.mine, e.leads_to["room"])
+                else:
+                    # Randomly decide whether the sprite should go through the exit or turn around
+                    if bool(random.randrange(0, 2)):
+                        spr.v_direction = change_direction(spr.v_direction)
+                        spr.h_direction = change_direction(spr.h_direction)
+                        continue
+                    spr.remove(room.rooms[str(room.room)]["miners"])
+                    room.rooms[str(e.leads_to["room"])]["miners"].add(spr)
+                spr.rect.x = e.leads_to["x"]
+                spr.rect.y = e.leads_to["y"]
+
+
 def flatten_list(l):
     """
     Make a list of lists into a single list.
@@ -70,21 +96,6 @@ def get_caught():
     for mi in room.miners.sprites():
         if mi.collides(room.player) and not room.player.is_passed_out() and not mi.is_passed_out() and not CHICKEN_MODE:
             room.player.pass_out()
-
-
-def go_through_door():
-    """Check whether the player or a miner walks through a door and if so transport to a different room"""
-    for d in room.doors.sprites():
-        for spr in room.players.sprites() + room.miners.sprites():
-            if spr.collides(d) and d.exit_direction in (spr.h_direction, spr.v_direction):
-                if spr.is_player:
-                    room.set(room.mine, d.leads_to["room"])
-                elif spr.is_miner:
-                    spr.remove(room.rooms[str(room.room)]["miners"])
-                    room.rooms[str(d.leads_to["room"])]["miners"].add(spr)
-                spr.rect.x = d.leads_to["x"]
-                spr.rect.y = d.leads_to["y"]
-                break
 
 
 def hit_miner():
@@ -254,7 +265,8 @@ def move_sprites():
         for m in room.miners.sprites():
             m.move_cc()
 
-        #go_through_door()
+        # Check if a miner collides with an exit point to another room
+        exit_room(room.exits.sprites(), room.miners.sprites())
 
     # Change back to the original room where the player is
     room.set(mine_=room.mine, room_=original_room)
@@ -285,7 +297,7 @@ class Rooms(object):
         self.ladders = None
         self.trucks = None
         self.wheelbarrows = None
-        self.doors = None
+        self.exits = None
         self.all_sprites = None
         self.not_player = None
         self.affected_by_gravity = None
@@ -320,7 +332,7 @@ class Rooms(object):
         self.ladders = self.rooms[str(self.room)]["ladders"]
         self.trucks = self.rooms[str(self.room)]["trucks"]
         self.wheelbarrows = self.rooms[str(self.room)]["wheelbarrows"]
-        self.doors = self.rooms[str(self.room)]["doors"]
+        self.exits = self.rooms[str(self.room)]["exits"]
         self.all_sprites = self.rooms[str(self.room)]["all_sprites"]
         self.not_player = self.rooms[str(self.room)]["not_player"]
         self.affected_by_gravity = self.rooms[str(self.room)]["affected_by_gravity"]
@@ -373,8 +385,8 @@ class Rooms(object):
                 r, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
             self.rooms[r]["trucks"] = self.generate_sprites(r, SpriteName.TRUCK, animation_freq_ms=100)
             self.rooms[r]["wheelbarrows"] = self.generate_sprites(r, SpriteName.WHEELBARROW)
-            self.rooms[r]["doors"] = self.generate_sprites(
-                r, SpriteName.DOOR, image=Folder.IDLE_IMGS.format(SpriteName.DOOR) + "001.png")
+            self.rooms[r]["exits"] = self.generate_sprites(
+                r, SpriteName.EXIT, image=Folder.IDLE_IMGS.format(SpriteName.EXIT) + "001.png")
             self.rooms[r]["all_sprites"] = (
                 self.rooms[r]["ladders"], self.rooms[r]["trucks"], self.rooms[r]["gold_sacks"],
                 self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"])
@@ -453,10 +465,10 @@ class Sprite(pygame.sprite.Sprite):
             carrying a gold sack
         - slow_speed -- (Integer. Optional. Defaults to SLOW_SPEED constant value) The sprite's speed when carrying a
             gold sack
-        - leads_to -- (Dict. Optional. Defaults to None) Only valid for door sprites. A dictionary containing the
-            room number and x/y-position to where the door leads
-        - exit_dir -- (String. Optional. Defaults to None) Only valid for door sprites. The direction the player must be
-            facing to go through the door.
+        - leads_to -- (Dict. Optional. Defaults to None) Only valid for exit sprites. A dictionary containing the
+            room number and x/y-position to where the exit leads
+        - exit_dir -- (String. Optional. Defaults to None) Only valid for exit sprites. The direction the player must be
+            facing to go through the exit.
         """
         pygame.sprite.Sprite.__init__(self)
 
@@ -1013,8 +1025,8 @@ class FileName(object):
 class SpriteName(object):
     AXE = "axe"
     CART = "cart"
-    DOOR = "door"
     ELEVATOR = "elevator"
+    EXIT = "exit"
     GOLD = "gold"
     HANDLE = "handle"
     LADDER = "ladder"
@@ -1138,8 +1150,8 @@ while game_is_running:
     # Check if the player is caught by a miner
     get_caught()
 
-    # Check if the player walks through a door to a different room
-    go_through_door()
+    # Check if the player exits the room
+    exit_room(room.exits.sprites(), room.players.sprites())
 
     # Check if a miner is hit by a falling gold sack
     hit_miner()

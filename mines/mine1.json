@@ -8,7 +8,7 @@
       "wheelbarrow":  [
         {"position": [1150, 100], "h_direction": "left"}],
       "player":  [
-        {"position": [1150, 20], "h_direction": "right", "activity":  "idle"}],
+        {"position": [120, 20], "h_direction": "right", "activity":  "idle"}],
       "miner": [
         {"position": [700, 290], "h_direction": "left", "activity":  "walking"},
         {"position": [635, 500], "h_direction": "right", "activity":  "walking"},
@@ -21,11 +21,11 @@
         {"position": [1055, 200], "height":  260},
         {"position": [95, 385], "height":  443},
         {"position": [880, 520], "height":  265}],
-      "door": [
-        {"position": [1420, 110], "exit_dir": "right", "leads_to": {"room":  2, "x": 1, "y":  110}},
-        {"position": [1420, 280], "exit_dir": "right", "leads_to": {"room":  2, "x": 1, "y":  300}},
-        {"position": [1420, 630], "exit_dir": "right", "leads_to": {"room":  2, "x": 1, "y":  645}},
-        {"position": [1420, 890], "exit_dir": "right", "leads_to": {"room":  2, "x": 1, "y":  902}}]}
+      "exit": [
+        {"position": [1430, 110], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  110}},
+        {"position": [1430, 280], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  300}},
+        {"position": [1430, 630], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  645}},
+        {"position": [1430, 890], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  901}}]}
   },
   "2": {
     "layout": "room1_2.png",
@@ -44,10 +44,10 @@
         {"position": [887, 200], "height":  565},
         {"position": [1034, 280], "height":  295},
         {"position": [1302, 280], "height":  635}],
-      "door": [
+      "exit": [
         {"position": [-100, 110], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  110}},
         {"position": [-100, 280], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  293}},
         {"position": [-100, 630], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  645}},
-        {"position": [-100, 890], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  902}}]}
+        {"position": [-100, 890], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  901}}]}
   }
 }

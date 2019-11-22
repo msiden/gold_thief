@@ -53,11 +53,7 @@ TODO:
     - [ ] Door
 - [x] Make miners move
 - [x] Make player able to move between different rooms
-- [ ] Make other sprites (miners/carts) able to move between rooms)  
-  - [ ] Reproduce bug where player is caught just when changing room
-  - [ ] Miners must change room also when not in the same room as player
-  - [ ] Randomly select whether miners should change room or turn around 
-  when colliding with door
+- [x] Make other sprites (miners/carts) able to move between rooms)  
 - [ ] Make carts move
 - [x] Miners (and carts) must keep moving when in another room    
 - [x] Print number of lives etc to the top of the screen
