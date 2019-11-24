@@ -261,12 +261,6 @@ def move_sprites():
                         or not spr.can_climb_ladders or spr.is_passed_out():
                     spr.move(Direction.DOWN, GRAVITY)
 
-                # Check if the player is just waking up from passed out state and if so reset mine to room 1 etc.
-                if spr.waiting_to_reset:
-                    spr.waiting_to_reset = False
-                    room.reset()
-                    original_room = 1
-
         # Move miners
         for m in room.miners.sprites():
             m.move_cc()
@@ -444,12 +438,6 @@ class Rooms(object):
             group.add(spr)
         return group
 
-    def reset(self):
-        """Reset the position of player and miners to the start position in room 1"""
-        sprites_db = self.database["1"]["sprites"]
-        self.player.rect.x = sprites_db["player"][0]["position"][0]
-        self.player.rect.y = sprites_db["player"][0]["position"][1]
-
 
 class Sprite(pygame.sprite.Sprite):
 
@@ -527,7 +515,6 @@ class Sprite(pygame.sprite.Sprite):
         self.leads_to = leads_to
         self.exit_direction = exit_dir
         self.max_control_while_falling_pix = 0 if self.name == SpriteName.GOLD else MAX_CONTROL_WHILE_FALLING_PIX
-        self.waiting_to_reset = False
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -776,7 +763,6 @@ class Sprite(pygame.sprite.Sprite):
         elif self.is_passed_out() and now >= self.wake_up_time:
             activity = Activity.WALKING if self.is_computer_controlled else Activity.IDLE
             self.animation = animation_loop(self.animations[activity])
-            self.waiting_to_reset = self.is_player
 
         # Load the next image in the animation
         if (now >= self.next_img) or (activity != self.activity):

@@ -70,10 +70,8 @@ TODO:
 - [ ] High scores
 - [ ] Save game function
 - [ ] Pause game function
-- [ ] Player and miners are reset to original position after player is
-    passed out
-  - [ ] Create a value called "self.original_pos" for each sprite
-    containing [room, x, y]. Reset to this value in room.reset. 
+- [ ] Player will be in immortal mode for a few seconds after passing out
+    - [ ] Set self.image.set_alpha(x) in sprite.update 
 
     
 KNOWN ISSUES
