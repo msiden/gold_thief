@@ -69,10 +69,9 @@ TODO:
 - [ ] Start screen
 - [ ] High scores
 - [ ] Save game function
-- [ ] Pause game function
-- [ ] Player will be in immortal mode for a few seconds after passing out
-    - [ ] Set self.image.set_alpha(x) in sprite.update 
-
+- [x] Pause game function
+- [x] Player will be in immortal mode for a few seconds after passing out
+    
     
 KNOWN ISSUES
 - [ ] Miners should not walk all the way to the edge of the screen to 

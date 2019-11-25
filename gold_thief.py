@@ -9,6 +9,10 @@ CHICKEN_MODE = False
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
+IMG_SEMI_TRANSPARENCY = 80
+IMG_FULLY_OPAQUE = 255
+IMG_TRANSPARENCY_INCREMENTATION = 1
+IMMORTAL_TIME = 5000
 MAX_FALL_PIX = 100
 MAX_CONTROL_WHILE_FALLING_PIX = 50
 STANDARD_SPEED = 9
@@ -94,7 +98,8 @@ def flatten_list(l):
 def get_caught():
     """Check whether the player is caught by a miner"""
     for mi in room.miners.sprites():
-        if mi.collides(room.player) and not room.player.is_passed_out() and not mi.is_passed_out() and not CHICKEN_MODE:
+        if mi.collides(room.player) and not room.player.is_passed_out() and not mi.is_passed_out() \
+                and not CHICKEN_MODE and not room.player.immortality_timer:
             room.player.pass_out()
 
 
@@ -515,6 +520,8 @@ class Sprite(pygame.sprite.Sprite):
         self.leads_to = leads_to
         self.exit_direction = exit_dir
         self.max_control_while_falling_pix = 0 if self.name == SpriteName.GOLD else MAX_CONTROL_WHILE_FALLING_PIX
+        self.immortality_timer = 0
+        self.image_transparency_val = 255
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -763,6 +770,16 @@ class Sprite(pygame.sprite.Sprite):
         elif self.is_passed_out() and now >= self.wake_up_time:
             activity = Activity.WALKING if self.is_computer_controlled else Activity.IDLE
             self.animation = animation_loop(self.animations[activity])
+            self.immortality_timer = IMMORTAL_TIME if self.is_player else 0
+            self.image_transparency_val = IMG_SEMI_TRANSPARENCY if self.is_player else IMG_FULLY_OPAQUE
+
+        # Update immortality timer if sprite is in immortal state after waking up from passed out state
+        if self.immortality_timer > 0:
+            self.immortality_timer -= clock.get_time()
+            self.image_transparency_val += IMG_TRANSPARENCY_INCREMENTATION
+        else:
+            self.immortality_timer = 0
+            self.image_transparency_val = IMG_FULLY_OPAQUE
 
         # Load the next image in the animation
         if (now >= self.next_img) or (activity != self.activity):
@@ -771,6 +788,7 @@ class Sprite(pygame.sprite.Sprite):
             self.image.set_colorkey(Color.WHITE)
             if self.is_facing_left:
                 self.image = pygame.transform.flip(self.image, True, False)
+            self.image.set_alpha(self.image_transparency_val)
 
         self.activity = activity
 
@@ -1096,6 +1114,7 @@ pygame.init()
 # Instantiate clock and set game to running
 clock = pygame.time.Clock()
 game_is_running = True
+game_is_paused = False
 
 # Load mine 1 and room 1
 room = Rooms()
@@ -1116,6 +1135,9 @@ gold_delivered_text = font.render(
     "Gold delivered: {0}/{1}".format(room.gold_delivered, room.no_of_gold_sacks), True, Color.GREEN)
 gold_delivered_rect = gold_delivered_text.get_rect()
 gold_delivered_rect.center = (250, 40)
+paused_text = font.render("PAUSED", True, Color.GREEN)
+paused_text_rect = paused_text.get_rect()
+paused_text_rect.center = (SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2)
 
 
 ########################################################################################################################
@@ -1129,9 +1151,10 @@ while game_is_running:
     # Read events
     for event in pygame.event.get():
 
-        # Check for quit game request from user
+        # Check for quit or pause game request from user
         game_is_running = \
             not (event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE))
+        game_is_paused = (not game_is_paused) and (event.type == pygame.KEYUP and event.key == pygame.K_p)
 
         # Check whether one of the gold sack interaction buttons are pressed
         l_control = event.type == pygame.KEYUP and event.key == pygame.K_LCTRL
@@ -1140,6 +1163,12 @@ while game_is_running:
         r_control = event.type == pygame.KEYUP and event.key == pygame.K_RCTRL
         r_alt = event.type == pygame.KEYUP and event.key == pygame.K_RALT
         player_pressed_interact_key = any((l_control, l_alt, space, r_control, r_alt))
+
+    # Pause game
+    if game_is_paused:
+        screen.blit(paused_text, paused_text_rect)
+        pygame.display.flip()
+        continue
 
     # Read key presses and move the player
     key_presses(player_pressed_interact_key)
