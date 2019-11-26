@@ -32,8 +32,9 @@
     "texture": "granite.jpg",
     "sprites": {
       "miner": [
-        {"position": [1330, 100], "h_direction": "left", "activity":  "walking"},
-        {"position": [170, 900], "h_direction": "right", "activity":  "walking"}],
+        {"position": [350, 100], "h_direction": "left", "activity":  "walking"},
+        {"position": [350, 630], "h_direction": "left", "activity":  "walking"},
+        {"position": [350, 900], "h_direction": "left", "activity":  "walking"}],
       "gold": [
         {"position": [740, 280]}, {"position": [515, 460]}, {"position": [1170, 460]}, {"position": [1130, 630]},
         {"position": [250, 890]}],

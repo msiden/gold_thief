@@ -73,7 +73,8 @@ TODO:
 - [x] Player will be in immortal mode for a few seconds after passing out
 - [ ] Player must get a warning when a miner is close to one of the doors
     and might enter the room
-    
+- [ ] Sound effects
+- [ ] Music
     
 KNOWN ISSUES
 - [ ] Passed out timer (and other timers) must pause when in pause mode 

@@ -3,6 +3,7 @@ import os
 import json
 import ctypes
 import random
+import itertools
 
 # Define Screen and sprite sizes and other constants
 CHICKEN_MODE = False
@@ -18,6 +19,7 @@ MAX_CONTROL_WHILE_FALLING_PIX = 50
 STANDARD_SPEED = 9
 SLOW_SPEED = 5
 MINER_SPEED = 8
+MINER_WARNING_DISTANCE_PIX = 200
 PLAYER_LIVES = 5
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
@@ -274,17 +276,26 @@ def move_sprites():
         exit_room(room.exits.sprites(), room.miners.sprites())
 
         # Check if a miner is close to an exit point to another room and if so present a warning to the player
-        for ex in room.exits.sprites():
-            for mi in room.miners.sprites():
-                if mi.h_direction == Direction.LEFT:
-                    if mi.rect.x <= ex.rect.right + 100 and mi.rect.x > ex.rect.right and mi.rect.y <= ex.rect.bottom and mi.rect.bottom >= ex.rect.y:
-                        if ex.leads_to["room"] == original_room:
-                            print("WARNING", ex.leads_to)
-                            warning.rect.x = ex.leads_to["x"]
-                            warning.rect.y = ex.leads_to["y"]
-                            warning.h_direction = mi.h_direction
-                            warning.update(Activity.IDLE)
-                            warnings.add(warning)
+        warnings.empty()  # Remove
+        for ex, mi in itertools.product(room.exits.sprites(), room.miners.sprites()):
+            heading_left = mi.h_direction == Direction.LEFT
+            heading_right = mi.h_direction == Direction.RIGHT
+            right_of_exit = ex.rect.right + MINER_WARNING_DISTANCE_PIX >= mi.rect.x > ex.rect.right
+            left_of_exit = ex.rect.x - MINER_WARNING_DISTANCE_PIX <= mi.rect.right < ex.rect.x
+            same_height = mi.rect.y <= ex.rect.bottom and mi.rect.bottom >= ex.rect.y
+            same_room_as_player = ex.leads_to["room"] == original_room
+            warning_right = heading_left and right_of_exit
+            warning_left = heading_right and left_of_exit
+            add_warning = same_height and same_room_as_player and (warning_left or warning_right)
+
+            if add_warning:
+                # Check that location isn't already in group before adding
+                warning = Sprite(
+                    SpriteName.WARNING, position=(ex.leads_to["x"], ex.leads_to["y"]),
+                    h_direction=mi.h_direction, activity=Activity.IDLE)
+                warnings.add(warning)
+
+        # Iterate through all sprites in warnings and remove those that are no longer needed by checking x/y pos
 
     # Change back to the original room where the player is
     room.set(mine_=room.mine, room_=original_room)
@@ -1155,7 +1166,6 @@ paused_text_rect = paused_text.get_rect()
 paused_text_rect.center = (SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2)
 
 # Warning sign sprites to be displayed when a miner might soon enter the room
-warning = Sprite(SpriteName.WARNING)
 warnings = pygame.sprite.Group()
 
 ########################################################################################################################
