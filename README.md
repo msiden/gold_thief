@@ -71,16 +71,15 @@ TODO:
 - [ ] Save game function
 - [x] Pause game function
 - [x] Player will be in immortal mode for a few seconds after passing out
+- [ ] Player must get a warning when a miner is close to one of the doors
+    and might enter the room
     
     
 KNOWN ISSUES
-- [ ] Miners should not walk all the way to the edge of the screen to 
-avoid player from being caught directly when entering another room or 
-when miner enters the same room as player 
+- [ ] Passed out timer (and other timers) must pause when in pause mode 
 
 FEATURES FROM ORIGINAL GAME TO BE IMPLEMENTED (?)
 * Miners can choose to wait for elevators
-* Miners keep moving when in another room and not visible
 * Bonus counts down every second from 3000 but is reset when 
 player is passed out 
 

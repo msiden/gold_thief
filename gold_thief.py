@@ -273,6 +273,19 @@ def move_sprites():
         # Check if a miner collides with an exit point to another room
         exit_room(room.exits.sprites(), room.miners.sprites())
 
+        # Check if a miner is close to an exit point to another room and if so present a warning to the player
+        for ex in room.exits.sprites():
+            for mi in room.miners.sprites():
+                if mi.h_direction == Direction.LEFT:
+                    if mi.rect.x <= ex.rect.right + 100 and mi.rect.x > ex.rect.right and mi.rect.y <= ex.rect.bottom and mi.rect.bottom >= ex.rect.y:
+                        if ex.leads_to["room"] == original_room:
+                            print("WARNING", ex.leads_to)
+                            warning.rect.x = ex.leads_to["x"]
+                            warning.rect.y = ex.leads_to["y"]
+                            warning.h_direction = mi.h_direction
+                            warning.update(Activity.IDLE)
+                            warnings.add(warning)
+
     # Change back to the original room where the player is
     room.set(mine_=room.mine, room_=original_room)
 
@@ -407,7 +420,7 @@ class Rooms(object):
         """
         Generate a sprites group from room setup dictionary
 
-        - room_
+        - room_ - (String or Integer. Mandatory) Refers to the room/mine database
         - name -- (String. Mandatory) The name of the sprite to generate. Use SpriteNames enum.
         - image -- (String. Optional. Defaults to None) Use a specific image instead of an animation
         - animation_freq_ms -- (Integer. Optional. Defaults to 0) The update frequency of the sprite animation in
@@ -430,7 +443,7 @@ class Rooms(object):
         for spr in sprites_db:
             activity = spr["activity"] if "activity" in spr else Activity.IDLE
             h_direction = spr["h_direction"] if "h_direction" in spr else Direction.RIGHT
-            v_direction = spr["v_direction"] if "v_direction" in spr else Direction.NONE
+            v_direction = spr["v_direction"] if "v_direction" in spr else Direction.DOWN
             height = spr["height"] if "height" in spr else None
             leads_to = spr["leads_to"] if "leads_to" in spr else None
             exit_dir = spr["exit_dir"] if "exit_dir" in spr else None
@@ -1053,6 +1066,7 @@ class SpriteName(object):
     PLAYER = "player"
     TRUCK = "truck"
     MINER = "miner"
+    WARNING = "warning"
     WHEELBARROW = "wheelbarrow"
 
 
@@ -1102,6 +1116,7 @@ SPRITE_ANIMATIONS = {
         Animation.LOADED_03: load_images(Animation.LOADED_03, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
         Animation.LOADED_04: load_images(Animation.LOADED_04, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
         Animation.LOADED_05: load_images(Animation.LOADED_05, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4)},
+    SpriteName.WARNING: {Animation.IDLE: load_images(Animation.IDLE, SpriteName.WARNING)},
     SpriteName.WHEELBARROW: {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.WHEELBARROW, multiply_x_by=2),
         Animation.LOADED_01: load_images(Animation.LOADED_01, SpriteName.WHEELBARROW, multiply_x_by=2),
@@ -1139,6 +1154,9 @@ paused_text = font.render("PAUSED", True, Color.GREEN)
 paused_text_rect = paused_text.get_rect()
 paused_text_rect.center = (SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2)
 
+# Warning sign sprites to be displayed when a miner might soon enter the room
+warning = Sprite(SpriteName.WARNING)
+warnings = pygame.sprite.Group()
 
 ########################################################################################################################
 # MAIN LOOP
@@ -1195,6 +1213,7 @@ while game_is_running:
     screen.blit(room.texture_img, (0, 0))
 
     # Draw sprites
+    warnings.draw(screen)
     for s in room.all_sprites:
         s.draw(screen)
     room.players.draw(screen)
