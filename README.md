@@ -74,6 +74,7 @@ TODO:
 - [ ] Player must get a warning when a miner is close to one of the doors
     and might enter the room
     - Must also work for vertical exits
+    - Blinking sprites!!!
 - [ ] Sound effects
 - [ ] Music
     

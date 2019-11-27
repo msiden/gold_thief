@@ -6,7 +6,7 @@ import random
 import itertools
 
 # Define Screen and sprite sizes and other constants
-CHICKEN_MODE = True
+CHICKEN_MODE = False
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
@@ -255,8 +255,10 @@ def move_sprites():
     # Remember original room, i.e. the room where the player is
     original_room = room.room
 
+    # Remove all warning sprites
+    warnings.empty()
+
     # Start iteration
-    #warnings.empty()  # Remove
     for ro in range(1, room.no_of_rooms + 1):
 
         # Change room temporarily
@@ -275,9 +277,7 @@ def move_sprites():
 
         # Check if a miner collides with an exit point to another room
         exit_room(room.exits.sprites(), room.miners.sprites())
-        remove_warning = False
-        obsolete_warnings = []
-        added_warnings = []
+
         # Check miner is close to an exit point to leading to the same room as the player and if so present a warning
         for ex, mi in itertools.product(room.exits.sprites(), room.miners.sprites()):
             heading_left = mi.h_direction == Direction.LEFT
@@ -291,23 +291,11 @@ def move_sprites():
             existing_warnings = [(w.rect.x, w.rect.y) for w in warnings.sprites()]
             exists = (ex.leads_to["x"], ex.leads_to["y"]) in existing_warnings
             add_warning = same_height and same_room_as_player and (warning_left or warning_right) and not exists
-            remove_warning = exists and not all((same_height, same_room_as_player, warning_left or warning_right))
 
             if add_warning:
-                added_warnings.append({"x": ex.leads_to["x"], "y": ex.leads_to["y"], "h_direction": mi.h_direction})
-            elif remove_warning:
-                obsolete_warnings.append((ex.leads_to["x"], ex.leads_to["y"]))
-
-        for w in warnings.sprites():
-            if (w.rect.x, w.rect.y) in obsolete_warnings:
-                w.remove(warnings)
-
-        for w in added_warnings:
-            warnings.add(Sprite(
-                SpriteName.WARNING, position=(w["x"], w["y"]), h_direction=w["h_direction"], activity=Activity.IDLE))
-
-
-
+                warnings.add(Sprite(
+                    SpriteName.WARNING, position=(ex.leads_to["x"], ex.leads_to["y"]), h_direction=mi.h_direction,
+                    activity=Activity.IDLE))
 
     # Change back to the original room where the player is
     room.set(mine_=room.mine, room_=original_room)
