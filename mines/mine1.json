@@ -57,6 +57,8 @@
     "layout": "room1_3.png",
     "texture": "granite.jpg",
     "sprites": {
+      "miner": [
+        {"position": [120, 410], "h_direction": "right", "activity":  "climbing"}],
       "gold": [
         {"position": [230, 800]}, {"position": [1250, 900]}],
       "ladder": [

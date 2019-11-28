@@ -25,7 +25,7 @@ SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
 WAKE_UP_TIME_MS = 5000
 WARNINGS_ANIMATION_FREQ_MS = 100
-WARNINGS_DURATION_MS = 700
+WARNINGS_DURATION_MS = 1000
 
 # Make sure we get the right screen resolution
 ctypes.windll.user32.SetProcessDPIAware()
@@ -222,6 +222,8 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
     """
     folder = {
         Animation.CLIMBING: Folder.CLIMBING_IMGS.format(sprite_name),
+        Animation.CLIMBING_UP: Folder.CLIMBING_UP_IMGS.format(sprite_name),
+        Animation.CLIMBING_DOWN: Folder.CLIMBING_DOWN_IMGS.format(sprite_name),
         Animation.CLIMBING_WITH_GOLD: Folder.CLIMBING_WITH_GOLD_IMGS.format(sprite_name),
         Animation.FALLING: Folder.IDLE_IMGS.format(sprite_name),
         Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name),
@@ -278,31 +280,36 @@ def move_sprites():
         # Check if a miner collides with an exit point to another room
         exit_room(room.exits.sprites(), room.miners.sprites())
 
-        # Check miner is close to an exit point to leading to the same room as the player and if so present a warning
+        # Check miner is close to an exit point leading to the same room as the player and if so present a warning
         for ex, mi in itertools.product(room.exits.sprites(), room.miners.sprites()):
-            heading_left = mi.h_direction == Direction.LEFT
-            heading_right = mi.h_direction == Direction.RIGHT
+            if mi.is_placeholder:
+                continue
+            heading_left = mi.h_direction == Direction.LEFT and mi.is_walking()
+            heading_right = mi.h_direction == Direction.RIGHT and mi.is_walking()
             heading_up = mi.v_direction == Direction.UP and mi.is_climbing()
             heading_down = mi.v_direction == Direction.DOWN and mi.is_climbing()
             right_of_exit = ex.rect.right + MINER_WARNING_DISTANCE_PIX >= mi.rect.x > ex.rect.right
             left_of_exit = ex.rect.x - MINER_WARNING_DISTANCE_PIX <= mi.rect.right < ex.rect.x
-            same_height = mi.rect.y <= ex.rect.bottom and mi.rect.bottom >= ex.rect.y
+            below_exit = ex.rect.bottom + MINER_WARNING_DISTANCE_PIX >= mi.rect.y > ex.rect.bottom
+            above_exit = ex.rect.y - MINER_WARNING_DISTANCE_PIX <= mi.rect.bottom < ex.rect.y
+            same_v_pos = mi.rect.y <= ex.rect.bottom and mi.rect.bottom >= ex.rect.y
+            same_h_pos = mi.rect.x <= ex.rect.right and mi.rect.right >= ex.rect.x
             same_room_as_player = ex.leads_to["room"] == original_room
             warning_right = heading_left and right_of_exit
             warning_left = heading_right and left_of_exit
+            warning_below = heading_up and below_exit
+            warning_above = heading_down and above_exit
             existing_warnings = [(w.rect.x, w.rect.y) for w in warnings.sprites()]
             exists = (ex.leads_to["x"], ex.leads_to["y"]) in existing_warnings
-            add_warning = same_height and same_room_as_player and (warning_left or warning_right) and not exists
+            h_warning = same_v_pos and same_room_as_player and (warning_left or warning_right) and not exists
+            v_warning = same_h_pos and same_room_as_player and (warning_above or warning_below) and not exists
+            add_warning = h_warning or v_warning
 
             if add_warning:
                 warnings.add(Sprite(
                     SpriteName.WARNING, position=(ex.leads_to["x"], ex.leads_to["y"]), h_direction=mi.h_direction,
                     activity=Activity.IDLE, longevity_ms=WARNINGS_DURATION_MS,
                     animation_freq_ms=WARNINGS_ANIMATION_FREQ_MS))
-
-            for w in warnings.sprites():
-                if pygame.time.get_ticks() >= w.expiration_ms:
-                    w.remove(warnings)
 
     # Update warnings animations
     warnings.update(Activity.IDLE)
@@ -560,7 +567,7 @@ class Sprite(pygame.sprite.Sprite):
         self.image_transparency_val = 255
         self.longevity_ms = longevity_ms
         self.expiration_ms = pygame.time.get_ticks() + self.longevity_ms if self.longevity_ms else 0
-        self.ignore_screen_boundries = self.is_truck
+        self.ignore_screen_boundaries = self.is_truck
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -617,7 +624,7 @@ class Sprite(pygame.sprite.Sprite):
             outside_of_screen_h = not (0 < self.rect.center[0] < SCREEN_SIZE[0])
             outside_of_screen_v = not (0 < self.rect.y < SCREEN_SIZE[1] - SPRITE_SIZE[1])
             outside_of_screen = outside_of_screen_h or outside_of_screen_v
-            applies_to_sprite = not self.ignore_screen_boundries
+            applies_to_sprite = not self.ignore_screen_boundaries
             if outside_of_screen and applies_to_sprite:
                 self.rect.move_ip(-x, -y)
 
@@ -800,6 +807,11 @@ class Sprite(pygame.sprite.Sprite):
         self.is_facing_left = self.h_direction == Direction.LEFT
         self.is_facing_right = self.h_direction == Direction.RIGHT
         self.is_facing_up = self.v_direction == Direction.UP
+
+        # Kill sprite if it has expired
+        if now >= self.expiration_ms and self.longevity_ms:
+            self.kill()
+            return
 
         # Check if the sprite activity has changed and if so change animation
         if activity != self.activity:
@@ -1001,6 +1013,8 @@ class Sprite(pygame.sprite.Sprite):
 # Enums
 class Activity(object):
     CLIMBING = "climbing"
+    CLIMBING_UP = "climbing_up"
+    CLIMBING_DOWN = "climbing_down"
     CLIMBING_WITH_GOLD = "climbing_with_gold"
     FALLING = "falling"
     FALLING_WITH_GOLD = "falling_with_gold"
@@ -1055,6 +1069,8 @@ class Folder(object):
     SPRITES = IMAGES + "sprites" + os.sep
     TEXTURES = IMAGES + "textures" + os.sep
     CLIMBING_IMGS = SPRITES + "{}" + os.sep + "climbing" + os.sep
+    CLIMBING_UP_IMGS = SPRITES + "{}" + os.sep + "climbing_up" + os.sep
+    CLIMBING_DOWN_IMGS = SPRITES + "{}" + os.sep + "climbing_down" + os.sep
     CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "climbing_with_gold" + os.sep
     IDLE_IMGS = SPRITES + "{}" + os.sep + "idle" + os.sep
     IDLE_CLIMBING_IMGS = SPRITES + "{}" + os.sep + "idle_climbing" + os.sep
@@ -1146,7 +1162,11 @@ SPRITE_ANIMATIONS = {
         Animation.LOADED_03: load_images(Animation.LOADED_03, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
         Animation.LOADED_04: load_images(Animation.LOADED_04, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
         Animation.LOADED_05: load_images(Animation.LOADED_05, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4)},
-    SpriteName.WARNING: {Animation.IDLE: load_images(Animation.IDLE, SpriteName.WARNING)},
+    SpriteName.WARNING: {
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.WARNING),
+        Animation.CLIMBING_UP: load_images(Animation.CLIMBING_UP, SpriteName.WARNING),
+        Animation.CLIMBING_DOWN: load_images(Animation.CLIMBING_DOWN, SpriteName.WARNING),
+        Animation.WALKING: load_images(Animation.WALKING, SpriteName.WARNING)},
     SpriteName.WHEELBARROW: {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.WHEELBARROW, multiply_x_by=2),
         Animation.LOADED_01: load_images(Animation.LOADED_01, SpriteName.WHEELBARROW, multiply_x_by=2),
