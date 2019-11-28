@@ -24,6 +24,8 @@ PLAYER_LIVES = 5
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
 WAKE_UP_TIME_MS = 5000
+WARNINGS_ANIMATION_FREQ_MS = 100
+WARNINGS_DURATION_MS = 700
 
 # Make sure we get the right screen resolution
 ctypes.windll.user32.SetProcessDPIAware()
@@ -74,6 +76,7 @@ def exit_room(exits_, sprites_):
             if spr.collides(e) and e.exit_direction in (spr.h_direction, spr.v_direction):
                 if spr.is_player:
                     room.set(room.mine, e.leads_to["room"])
+                    warnings.empty()
                 else:
                     # Randomly decide whether the sprite should go through the exit or turn around
                     if bool(random.randrange(0, 2)):
@@ -255,9 +258,6 @@ def move_sprites():
     # Remember original room, i.e. the room where the player is
     original_room = room.room
 
-    # Remove all warning sprites
-    warnings.empty()
-
     # Start iteration
     for ro in range(1, room.no_of_rooms + 1):
 
@@ -295,7 +295,15 @@ def move_sprites():
             if add_warning:
                 warnings.add(Sprite(
                     SpriteName.WARNING, position=(ex.leads_to["x"], ex.leads_to["y"]), h_direction=mi.h_direction,
-                    activity=Activity.IDLE))
+                    activity=Activity.IDLE, longevity_ms=WARNINGS_DURATION_MS,
+                    animation_freq_ms=WARNINGS_ANIMATION_FREQ_MS))
+
+            for w in warnings.sprites():
+                if pygame.time.get_ticks() >= w.expiration_ms:
+                    w.remove(warnings)
+
+    # Update warnings animations
+    warnings.update(Activity.IDLE)
 
     # Change back to the original room where the player is
     room.set(mine_=room.mine, room_=original_room)
@@ -473,7 +481,7 @@ class Sprite(pygame.sprite.Sprite):
     def __init__(
             self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none",
             height=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED, leads_to=None,
-            exit_dir=None):
+            exit_dir=None, longevity_ms=None):
         """
         Create a new sprite
 
@@ -498,6 +506,8 @@ class Sprite(pygame.sprite.Sprite):
             room number and x/y-position to where the exit leads
         - exit_dir -- (String. Optional. Defaults to None) Only valid for exit sprites. The direction the player must be
             facing to go through the exit.
+        - longevity_ms -- (Integer. Optional. Defaults to None) If set to a positive value the sprite will expire after
+            the given number of milliseconds
         """
         pygame.sprite.Sprite.__init__(self)
 
@@ -546,6 +556,8 @@ class Sprite(pygame.sprite.Sprite):
         self.max_control_while_falling_pix = 0 if self.name == SpriteName.GOLD else MAX_CONTROL_WHILE_FALLING_PIX
         self.immortality_timer = 0
         self.image_transparency_val = 255
+        self.longevity_ms = longevity_ms
+        self.expiration_ms = pygame.time.get_ticks() + self.longevity_ms if self.longevity_ms else 0
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -1223,9 +1235,9 @@ while game_is_running:
     screen.blit(room.texture_img, (0, 0))
 
     # Draw sprites
-    warnings.draw(screen)
     for s in room.all_sprites:
         s.draw(screen)
+    warnings.draw(screen)
     room.players.draw(screen)
 
     # Draw text
