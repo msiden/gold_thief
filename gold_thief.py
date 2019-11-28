@@ -6,7 +6,7 @@ import random
 import itertools
 
 # Define Screen and sprite sizes and other constants
-CHICKEN_MODE = False
+CHICKEN_MODE = True
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
@@ -282,6 +282,8 @@ def move_sprites():
         for ex, mi in itertools.product(room.exits.sprites(), room.miners.sprites()):
             heading_left = mi.h_direction == Direction.LEFT
             heading_right = mi.h_direction == Direction.RIGHT
+            heading_up = mi.v_direction == Direction.UP and mi.is_climbing()
+            heading_down = mi.v_direction == Direction.DOWN and mi.is_climbing()
             right_of_exit = ex.rect.right + MINER_WARNING_DISTANCE_PIX >= mi.rect.x > ex.rect.right
             left_of_exit = ex.rect.x - MINER_WARNING_DISTANCE_PIX <= mi.rect.right < ex.rect.x
             same_height = mi.rect.y <= ex.rect.bottom and mi.rect.bottom >= ex.rect.y
@@ -558,6 +560,7 @@ class Sprite(pygame.sprite.Sprite):
         self.image_transparency_val = 255
         self.longevity_ms = longevity_ms
         self.expiration_ms = pygame.time.get_ticks() + self.longevity_ms if self.longevity_ms else 0
+        self.ignore_screen_boundries = self.is_truck
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -611,7 +614,11 @@ class Sprite(pygame.sprite.Sprite):
             self.rect.move_ip(x, y)
 
             # Check if sprite is outside of screen
-            if not (0 < self.rect.center[0] < SCREEN_SIZE[0]) and (0 < self.rect.center[1] < SCREEN_SIZE[1]):
+            outside_of_screen_h = not (0 < self.rect.center[0] < SCREEN_SIZE[0])
+            outside_of_screen_v = not (0 < self.rect.y < SCREEN_SIZE[1] - SPRITE_SIZE[1])
+            outside_of_screen = outside_of_screen_h or outside_of_screen_v
+            applies_to_sprite = not self.ignore_screen_boundries
+            if outside_of_screen and applies_to_sprite:
                 self.rect.move_ip(-x, -y)
 
                 # Change direction for computer controlled sprites
