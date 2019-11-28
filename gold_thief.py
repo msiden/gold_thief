@@ -304,15 +304,17 @@ def move_sprites():
             h_warning = same_v_pos and same_room_as_player and (warning_left or warning_right) and not exists
             v_warning = same_h_pos and same_room_as_player and (warning_above or warning_below) and not exists
             add_warning = h_warning or v_warning
+            activity = (
+                Activity.CLIMBING_UP if heading_up else Activity.CLIMBING_DOWN) if v_warning else Activity.WALKING
 
             if add_warning:
                 warnings.add(Sprite(
                     SpriteName.WARNING, position=(ex.leads_to["x"], ex.leads_to["y"]), h_direction=mi.h_direction,
-                    activity=Activity.IDLE, longevity_ms=WARNINGS_DURATION_MS,
+                    activity=activity, longevity_ms=WARNINGS_DURATION_MS,
                     animation_freq_ms=WARNINGS_ANIMATION_FREQ_MS))
 
     # Update warnings animations
-    warnings.update(Activity.IDLE)
+    warnings.update()
 
     # Change back to the original room where the player is
     room.set(mine_=room.mine, room_=original_room)
@@ -792,16 +794,18 @@ class Sprite(pygame.sprite.Sprite):
 
             self.move(self.v_direction)
 
-    def update(self, activity):
+    def update(self, activity=None):
         """
-        Update the sprite animation
+        Update the sprite status
 
-        - activity -- (String. Mandatory) The new activity to assign the sprite
+        - activity -- (String. Optional. Defaults to None) The new activity to assign the sprite. If not provided
+            animation will be unchanged.
         """
         # Static sprites can't be updated
         if self.is_static:
             return
 
+        activity = self.activity if not activity else activity
         now = pygame.time.get_ticks()
         self.is_facing_down = self.v_direction == Direction.DOWN
         self.is_facing_left = self.h_direction == Direction.LEFT
@@ -1163,7 +1167,6 @@ SPRITE_ANIMATIONS = {
         Animation.LOADED_04: load_images(Animation.LOADED_04, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4),
         Animation.LOADED_05: load_images(Animation.LOADED_05, SpriteName.TRUCK, multiply_x_by=4, multiply_y_by=4)},
     SpriteName.WARNING: {
-        Animation.IDLE: load_images(Animation.IDLE, SpriteName.WARNING),
         Animation.CLIMBING_UP: load_images(Animation.CLIMBING_UP, SpriteName.WARNING),
         Animation.CLIMBING_DOWN: load_images(Animation.CLIMBING_DOWN, SpriteName.WARNING),
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.WARNING)},

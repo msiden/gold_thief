@@ -71,10 +71,8 @@ TODO:
 - [ ] Save game function
 - [x] Pause game function
 - [x] Player will be in immortal mode for a few seconds after passing out
-- [ ] Player must get a warning when a miner is close to one of the doors
-    and might enter the room
-    - Must also work for vertical exits
-    - Remove IDLE animation for warnings!    
+- [x] Player must get a warning when a miner is close to one of the doors
+    and might enter the room        
 - [ ] Sound effects
 - [ ] Music
     
