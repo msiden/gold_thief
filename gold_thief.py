@@ -265,10 +265,10 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
 
 def mine_completed():
     """Check if a mine is completed and if so load the next one"""
-    mine_completed_text = font.render("Congratulations! Mine {} is completed.".format(mine.mine), True, Color.GREEN)
+    """mine_completed_text = font.render("Congratulations! Mine {} is completed.".format(mine.mine), True, Color.GREEN)
     total_score_text = font.render("Total score: 100000".format(mine.mine), True, Color.GREEN)
     screen.blit(mine_completed_text, mine_completed_rect)
-    screen.blit(total_score_text, total_score_rect)
+    screen.blit(total_score_text, total_score_rect)"""
     pygame.display.flip()
 
 
@@ -1043,6 +1043,37 @@ class Sprite(pygame.sprite.Sprite):
         return "loaded" in self.activity
 
 
+class OnScreenTexts(object):
+
+    def __init__(self, text, center=None, x=None, y=None, right=None, bottom=None):
+        """
+        Object for managing on-screen texts
+
+        - text -- (String. Mandatory) The text to print
+        - center -- (Integer. Optional. Defaults to None) Position of text
+        - x -- (Integer. Optional. Defaults to None) Position of text
+        - y -- (Integer. Optional. Defaults to None) Position of text
+        - right -- (Integer. Optional. Defaults to None) Position of text
+        - bottom -- (Integer. Optional. Defaults to None) Position of text
+        """
+        default_font = "comicsansms"
+        font_name = default_font if default_font in pygame.font.get_fonts() else "freesansbold.ttf"
+        self.font = pygame.font.SysFont(font_name, 30)
+        self.font.set_bold(True)
+        self.original_text = text
+        self.text = self.font.render(text, True, Color.GREEN)
+        self.rect = self.text.get_rect()
+        self.rect.center = center if center else self.rect.center
+        self.rect.x = x if x else self.rect.x
+        self.rect.y = y if y else self.rect.y
+        self.rect.right = right if right else self.rect.right
+        self.rect.bottom = bottom if bottom else self.rect.bottom
+
+    def update(self, *args):
+        """Returns a formatted copy of the original text"""
+        return self.font.render(self.original_text.format(*args), True, Color.GREEN)
+
+
 # Enums
 class Activity(object):
     CLIMBING = "climbing"
@@ -1149,6 +1180,17 @@ class SpriteName(object):
     WHEELBARROW = "wheelbarrow"
 
 
+class Text(object):
+    TITLE = "- GOLD THIEF -"
+    LIVES = "Lives: {}"
+    BONUS = "Bonus: {}"
+    GOLD_DELIVERED = "Gold delivered: {0}/{1}"
+    PAUSED = "PAUSED"
+    SECONDS_LEFT = "TIme left: {}"
+    MINE_COMPLETED= "CONGRATULATIONS! MINE {} COMPLETED!"
+    TOTAL_SCORE = "TOTAL SCORE: {}"
+
+
 # Load sprite animation images and store in a dict
 SPRITE_ANIMATIONS = {
     SpriteName.GOLD: {
@@ -1218,43 +1260,43 @@ mine = Mines()
 mine.set(1, 1)
 
 # On-screen text
-default_font = "comicsansms"
+"""default_font = "comicsansms"
 font_name = default_font if default_font in pygame.font.get_fonts() else "freesansbold.ttf"
 font = pygame.font.SysFont(font_name, 30)
 font.set_bold(True)
-title_text = font.render("- GOLD THIEF -", True, Color.GREEN)
+title_text = font.render(Text.TITLE, True, Color.GREEN)
 title_text_rect = title_text.get_rect()
 title_text_rect.center = (SCREEN_SIZE[0] // 2, 40)
-lives_text = font.render("Lives: {}".format(mine.player.lives), True, Color.GREEN)
+lives_text = font.render(Text.LIVES.format(mine.player.lives), True, Color.GREEN)
 lives_text_rect = lives_text.get_rect()
 lives_text_rect.x = SCREEN_SIZE[0] - 250
 lives_text_rect.y = 20
 gold_delivered_text = font.render(
-    "Gold delivered: {0}/{1}".format(mine.gold_delivered, mine.no_of_gold_sacks), True, Color.GREEN)
+    Text.GOLD_DELIVERED.format(mine.gold_delivered, mine.no_of_gold_sacks), True, Color.GREEN)
 gold_delivered_rect = gold_delivered_text.get_rect()
 gold_delivered_rect.x = 40
 gold_delivered_rect.y = 20
-paused_text = font.render("PAUSED", True, Color.GREEN)
+paused_text = font.render(Text.PAUSED, True, Color.GREEN)
 paused_text_rect = paused_text.get_rect()
 paused_text_rect.center = (SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2)
-seconds_text = font.render("Time left: {}".format(mine.seconds_remaining), True, Color.GREEN)
+seconds_text = font.render(Text.SECONDS_LEFT.format(mine.seconds_remaining), True, Color.GREEN)
 seconds_text_rect = seconds_text.get_rect()
 seconds_text_rect.y = 60
 seconds_text_rect.x = 40
-bonus_text = font.render("Bonus: {}".format(mine.bonus), True, Color.GREEN)
+bonus_text = font.render(Text.BONUS.format(mine.bonus), True, Color.GREEN)
 bonus_text_rect = bonus_text.get_rect()
 bonus_text_rect.y = 60
 bonus_text_rect.x = SCREEN_SIZE[0] - 250
-mine_completed_text = font.render("Congratulations! Mine {} is completed.".format(mine.mine), True, Color.GREEN)
+mine_completed_text = font.render(Text.MINE_COMPLETED.format(mine.mine), True, Color.GREEN)
 mine_completed_rect = mine_completed_text.get_rect()
 mine_completed_rect.center = (SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2)
 mine_completed_rect.y -= 50
-total_score_text = font.render("Total score: 100000".format(mine.mine), True, Color.GREEN)
+total_score_text = font.render(Text.TOTAL_SCORE.format(mine.mine), True, Color.GREEN)
 total_score_rect = total_score_text.get_rect()
 total_score_rect.center = (SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2)
-total_score_rect.y += 50
-
-
+total_score_rect.y += 50"""
+#title = OnScreenTexts(Text.TITLE, center=(SCREEN_SIZE[0] // 2, 40))
+title = OnScreenTexts(Text.GOLD_DELIVERED, x=200, y=50)
 
 # Warning sign sprites to be displayed when a miner might soon enter the room
 warnings = pygame.sprite.Group()
@@ -1285,7 +1327,7 @@ while game_is_running:
 
     # Pause game
     if game_is_paused:
-        screen.blit(paused_text, paused_text_rect)
+        #screen.blit(paused_text, paused_text_rect)
         pygame.display.flip()
         continue
 
@@ -1321,19 +1363,20 @@ while game_is_running:
     mine.players.draw(screen)
 
     # Update remaining time
-    mine.seconds_remaining -= (clock.get_time() / 1000)
+    mine.seconds_remaining -= clock.get_time() / 1000
 
     # Draw text
-    lives_text = font.render("Lives: {}".format(mine.player.lives), True, Color.GREEN)
+    """lives_text = font.render("Lives: {}".format(mine.player.lives), True, Color.GREEN)
     gold_delivered_text = font.render(
         "Gold delivered: {0}/{1}".format(mine.gold_delivered, mine.no_of_gold_sacks), True, Color.GREEN)
     seconds_text = font.render("Time left: {}".format(int(mine.seconds_remaining)), True, Color.GREEN)
-    bonus_text = font.render("Bonus: {}".format(mine.bonus), True, Color.GREEN)
-    screen.blit(title_text, title_text_rect)
+    bonus_text = font.render("Bonus: {}".format(mine.bonus), True, Color.GREEN)"""
+    screen.blit(title.text, title.rect)
+    """screen.blit(title_text, title_text_rect)
     screen.blit(lives_text, lives_text_rect)
     screen.blit(gold_delivered_text, gold_delivered_rect)
     screen.blit(seconds_text, seconds_text_rect)
-    screen.blit(bonus_text, bonus_text_rect)
+    screen.blit(bonus_text, bonus_text_rect)"""
 
     # Update the screen
     pygame.display.flip()
