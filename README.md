@@ -22,9 +22,9 @@ TODO:
     - [x] Idle with loaded 02 wheelbarrow
     - [x] Idle with loaded 03 wheelbarrow
     - [ ] Riding cart
-    - [ ] Idle with axe
-    - [ ] Walking with axe
-    - [ ] Using axe
+    - [ ] Idle with stun gun
+    - [ ] Walking with stun gun
+    - [ ] Using stun gun 
 - [ ] More player abilities
     - [x] Climb
     - [x] Carry sack
@@ -33,11 +33,11 @@ TODO:
     - [x] Push wheelbarrow
     - [ ] Ride cart   
     - [x] Die if caught by miner 
-    - [ ] Use axe
+    - [ ] Use stun gun (add bonus points!)
     - [ ] Ride elevator
     - [x] Empty gold in truck and collect points
     - [x] Kill miners if hitting with gold sack
-- [ ] Design levels
+- [ ] Design rooms
 - [X] Nicer granite texture
 - [ ] More textures
 - [ ] Create more sprites
@@ -46,7 +46,8 @@ TODO:
     - [X] Gold sack
     - [ ] Cart
     - [x] Wheelbarrow
-    - [ ] Axe
+    - [ ] Stun gun
+    - [ ] Key
     - [ ] Elevator
     - [ ] Handle
     - [x] Truck
@@ -60,12 +61,11 @@ TODO:
 - [x] Game over if no lives left
 - [x] Player should not be able to move while falling
 - [x] Player should not be able to move outside screen
-- [ ] Points system:    
-    - Player has limited amount of time in each mine before Game Over
-    - Keep track of number of collected gold sacks
-    - More points if sacks are collected quickly
-    - Bonus for time left when mine is completed
-    - Print collected sacks, time left, bonus and total score on screen
+- [ ] Points system:
+    - Bonus is given for:        
+        - Time left when all gold is collected
+        - Lives left when all gold is collected
+- [ ] Create a Texts enum!
 - [ ] Start screen
 - [ ] High scores
 - [ ] Save game function
@@ -75,9 +75,12 @@ TODO:
     and might enter the room        
 - [ ] Sound effects
 - [ ] Music
+- [ ] Make sure there is always at least one miner in the same room as the player
+- [ ] Load a new mine when
     
 KNOWN ISSUES
 - [ ] Passed out timer (and other timers) must pause when in pause mode 
+- [ ] Miners can get stuck on ladders just going left/right
 
 FEATURES FROM ORIGINAL GAME TO BE IMPLEMENTED (?)
 * Miners can choose to wait for elevators
