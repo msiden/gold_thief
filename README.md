@@ -65,7 +65,8 @@ TODO:
     - Bonus is given for:        
         - Time left when all gold is collected
         - Lives left when all gold is collected
-- [ ] Create a Texts enum!
+- [ ] Game Over screen
+- [x] Create a Texts enum!
 - [ ] Start screen
 - [ ] High scores
 - [ ] Save game function
@@ -76,7 +77,7 @@ TODO:
 - [ ] Sound effects
 - [ ] Music
 - [ ] Make sure there is always at least one miner in the same room as the player
-- [ ] Load a new mine when
+- [ ] Load a new mine
     
 KNOWN ISSUES
 - [ ] Passed out timer (and other timers) must pause when in pause mode 
