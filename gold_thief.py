@@ -265,9 +265,10 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
 
 def mine_completed():
     """Check if a mine is completed and if so load the next one"""
-    screen.blit(mine_is_completed.text, mine_is_completed.rect)
-    screen.blit(total_score.text, total_score.rect)
-    pygame.display.flip()
+    if mine.is_completed():
+        screen.blit(mine_is_completed.text, mine_is_completed.rect)
+        screen.blit(total_score.text, total_score.rect)
+        pygame.display.flip()
 
 
 def move_sprites():
@@ -443,8 +444,9 @@ class Mines(object):
             self.rooms[r]["layout_sprite"] = Sprite(SpriteName.LAYOUT, image=self.rooms[r]["layout"])
             self.rooms[r]["layouts"] = pygame.sprite.Group()
             self.rooms[r]["layouts"].add(self.rooms[r]["layout_sprite"])
-            self.no_of_gold_sacks = len(
-                flatten_list([self.database["rooms"][r]["sprites"]["gold"] for r in self.database["rooms"]]))
+            self.no_of_gold_sacks = len(flatten_list([
+                self.database["rooms"][r]["sprites"]["gold"] for r in self.database["rooms"]
+                if "gold" in self.database["rooms"][r]["sprites"]]))
             self.no_of_rooms = len(self.database["rooms"])
 
             # Load sprites
@@ -1302,6 +1304,11 @@ while game_is_running:
         pygame.display.flip()
         continue
 
+    # Check if player has collected all the gold in the mine
+    if mine.is_completed():
+        mine_completed()
+        continue
+
     # Read key presses and move the player
     key_presses(player_pressed_interact_key)
 
@@ -1316,9 +1323,6 @@ while game_is_running:
 
     # Check if a miner is hit by a falling gold sack
     hit_miner()
-
-    # Check if player has collected all the gold in the mine
-    mine_completed()
 
     # Check if time is up or player has no lives left
     game_over()
