@@ -7,7 +7,7 @@ import itertools
 
 # Define Screen and sprite sizes and other constants
 BONUS_POINTS = 10
-CHICKEN_MODE = False
+CHICKEN_MODE = True
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
@@ -18,6 +18,7 @@ IMMORTAL_TIME = 5000
 MAX_FALL_PIX = 100
 MAX_CONTROL_WHILE_FALLING_PIX = 50
 STANDARD_SPEED = 9
+START = 1
 SLOW_SPEED = 5
 MINER_SPEED = 8
 MINER_WARNING_DISTANCE_PIX = 200
@@ -266,8 +267,9 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
 def mine_completed():
     """Check if a mine is completed and if so load the next one"""
     if mine.is_completed():
-        screen.blit(mine_is_completed.text, mine_is_completed.rect)
-        screen.blit(total_score.text, total_score.rect)
+        mine.total_score += (int(mine.seconds_remaining) * mine.player.lives * mine.bonus)
+        screen.blit(mine_is_completed.update(mine.mine), mine_is_completed.rect)
+        screen.blit(total_score.update(int(mine.seconds_remaining), mine.player.lives, mine.bonus, mine.total_score), total_score.rect)
         pygame.display.flip()
 
 
@@ -373,6 +375,7 @@ class Mines(object):
         self.time_limit_mins = 0
         self.seconds_remaining = 0
         self.bonus = 0
+        self.total_score = 0
 
     def set(self, mine_, room_):
         """
@@ -1188,8 +1191,9 @@ class Text(object):
     GOLD_DELIVERED = "Gold delivered: {0}/{1}"
     PAUSED = "PAUSED"
     SECONDS_LEFT = "Time left: {}"
-    MINE_COMPLETED= "CONGRATULATIONS! MINE {} COMPLETED!"
-    TOTAL_SCORE = "TOTAL SCORE: {}"
+    MINE_COMPLETED = "CONGRATULATIONS! MINE {} COMPLETED!"
+    TOTAL_SCORE = "TOTAL SCORE: {} x {} x {} = {}"
+    MINE_NO = "Mine: {}"
 
 
 # Load sprite animation images and store in a dict
@@ -1258,7 +1262,7 @@ game_is_paused = False
 
 # Load mine 1 and room 1
 mine = Mines()
-mine.set(1, 1)
+mine.set(START, 1)
 
 # On-screen text
 title = OnScreenTexts(Text.TITLE, center=(SCREEN_SIZE[0] // 2, 40))
@@ -1269,6 +1273,7 @@ seconds_left = OnScreenTexts(Text.SECONDS_LEFT, x=40, y=60)
 bonus = OnScreenTexts(Text.BONUS, x=SCREEN_SIZE[0] - 250, y=60)
 mine_is_completed = OnScreenTexts(Text.MINE_COMPLETED, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50))
 total_score = OnScreenTexts(Text.TOTAL_SCORE, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)+50))
+mine_no = OnScreenTexts(Text.MINE_NO, center=(SCREEN_SIZE[0] // 2, 80))
 
 
 # Warning sign sprites to be displayed when a miner might soon enter the room
@@ -1346,6 +1351,7 @@ while game_is_running:
     screen.blit(seconds_left.update(int(mine.seconds_remaining)), seconds_left.rect)
     screen.blit(bonus.update(mine.bonus), bonus.rect)
     screen.blit(title.text, title.rect)
+    screen.blit(mine_no.update(mine.mine), mine_no.rect)
 
     # Update the screen
     pygame.display.flip()

@@ -65,6 +65,7 @@ TODO:
     - Bonus is given for:        
         - Time left when all gold is collected
         - Lives left when all gold is collected
+        - Total score = time left * lives left * bonus
 - [ ] Game Over screen
 - [x] Create a Texts enum!
 - [ ] Start screen
