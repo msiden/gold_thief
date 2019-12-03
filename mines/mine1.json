@@ -15,6 +15,8 @@
           {"position": [700, 290], "h_direction": "left", "activity":  "walking"},
           {"position": [250, 385], "h_direction": "right", "activity":  "walking"}],
         "gold": [
+          {"position": [545, 80]}],
+        "xgold": [
           {"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}, {"position": [545, 80]},
           {"position": [845, 80]}, {"position": [945, 80]}],
         "ladder": [
@@ -36,7 +38,7 @@
         "miner": [
           {"position": [350, 100], "h_direction": "right", "activity":  "walking"},
           {"position": [350, 630], "h_direction": "right", "activity":  "walking"}],
-        "gold": [
+        "xgold": [
           {"position": [740, 280]}, {"position": [515, 460]}, {"position": [1170, 460]}, {"position": [1130, 630]},
           {"position": [250, 890]}],
         "ladder": [
@@ -55,9 +57,9 @@
     "3": {
       "layout": "room1_3.png",
       "sprites": {
-        "xminer": [
+        "miner": [
           {"position": [1200, 870], "h_direction": "right", "activity":  "climbing"}],
-        "gold": [
+        "xgold": [
           {"position": [230, 800]}, {"position": [1250, 900]}],
         "ladder": [
           {"position": [110, 0], "height":  540},

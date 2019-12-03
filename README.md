@@ -61,11 +61,7 @@ TODO:
 - [x] Game over if no lives left
 - [x] Player should not be able to move while falling
 - [x] Player should not be able to move outside screen
-- [ ] Points system:
-    - Bonus is given for:        
-        - Time left when all gold is collected
-        - Lives left when all gold is collected
-        - Total score = time left * lives left * bonus
+- [x] Points system:    
 - [ ] Game Over screen
 - [x] Create a Texts enum!
 - [ ] Start screen

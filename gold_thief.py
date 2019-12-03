@@ -264,15 +264,6 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
     return [pygame.transform.scale(pygame.image.load(folder + i).convert(), size) for i in os.listdir(folder)]
 
 
-def mine_completed():
-    """Check if a mine is completed and if so load the next one"""
-    if mine.is_completed():
-        mine.total_score += (int(mine.seconds_remaining) * mine.player.lives * mine.bonus)
-        screen.blit(mine_is_completed.update(mine.mine), mine_is_completed.rect)
-        screen.blit(total_score.update(int(mine.seconds_remaining), mine.player.lives, mine.bonus, mine.total_score), total_score.rect)
-        pygame.display.flip()
-
-
 def move_sprites():
     """
     Iterate though all rooms in the mine, move the miners and apply gravity to all applicable sprites
@@ -516,7 +507,14 @@ class Mines(object):
         return group
 
     def is_completed(self):
-        return self.gold_delivered >= self.no_of_gold_sacks
+        done = self.gold_delivered >= self.no_of_gold_sacks
+        if done:
+            screen.blit(mine_is_completed.update(self.mine), mine_is_completed.rect)
+            screen.blit(tot_score.update(int(
+                self.seconds_remaining), self.player.lives, self.bonus, f"{self.total_score:,}",
+                get_rect=True), tot_score.rect)
+            pygame.display.flip()
+        return done
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -1072,9 +1070,13 @@ class OnScreenTexts(object):
         self.rect.right = right if right else self.rect.right
         self.rect.bottom = bottom if bottom else self.rect.bottom
 
-    def update(self, *args):
+    def update(self, *args, get_rect=False):
         """Updates and returns a formatted copy of the original text"""
         self.text = self.font.render(self.original_text.format(*args), True, Color.GREEN)
+        if get_rect:
+            center = self.rect.center
+            self.rect = self.text.get_rect()
+            self.rect.center = center
         return self.text
 
 
@@ -1255,7 +1257,7 @@ SPRITE_ANIMATIONS = {
 # Initialize PyGame
 pygame.init()
 
-# Instantiate clock and set game to running
+# Instantiate clock and set game to running state
 clock = pygame.time.Clock()
 game_is_running = True
 game_is_paused = False
@@ -1272,9 +1274,8 @@ paused = OnScreenTexts(Text.PAUSED, center=(SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] /
 seconds_left = OnScreenTexts(Text.SECONDS_LEFT, x=40, y=60)
 bonus = OnScreenTexts(Text.BONUS, x=SCREEN_SIZE[0] - 250, y=60)
 mine_is_completed = OnScreenTexts(Text.MINE_COMPLETED, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50))
-total_score = OnScreenTexts(Text.TOTAL_SCORE, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)+50))
+tot_score = OnScreenTexts(Text.TOTAL_SCORE, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)+50))
 mine_no = OnScreenTexts(Text.MINE_NO, center=(SCREEN_SIZE[0] // 2, 80))
-
 
 # Warning sign sprites to be displayed when a miner might soon enter the room
 warnings = pygame.sprite.Group()
@@ -1286,6 +1287,7 @@ while game_is_running:
 
     clock.tick(FPS)
     player_pressed_interact_key = False
+    mine.total_score = int((mine.seconds_remaining * mine.player.lives * mine.bonus))
 
     # Read events
     for event in pygame.event.get():
@@ -1311,7 +1313,6 @@ while game_is_running:
 
     # Check if player has collected all the gold in the mine
     if mine.is_completed():
-        mine_completed()
         continue
 
     # Read key presses and move the player
