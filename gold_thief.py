@@ -376,6 +376,7 @@ class Mines(object):
         self.seconds_remaining = 0
         self.bonus = 0
         self.total_score = 0
+        self.all_mines = range(1, len(os.listdir(Folder.MINES)))
 
     def set(self, mine_, room_):
         """
@@ -488,7 +489,7 @@ class Mines(object):
         self.player.rect.x = player_db["position"][0]
         self.player.rect.y = player_db["position"][1]
         self.player.activity = Activity.IDLE
-        self.players.h_direction = player_db["h_direction"]
+        self.player.h_direction = player_db["h_direction"]
 
     def generate_sprites(
             self, room_, name, image=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED):
@@ -544,6 +545,12 @@ class Mines(object):
 
     def is_game_over(self):
         return self.seconds_remaining <= 0 or self.player.lives <= 0
+
+    def next(self):
+        """Load the next mine"""
+        print(self.all_mines)
+        self.set(self.mine + 1, 1)
+        self.reset()
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -1359,9 +1366,7 @@ while game_is_running:
     # Check if player has collected all the gold in the mine
     if mine.is_completed():
         if player_pressed_any_key:
-            mine.set(mine.mine+1, 1)
-            mine.reset()
-
+            mine.next()
         continue
 
     # Open the start screen

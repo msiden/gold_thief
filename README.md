@@ -76,6 +76,9 @@ TODO:
 - [ ] Make sure there is always at least one miner in the same room as the player
 - [ ] Load a new mine
     - total score must be saved between mines
+    - rename "total score" > "score". Score is reset per mine and total score is for all mines
+    - Update game completed screen
+    - Create game finished screen
     
 KNOWN ISSUES
 - [ ] Passed out timer (and other timers) must pause when in pause mode 
