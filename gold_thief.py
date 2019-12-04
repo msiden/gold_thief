@@ -5,9 +5,13 @@ import ctypes
 import random
 import itertools
 
-# Define Screen and sprite sizes and other constants
-BONUS_POINTS = 10
+# Constants that are useful during development
 CHICKEN_MODE = True
+SHOW_START_SCREEN = True
+START_MINE = 1
+
+# Other constants
+BONUS_POINTS = 10
 CLIMBABLE_PIX = 1
 FPS = 25
 GRAVITY = 20
@@ -18,7 +22,6 @@ IMMORTAL_TIME = 5000
 MAX_FALL_PIX = 100
 MAX_CONTROL_WHILE_FALLING_PIX = 50
 STANDARD_SPEED = 9
-START = 1
 SLOW_SPEED = 5
 MINER_SPEED = 8
 MINER_WARNING_DISTANCE_PIX = 200
@@ -330,6 +333,14 @@ def move_sprites():
 
     # Change back to the original room where the player is
     mine.set(mine_=mine.mine, room_=original_room)
+
+
+def start_screen():
+    """Display the start screen"""
+    screen.blit(mine.background_img, (0, 0))
+    screen.blit(start_screen_01.text, start_screen_01.rect)
+    screen.blit(start_screen_02.text, start_screen_02.rect)
+    pygame.display.flip()
 
 
 # Classes
@@ -1046,7 +1057,7 @@ class Sprite(pygame.sprite.Sprite):
 
 class OnScreenTexts(object):
 
-    def __init__(self, text, center=None, x=None, y=None, right=None, bottom=None):
+    def __init__(self, text, center=None, x=None, y=None, right=None, bottom=None, size=30):
         """
         Object for managing on-screen texts
 
@@ -1056,10 +1067,11 @@ class OnScreenTexts(object):
         - y -- (Integer. Optional. Defaults to None) Position of text
         - right -- (Integer. Optional. Defaults to None) Position of text
         - bottom -- (Integer. Optional. Defaults to None) Position of text
+        - size -- (Integer. Optional. Defaults to 30) The font size
         """
         default_font = "comicsansms"
         font_name = default_font if default_font in pygame.font.get_fonts() else "freesansbold.ttf"
-        self.font = pygame.font.SysFont(font_name, 30)
+        self.font = pygame.font.SysFont(font_name, size)
         self.font.set_bold(True)
         self.original_text = text
         self.text = self.font.render(text, True, Color.GREEN)
@@ -1190,12 +1202,16 @@ class Text(object):
     TITLE = "- GOLD THIEF -"
     LIVES = "Lives: {}"
     BONUS = "Bonus: {}"
+    GAME_OVER = "GAME OVER"
     GOLD_DELIVERED = "Gold delivered: {0}/{1}"
     PAUSED = "PAUSED"
     SECONDS_LEFT = "Time left: {}"
+    START_SCREEN_01 = "GOLD THIEF"
+    START_SCREEN_02 = "Press any key to start"
     MINE_COMPLETED = "CONGRATULATIONS! MINE {} COMPLETED!"
     TOTAL_SCORE = "TOTAL SCORE: {} x {} x {} = {}"
     MINE_NO = "Mine: {}"
+    OUT_OF_TIME = "SORRY! TIME'S UP!"
 
 
 # Load sprite animation images and store in a dict
@@ -1261,10 +1277,11 @@ pygame.init()
 clock = pygame.time.Clock()
 game_is_running = True
 game_is_paused = False
+show_start_screen = SHOW_START_SCREEN
 
 # Load mine 1 and room 1
 mine = Mines()
-mine.set(START, 1)
+mine.set(START_MINE, 1)
 
 # On-screen text
 title = OnScreenTexts(Text.TITLE, center=(SCREEN_SIZE[0] // 2, 40))
@@ -1273,9 +1290,13 @@ gold_delivered = OnScreenTexts(Text.GOLD_DELIVERED, x=40, y=20)
 paused = OnScreenTexts(Text.PAUSED, center=(SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2))
 seconds_left = OnScreenTexts(Text.SECONDS_LEFT, x=40, y=60)
 bonus = OnScreenTexts(Text.BONUS, x=SCREEN_SIZE[0] - 250, y=60)
-mine_is_completed = OnScreenTexts(Text.MINE_COMPLETED, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50))
+mine_is_completed = OnScreenTexts(Text.MINE_COMPLETED, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50), size=60)
 tot_score = OnScreenTexts(Text.TOTAL_SCORE, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)+50))
 mine_no = OnScreenTexts(Text.MINE_NO, center=(SCREEN_SIZE[0] // 2, 80))
+start_screen_01 = OnScreenTexts(Text.START_SCREEN_01, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50), size=100)
+start_screen_02 = OnScreenTexts(Text.START_SCREEN_02, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)+50))
+game_over_ = OnScreenTexts(Text.GAME_OVER, center=(SCREEN_SIZE[0] // 2, 80), size=100)
+out_of_time = OnScreenTexts(Text.OUT_OF_TIME, center=(SCREEN_SIZE[0] // 2, 80), size=100)
 
 # Warning sign sprites to be displayed when a miner might soon enter the room
 warnings = pygame.sprite.Group()
@@ -1287,6 +1308,7 @@ while game_is_running:
 
     clock.tick(FPS)
     player_pressed_interact_key = False
+    player_pressed_any_key = False
     mine.total_score = int((mine.seconds_remaining * mine.player.lives * mine.bonus))
 
     # Read events
@@ -1297,13 +1319,14 @@ while game_is_running:
             not (event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE))
         game_is_paused = (not game_is_paused) and (event.type == pygame.KEYUP and event.key == pygame.K_p)
 
-        # Check whether one of the gold sack interaction buttons are pressed
+        # Check for specific key presses
         l_control = event.type == pygame.KEYUP and event.key == pygame.K_LCTRL
         l_alt = event.type == pygame.KEYUP and event.key == pygame.K_LALT
         space = event.type == pygame.KEYUP and event.key == pygame.K_SPACE
         r_control = event.type == pygame.KEYUP and event.key == pygame.K_RCTRL
         r_alt = event.type == pygame.KEYUP and event.key == pygame.K_RALT
         player_pressed_interact_key = any((l_control, l_alt, space, r_control, r_alt))
+        player_pressed_any_key = pygame.KEYDOWN
 
     # Pause game
     if game_is_paused:
@@ -1313,6 +1336,12 @@ while game_is_running:
 
     # Check if player has collected all the gold in the mine
     if mine.is_completed():
+        continue
+
+    # Open the start screen
+    if show_start_screen:
+        show_start_screen = not(player_pressed_any_key and show_start_screen)
+        start_screen()
         continue
 
     # Read key presses and move the player

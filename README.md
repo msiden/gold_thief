@@ -64,7 +64,7 @@ TODO:
 - [x] Points system:    
 - [ ] Game Over screen
 - [x] Create a Texts enum!
-- [ ] Start screen
+- [x] Start screen
 - [ ] High scores
 - [ ] Save game function
 - [x] Pause game function
