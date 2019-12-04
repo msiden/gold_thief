@@ -62,7 +62,7 @@ TODO:
 - [x] Player should not be able to move while falling
 - [x] Player should not be able to move outside screen
 - [x] Points system:    
-- [ ] Game Over screen
+- [x] Game Over screen
 - [x] Create a Texts enum!
 - [x] Start screen
 - [ ] High scores
@@ -75,10 +75,10 @@ TODO:
 - [ ] Music
 - [ ] Make sure there is always at least one miner in the same room as the player
 - [ ] Load a new mine
+    - total score must be saved between mines
     
 KNOWN ISSUES
 - [ ] Passed out timer (and other timers) must pause when in pause mode 
-- [ ] Miners can get stuck on ladders just going left/right
 
 FEATURES FROM ORIGINAL GAME TO BE IMPLEMENTED (?)
 * Miners can choose to wait for elevators

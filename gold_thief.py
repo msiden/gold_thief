@@ -6,9 +6,10 @@ import random
 import itertools
 
 # Constants that are useful during development
-CHICKEN_MODE = False
+CHICKEN_MODE = True
 SHOW_START_SCREEN = True
 START_MINE = 1
+PLAYER_LIVES = 5
 
 # Other constants
 BONUS_POINTS = 10
@@ -25,7 +26,6 @@ STANDARD_SPEED = 9
 SLOW_SPEED = 5
 MINER_SPEED = 8
 MINER_WARNING_DISTANCE_PIX = 200
-PLAYER_LIVES = 1
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
 WAKE_UP_TIME_MS = 5000
@@ -106,15 +106,10 @@ def flatten_list(l):
 
 
 def game_over():
-    """Display the game over screen and reset the game to mine 1 room 1"""
+    """Display the game over screen"""
     text = {mine.seconds_remaining <= 0: out_of_time, mine.player.lives <= 0: game_over_}[True]
     screen.blit(text.text, text.rect)
     pygame.display.flip()
-    mine.reset()
-    #mine.load(START_MINE)
-    #mine.set(START_MINE, 1)
-    #mine.player.lives = PLAYER_LIVES
-    #print(mine.seconds_remaining, mine.player.lives)
 
 
 def get_caught():
@@ -479,10 +474,15 @@ class Mines(object):
                 self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["trucks"],
                 self.rooms[r]["wheelbarrows"]]
 
-    def reset(self):
-        """Load the first mine and set all sprites to their start positions"""
-        self.load(START_MINE)
-        self.set(START_MINE, 1)
+    def reset(self, mine_=None):
+        """
+        Reset all sprites in the mine to their start positions
+
+        - mine_ -- (Integer or string. Mandatory. Optional) The requested mine. Will default to the current mine.
+        """
+        mine_ = self.mine if not mine_ else mine_
+        self.load(mine_)
+        self.set(mine_, 1)
         self.player.lives = PLAYER_LIVES
         player_db = self.database["rooms"]["1"]["sprites"]["player"][0]
         self.player.rect.x = player_db["position"][0]
@@ -534,7 +534,8 @@ class Mines(object):
     def is_completed(self):
         done = self.gold_delivered >= self.no_of_gold_sacks
         if done:
-            screen.blit(mine_is_completed.update(self.mine), mine_is_completed.rect)
+            screen.blit(mine_is_completed_01.update(self.mine), mine_is_completed_01.rect)
+            screen.blit(mine_is_completed_02.update(self.mine), mine_is_completed_02.rect)
             screen.blit(tot_score.update(int(
                 self.seconds_remaining), self.player.lives, self.bonus, f"{self.total_score:,}",
                 get_rect=True), tot_score.rect)
@@ -1225,7 +1226,8 @@ class Text(object):
     SECONDS_LEFT = "Time left: {}"
     START_SCREEN_01 = "GOLD THIEF"
     START_SCREEN_02 = "Press any key to start"
-    MINE_COMPLETED = "CONGRATULATIONS! MINE {} COMPLETED!"
+    MINE_COMPLETED_01 = "CONGRATULATIONS!"
+    MINE_COMPLETED_02 = "MINE {} COMPLETED!"
     TOTAL_SCORE = "TOTAL SCORE: {} x {} x {} = {}"
     MINE_NO = "Mine: {}"
     OUT_OF_TIME = "TIME'S UP!"
@@ -1307,8 +1309,11 @@ gold_delivered = OnScreenTexts(Text.GOLD_DELIVERED, x=40, y=20)
 paused = OnScreenTexts(Text.PAUSED, center=(SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2))
 seconds_left = OnScreenTexts(Text.SECONDS_LEFT, x=40, y=60)
 bonus = OnScreenTexts(Text.BONUS, x=SCREEN_SIZE[0] - 250, y=60)
-mine_is_completed = OnScreenTexts(Text.MINE_COMPLETED, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50), size=60)
-tot_score = OnScreenTexts(Text.TOTAL_SCORE, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)+50))
+mine_is_completed_01 = OnScreenTexts(
+    Text.MINE_COMPLETED_01, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50))
+mine_is_completed_02 = OnScreenTexts(
+    Text.MINE_COMPLETED_02, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)+50), size=100)
+tot_score = OnScreenTexts(Text.TOTAL_SCORE, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)+150))
 mine_no = OnScreenTexts(Text.MINE_NO, center=(SCREEN_SIZE[0] // 2, 80))
 start_screen_01 = OnScreenTexts(Text.START_SCREEN_01, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50), size=100)
 start_screen_02 = OnScreenTexts(Text.START_SCREEN_02, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)+50))
@@ -1343,7 +1348,7 @@ while game_is_running:
         r_control = event.type == pygame.KEYUP and event.key == pygame.K_RCTRL
         r_alt = event.type == pygame.KEYUP and event.key == pygame.K_RALT
         player_pressed_interact_key = any((l_control, l_alt, space, r_control, r_alt))
-        player_pressed_any_key = pygame.KEYUP
+        player_pressed_any_key = event.type == pygame.KEYDOWN
 
     # Pause game
     if game_is_paused:
@@ -1353,6 +1358,10 @@ while game_is_running:
 
     # Check if player has collected all the gold in the mine
     if mine.is_completed():
+        if player_pressed_any_key:
+            mine.set(mine.mine+1, 1)
+            mine.reset()
+
         continue
 
     # Open the start screen
@@ -1364,7 +1373,8 @@ while game_is_running:
     # Check if time is up or player has no lives left
     if mine.is_game_over():
         game_over()
-        #show_start_screen = player_pressed_any_key
+        if player_pressed_any_key:
+            mine.reset(START_MINE)
         continue
 
     # Read key presses and move the player
