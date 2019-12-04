@@ -6,7 +6,7 @@ import random
 import itertools
 
 # Constants that are useful during development
-CHICKEN_MODE = True
+CHICKEN_MODE = False
 SHOW_START_SCREEN = True
 START_MINE = 1
 
@@ -25,7 +25,7 @@ STANDARD_SPEED = 9
 SLOW_SPEED = 5
 MINER_SPEED = 8
 MINER_WARNING_DISTANCE_PIX = 200
-PLAYER_LIVES = 5
+PLAYER_LIVES = 1
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
 WAKE_UP_TIME_MS = 5000
@@ -106,12 +106,15 @@ def flatten_list(l):
 
 
 def game_over():
-    """Check if time is up or player has no more lives and if so end the game"""
-    out_of_time = mine.seconds_remaining <= 0
-    player_is_dead = mine.player.lives <= 0
-    if out_of_time or player_is_dead:
-        print("GAME OVER!")
-        quit()
+    """Display the game over screen and reset the game to mine 1 room 1"""
+    text = {mine.seconds_remaining <= 0: out_of_time, mine.player.lives <= 0: game_over_}[True]
+    screen.blit(text.text, text.rect)
+    pygame.display.flip()
+    mine.reset()
+    #mine.load(START_MINE)
+    #mine.set(START_MINE, 1)
+    #mine.player.lives = PLAYER_LIVES
+    #print(mine.seconds_remaining, mine.player.lives)
 
 
 def get_caught():
@@ -476,6 +479,17 @@ class Mines(object):
                 self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["trucks"],
                 self.rooms[r]["wheelbarrows"]]
 
+    def reset(self):
+        """Load the first mine and set all sprites to their start positions"""
+        self.load(START_MINE)
+        self.set(START_MINE, 1)
+        self.player.lives = PLAYER_LIVES
+        player_db = self.database["rooms"]["1"]["sprites"]["player"][0]
+        self.player.rect.x = player_db["position"][0]
+        self.player.rect.y = player_db["position"][1]
+        self.player.activity = Activity.IDLE
+        self.players.h_direction = player_db["h_direction"]
+
     def generate_sprites(
             self, room_, name, image=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED):
         """
@@ -526,6 +540,9 @@ class Mines(object):
                 get_rect=True), tot_score.rect)
             pygame.display.flip()
         return done
+
+    def is_game_over(self):
+        return self.seconds_remaining <= 0 or self.player.lives <= 0
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -1211,7 +1228,7 @@ class Text(object):
     MINE_COMPLETED = "CONGRATULATIONS! MINE {} COMPLETED!"
     TOTAL_SCORE = "TOTAL SCORE: {} x {} x {} = {}"
     MINE_NO = "Mine: {}"
-    OUT_OF_TIME = "SORRY! TIME'S UP!"
+    OUT_OF_TIME = "TIME'S UP!"
 
 
 # Load sprite animation images and store in a dict
@@ -1295,8 +1312,8 @@ tot_score = OnScreenTexts(Text.TOTAL_SCORE, center=(SCREEN_SIZE[0] / 2, (SCREEN_
 mine_no = OnScreenTexts(Text.MINE_NO, center=(SCREEN_SIZE[0] // 2, 80))
 start_screen_01 = OnScreenTexts(Text.START_SCREEN_01, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50), size=100)
 start_screen_02 = OnScreenTexts(Text.START_SCREEN_02, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)+50))
-game_over_ = OnScreenTexts(Text.GAME_OVER, center=(SCREEN_SIZE[0] // 2, 80), size=100)
-out_of_time = OnScreenTexts(Text.OUT_OF_TIME, center=(SCREEN_SIZE[0] // 2, 80), size=100)
+game_over_ = OnScreenTexts(Text.GAME_OVER, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50), size=100)
+out_of_time = OnScreenTexts(Text.OUT_OF_TIME, center=(SCREEN_SIZE[0] / 2, (SCREEN_SIZE[1] / 2)-50), size=100)
 
 # Warning sign sprites to be displayed when a miner might soon enter the room
 warnings = pygame.sprite.Group()
@@ -1326,7 +1343,7 @@ while game_is_running:
         r_control = event.type == pygame.KEYUP and event.key == pygame.K_RCTRL
         r_alt = event.type == pygame.KEYUP and event.key == pygame.K_RALT
         player_pressed_interact_key = any((l_control, l_alt, space, r_control, r_alt))
-        player_pressed_any_key = pygame.KEYDOWN
+        player_pressed_any_key = pygame.KEYUP
 
     # Pause game
     if game_is_paused:
@@ -1340,8 +1357,14 @@ while game_is_running:
 
     # Open the start screen
     if show_start_screen:
-        show_start_screen = not(player_pressed_any_key and show_start_screen)
+        show_start_screen = not player_pressed_any_key
         start_screen()
+        continue
+
+    # Check if time is up or player has no lives left
+    if mine.is_game_over():
+        game_over()
+        #show_start_screen = player_pressed_any_key
         continue
 
     # Read key presses and move the player
@@ -1358,9 +1381,6 @@ while game_is_running:
 
     # Check if a miner is hit by a falling gold sack
     hit_miner()
-
-    # Check if time is up or player has no lives left
-    game_over()
 
     # Draw background and walls
     screen.blit(mine.background_img, (0, 0))

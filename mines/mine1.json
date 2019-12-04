@@ -1,6 +1,6 @@
 {
   "texture": "granite.jpg",
-  "time_limit_mins": 10,
+  "time_limit_mins": 1,
   "rooms": {
     "1": {
       "layout": "room1_1.png",
