@@ -8,7 +8,7 @@
         "truck":  [
           {"position": [-100, -260]}],
         "wheelbarrow":  [
-          {"position": [1150, 100], "h_direction": "left"}],
+          {"position": [750, 20], "h_direction": "left"}],
         "player":  [
           {"position": [120, 20], "h_direction": "right", "activity":  "idle"}],
         "gold": [

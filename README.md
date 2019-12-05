@@ -58,7 +58,7 @@ TODO:
 - [ ] Make sure there is always at least one miner in the same room as the player
     
 KNOWN ISSUES
-- [ ] Passed out timer (and other timers) must pause when in pause mode 
+- [ ] Passed out timer (and other timers) must pause when in pause mode
 
 FEATURES FROM ORIGINAL GAME TO BE IMPLEMENTED (?)
 * Miners can choose to wait for elevators

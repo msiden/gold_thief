@@ -493,6 +493,7 @@ class Mines(object):
         self.player.rect.y = player_db["position"][1]
         self.player.activity = Activity.IDLE
         self.player.h_direction = player_db["h_direction"]
+        self.player.saved_sprite = None
 
     def generate_sprites(
             self, room_, name, image=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED):
@@ -912,7 +913,12 @@ class Sprite(pygame.sprite.Sprite):
 
         # Check if it's time to wake up the sprite from passed out state
         elif self.is_passed_out() and now >= self.wake_up_time:
-            activity = Activity.WALKING if self.is_computer_controlled else Activity.IDLE
+            if self.is_computer_controlled and self.collides(mine.ladders):
+                activity = Activity.CLIMBING
+            elif self.is_computer_controlled:
+                activity = Activity.WALKING
+            else:
+                activity = Activity.IDLE
             self.animation = animation_loop(self.animations[activity])
             self.immortality_timer = IMMORTAL_TIME if self.is_player else 0
             self.image_transparency_val = IMG_SEMI_TRANSPARENCY if self.is_player else IMG_FULLY_OPAQUE
@@ -1314,6 +1320,7 @@ SPRITE_ANIMATIONS = {
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.WARNING)},
     SpriteName.WHEELBARROW: {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.WHEELBARROW, multiply_x_by=2),
+        Animation.FALLING: load_images(Animation.IDLE, SpriteName.WHEELBARROW, multiply_x_by=2),
         Animation.LOADED_01: load_images(Animation.LOADED_01, SpriteName.WHEELBARROW, multiply_x_by=2),
         Animation.LOADED_02: load_images(Animation.LOADED_02, SpriteName.WHEELBARROW, multiply_x_by=2),
         Animation.LOADED_03: load_images(Animation.LOADED_03, SpriteName.WHEELBARROW, multiply_x_by=2)}}
@@ -1409,6 +1416,7 @@ while game_is_running:
             mine.reset(START_MINE)
         continue
 
+    # Check if the player has completed the whole game
     if mine.is_game_completed():
         if player_pressed_any_key:
             mine.scores = {}
