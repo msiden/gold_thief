@@ -32,12 +32,16 @@ TODO:
     - [x] Push wheelbarrow
     - [ ] Ride cart   
     - [x] Die if caught by miner 
-    - [ ] Use stun gun (add bonus points!)
-    - [ ] Ride elevator
-        - Make elevator move
-        - Miners can choose to wait for elevators
+    - [ ] Use stun gun (add bonus points!)    
     - [x] Empty gold in truck and collect points
     - [x] Kill miners if hitting with gold sack
+- [ ] Elevators
+    - [x] Make elevator move
+    - [ ] Miners can choose to wait for elevators
+    - [ ] Player and miner must pass out if landing on elevator
+    - [ ] Player and miner must be able to ride elevator
+    - [ ] Player and miner must pass out if hit in the head by elevator
+    - [ ] Elevator must pause at stops
 - [ ] Design lots of mines
 - [ ] More textures
 - [ ] Create more sprites
@@ -61,3 +65,4 @@ TODO:
     
 KNOWN ISSUES
 - [ ] Passed out timer (and other timers) must pause when in pause mode
+- [ ] Wheelbarrow temporarily disappears if player falls while pushing wheelbarrow

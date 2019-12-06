@@ -481,8 +481,8 @@ class Mines(object):
                 r, SpriteName.EXIT, image=Folder.IDLE_IMGS.format(SpriteName.EXIT) + "001.png")
             self.rooms[r]["elevators"] = self.generate_sprites(r, SpriteName.ELEVATOR, standard_speed=ELEVATOR_SPEED)
             self.rooms[r]["all_sprites"] = (
-                self.rooms[r]["ladders"], self.rooms[r]["trucks"], self.rooms[r]["gold_sacks"],
-                self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"], self.rooms[r]["elevator_shafts"])
+                self.rooms[r]["ladders"], self.rooms[r]["elevator_shafts"], self.rooms[r]["trucks"],
+                self.rooms[r]["gold_sacks"], self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"])
             self.rooms[r]["not_player"] = (
                 self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["ladders"], self.rooms[r]["trucks"],
                 self.rooms[r]["wheelbarrows"], self.rooms[r]["elevator_shafts"], self.rooms[r]["elevators"])
@@ -673,6 +673,7 @@ class Sprite(pygame.sprite.Sprite):
         self.expiration_ms = pygame.time.get_ticks() + self.longevity_ms if self.longevity_ms else 0
         self.ignore_screen_boundaries = self.is_truck
         self.stops = stops
+        self.can_climb_slopes = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -742,7 +743,7 @@ class Sprite(pygame.sprite.Sprite):
             # Check for wall collision
             if self.collides(mine.layouts):
                 climbed = False
-                if self.is_elevator: print("OUCH!")
+
                 # Check if the sprite has fallen too far
                 if self.fall_pix >= MAX_FALL_PIX and self.can_pass_out:
                     self.pass_out()
@@ -751,7 +752,7 @@ class Sprite(pygame.sprite.Sprite):
                 self.fall_pix = 0 if vertical else self.fall_pix
 
                 # Try climbing up slope
-                if self.is_walking() or self.is_idle():
+                if self.can_climb_slopes and (self.is_walking() or self.is_idle()):
                     for _ in range(CLIMBABLE_PIX):
                         self.rect.move_ip(0, -1)
                         if not self.collides(mine.layouts):
@@ -762,7 +763,7 @@ class Sprite(pygame.sprite.Sprite):
                     else:
                         self.rect.move_ip(0, CLIMBABLE_PIX)
 
-                # Stop the sprite or change direction if impossible to get passed obstacle
+                # Stop the sprite or change direction if impossible to get past obstacle
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
                 if self.is_carrying_gold() and self.is_climbing():
                     activity = Activity.CLIMBING_WITH_GOLD
@@ -780,6 +781,8 @@ class Sprite(pygame.sprite.Sprite):
                     self.h_direction = change_direction(self.h_direction)
                 elif self.is_pushing_wheelbarrow():
                     activity = self.activity
+                elif self.is_elevator:
+                    self.v_direction = change_direction(self.v_direction)
                 else:
                     activity = Activity.WALKING if self.is_miner else Activity.IDLE
                 break
@@ -900,6 +903,10 @@ class Sprite(pygame.sprite.Sprite):
 
         # Move elevators
         if self.is_elevator:
+            stop_points = [range(s-self.standard_speed, s+self.standard_speed) for s in self.stops]
+            stop_the_elevator = any([self.rect.bottom in i for i in stop_points])
+            if stop_the_elevator:
+                print("STOP")
             self.move(self.v_direction)
 
     def update(self, activity=None):
