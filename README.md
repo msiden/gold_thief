@@ -34,6 +34,8 @@ TODO:
     - [x] Die if caught by miner 
     - [ ] Use stun gun (add bonus points!)
     - [ ] Ride elevator
+        - Make elevator move
+        - Miners can choose to wait for elevators
     - [x] Empty gold in truck and collect points
     - [x] Kill miners if hitting with gold sack
 - [ ] Design lots of mines
@@ -46,7 +48,7 @@ TODO:
     - [x] Wheelbarrow
     - [ ] Stun gun
     - [ ] Key
-    - [ ] Elevator
+    - [x] Elevator
     - [ ] Handle
     - [x] Truck
     - [ ] Door  
@@ -59,6 +61,3 @@ TODO:
     
 KNOWN ISSUES
 - [ ] Passed out timer (and other timers) must pause when in pause mode
-
-FEATURES FROM ORIGINAL GAME TO BE IMPLEMENTED (?)
-* Miners can choose to wait for elevators

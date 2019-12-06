@@ -5,30 +5,31 @@ import ctypes
 import random
 import itertools
 
-# Constants that are useful during development
-CHICKEN_MODE = True
-SHOW_START_SCREEN = True
-START_MINE = 1
+# Constants you may want to play around with
+CHICKEN_MODE = False
+SHOW_START_SCREEN = False
+START_MINE = 2
 PLAYER_LIVES = 5
-
-# Other constants
 BONUS_POINTS = 10
-CLIMBABLE_PIX = 1
-FPS = 25
-GRAVITY = 20
-IMG_SEMI_TRANSPARENCY = 80
-IMG_FULLY_OPAQUE = 255
-IMG_TRANSPARENCY_INCREMENTATION = 1
+GRAVITY = 25
 IMMORTAL_TIME = 5000
-MAX_FALL_PIX = 100
-MAX_CONTROL_WHILE_FALLING_PIX = 50
 STANDARD_SPEED = 9
 SLOW_SPEED = 5
 MINER_SPEED = 8
 MINER_WARNING_DISTANCE_PIX = 200
+WAKE_UP_TIME_MS = 5000
+MAX_FALL_PIX = 100
+MAX_CONTROL_WHILE_FALLING_PIX = 50
+ELEVATOR_SPEED = 5
+
+# Constants you probably don't want to play around with
+CLIMBABLE_PIX = 1
+FPS = 25
+IMG_SEMI_TRANSPARENCY = 80
+IMG_FULLY_OPAQUE = 255
+IMG_TRANSPARENCY_INCREMENTATION = 1
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
-WAKE_UP_TIME_MS = 5000
 WARNINGS_ANIMATION_FREQ_MS = 100
 WARNINGS_DURATION_MS = 1000
 
@@ -282,12 +283,16 @@ def move_sprites():
         # Apply gravity to all sprites. This will also update sprite animations.
         for sp in mine.affected_by_gravity + ([mine.players] if mine.room == original_room else []):
             for spr in sp.sprites():
-                if not (spr.can_climb_ladders and spr.collides(mine.ladders)) \
-                        or not spr.can_climb_ladders or spr.is_passed_out():
+                not_climbing_ladder = not (spr.can_climb_ladders and spr.collides(mine.ladders))
+                cant_climb_ladder = not spr.can_climb_ladders
+                is_passed_out = spr.is_passed_out()
+                not_riding_elevator = not spr.collides(mine.elevators)
+                apply_gravity = not_riding_elevator and (not_climbing_ladder or cant_climb_ladder or is_passed_out)
+                if apply_gravity:
                     spr.move(Direction.DOWN, GRAVITY)
 
-        # Move miners
-        for m in mine.miners.sprites():
+        # Move computer controlled sprites
+        for m in mine.miners.sprites() + mine.elevators.sprites():
             m.move_cc()
 
         # Check if a miner collides with an exit point to another room
@@ -295,7 +300,7 @@ def move_sprites():
 
         # Check miner is close to an exit point leading to the same room as the player and if so present a warning
         for ex, mi in itertools.product(mine.exits.sprites(), mine.miners.sprites()):
-            if mi.is_placeholder:
+            if mi.is_placeholder or ex.is_placeholder:
                 continue
             heading_left = mi.h_direction == Direction.LEFT and mi.is_walking()
             heading_right = mi.h_direction == Direction.RIGHT and mi.is_walking()
@@ -367,6 +372,8 @@ class Mines(object):
         self.trucks = None
         self.wheelbarrows = None
         self.exits = None
+        self.elevators = None
+        self.elevator_shafts = None
         self.all_sprites = None
         self.not_player = None
         self.affected_by_gravity = None
@@ -414,6 +421,8 @@ class Mines(object):
         self.affected_by_gravity = self.rooms[str(self.room)]["affected_by_gravity"]
         self.player = self.rooms[str(self.room)]["player"] if not self.player else self.player
         self.players = self.rooms[str(self.room)]["players"] if not self.players else self.players
+        self.elevator_shafts = self.rooms[str(self.room)]["elevator_shafts"]
+        self.elevators = self.rooms[str(self.room)]["elevators"]
 
     def load(self, mine_):
         """
@@ -464,16 +473,19 @@ class Mines(object):
             self.rooms[r]["gold_sacks"] = self.generate_sprites(r, SpriteName.GOLD, animation_freq_ms=500)
             self.rooms[r]["ladders"] = self.generate_sprites(
                 r, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
+            self.rooms[r]["elevator_shafts"] = self.generate_sprites(
+                r, SpriteName.ELEVATOR_SHAFT, image=Folder.IDLE_IMGS.format(SpriteName.ELEVATOR_SHAFT) + "001.png")
             self.rooms[r]["trucks"] = self.generate_sprites(r, SpriteName.TRUCK, animation_freq_ms=100)
             self.rooms[r]["wheelbarrows"] = self.generate_sprites(r, SpriteName.WHEELBARROW)
             self.rooms[r]["exits"] = self.generate_sprites(
                 r, SpriteName.EXIT, image=Folder.IDLE_IMGS.format(SpriteName.EXIT) + "001.png")
+            self.rooms[r]["elevators"] = self.generate_sprites(r, SpriteName.ELEVATOR, standard_speed=ELEVATOR_SPEED)
             self.rooms[r]["all_sprites"] = (
                 self.rooms[r]["ladders"], self.rooms[r]["trucks"], self.rooms[r]["gold_sacks"],
-                self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"])
+                self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"], self.rooms[r]["elevator_shafts"])
             self.rooms[r]["not_player"] = (
                 self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["ladders"], self.rooms[r]["trucks"],
-                self.rooms[r]["wheelbarrows"])
+                self.rooms[r]["wheelbarrows"], self.rooms[r]["elevator_shafts"], self.rooms[r]["elevators"])
             self.rooms[r]["affected_by_gravity"] = [
                 self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["trucks"],
                 self.rooms[r]["wheelbarrows"]]
@@ -527,11 +539,12 @@ class Mines(object):
             height = spr["height"] if "height" in spr else None
             leads_to = spr["leads_to"] if "leads_to" in spr else None
             exit_dir = spr["exit_dir"] if "exit_dir" in spr else None
+            stops = spr["stops"] if "stops" in spr else None
             sprites.append(Sprite(
                 name=name, position=spr["position"], image=image, activity=activity, h_direction=h_direction,
                 v_direction=v_direction, height=height, animation_freq_ms=animation_freq_ms,
                 standard_speed=standard_speed,
-                slow_speed=slow_speed, leads_to=leads_to, exit_dir=exit_dir))
+                slow_speed=slow_speed, leads_to=leads_to, exit_dir=exit_dir, stops=stops))
         for spr in sprites:
             group.add(spr)
         return group
@@ -578,7 +591,7 @@ class Sprite(pygame.sprite.Sprite):
     def __init__(
             self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none",
             height=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED, leads_to=None,
-            exit_dir=None, longevity_ms=None):
+            exit_dir=None, longevity_ms=None, stops=None):
         """
         Create a new sprite
 
@@ -605,6 +618,8 @@ class Sprite(pygame.sprite.Sprite):
             facing to go through the exit.
         - longevity_ms -- (Integer. Optional. Defaults to None) If set to a positive value the sprite will expire after
             the given number of milliseconds
+        - stops -- (List. Optional. Defaults to None) Applicable for elevators (and carts?). Positions (in pix) where
+            the sprite should pause.
         """
         pygame.sprite.Sprite.__init__(self)
 
@@ -623,9 +638,10 @@ class Sprite(pygame.sprite.Sprite):
         self.is_ladder = self.name == SpriteName.LADDER
         self.is_truck = self.name == SpriteName.TRUCK
         self.is_wheelbarrow = self.name == SpriteName.WHEELBARROW
-        self.is_axe = self.name == SpriteName.AXE
+        self.is_stun_gun = self.name == SpriteName.STUN_GUN
         self.is_cart = self.name == SpriteName.CART
         self.is_elevator = self.name == SpriteName.ELEVATOR
+        self.is_elevator_shaft = self.name == SpriteName.ELEVATOR_SHAFT
         self.is_handle = self.name == SpriteName.HANDLE
         self.standard_speed = standard_speed
         self.slow_speed = slow_speed
@@ -656,6 +672,7 @@ class Sprite(pygame.sprite.Sprite):
         self.longevity_ms = longevity_ms
         self.expiration_ms = pygame.time.get_ticks() + self.longevity_ms if self.longevity_ms else 0
         self.ignore_screen_boundaries = self.is_truck
+        self.stops = stops
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -725,7 +742,7 @@ class Sprite(pygame.sprite.Sprite):
             # Check for wall collision
             if self.collides(mine.layouts):
                 climbed = False
-
+                if self.is_elevator: print("OUCH!")
                 # Check if the sprite has fallen too far
                 if self.fall_pix >= MAX_FALL_PIX and self.can_pass_out:
                     self.pass_out()
@@ -769,7 +786,7 @@ class Sprite(pygame.sprite.Sprite):
 
             # Keep track of how many pixels the sprite has fallen
             elif vertical and self.v_direction == Direction.DOWN and not (
-                    self.collides(mine.ladders) and self.can_climb_ladders):
+                    self.collides(mine.ladders) and self.can_climb_ladders) and not self.is_elevator:
                 self.fall_pix += 1
                 if self.fall_pix >= self.max_control_while_falling_pix:
                     if self.is_passed_out():
@@ -793,7 +810,8 @@ class Sprite(pygame.sprite.Sprite):
         ladder_center = [l.rect.center[0] for l in mine.ladders.sprites() if l.collides(self)]
         ladder_center = ladder_center[0] if ladder_center else -10
         close_to_center = ladder_center in range(x_pos - self.speed, x_pos + self.speed)
-        can_climb_ladder = close_to_center and not self.is_climbing() and not self.ladder_enter_selection
+        can_climb_ladder = \
+            close_to_center and not self.is_climbing() and not self.ladder_enter_selection and self.can_climb_ladders
 
         # If the sprite is currently able to start climbing a ladder then make a random selection whether to start
         # climbing and if so, if what direction, or to keep walking
@@ -878,6 +896,10 @@ class Sprite(pygame.sprite.Sprite):
                     self.ladder_exit_selection = [False, False]
                     return
 
+            self.move(self.v_direction)
+
+        # Move elevators
+        if self.is_elevator:
             self.move(self.v_direction)
 
     def update(self, activity=None):
@@ -1232,9 +1254,9 @@ class FileName(object):
 
 
 class SpriteName(object):
-    AXE = "axe"
     CART = "cart"
     ELEVATOR = "elevator"
+    ELEVATOR_SHAFT = "elevator_shaft"
     EXIT = "exit"
     GOLD = "gold"
     HANDLE = "handle"
@@ -1242,6 +1264,7 @@ class SpriteName(object):
     LAYOUT = "layout"
     PLACEHOLDER = "placeholder"
     PLAYER = "player"
+    STUN_GUN = "stun_gun"
     TRUCK = "truck"
     MINER = "miner"
     WARNING = "warning"
@@ -1270,6 +1293,8 @@ class Text(object):
 
 # Load sprite animation images and store in a dict
 SPRITE_ANIMATIONS = {
+    SpriteName.ELEVATOR: {
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.ELEVATOR)},
     SpriteName.GOLD: {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.GOLD),
         Animation.FALLING: load_images(Animation.IDLE, SpriteName.GOLD)},
@@ -1448,6 +1473,7 @@ while game_is_running:
         s.draw(screen)
     warnings.draw(screen)
     mine.players.draw(screen)
+    mine.elevators.draw(screen)
 
     # Update remaining time
     mine.seconds_remaining -= clock.get_time() / 1000

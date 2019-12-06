@@ -1,12 +1,12 @@
 {
   "texture": "granite.jpg",
-  "time_limit_mins": 3,
+  "time_limit_mins": 10,
   "rooms": {
     "1": {
       "layout": "room2_1.png",
       "sprites": {
         "truck":  [
-          {"position": [-100, -260]}],
+          {"position": [-180, -260]}],
         "wheelbarrow":  [
           {"position": [750, 20], "h_direction": "left"}],
         "player":  [
@@ -14,7 +14,13 @@
         "gold": [
           {"position": [545, 80]}],
         "ladder": [
-          {"position": [402, 200], "height":  820}]
+          {"position": [1055, 200], "height":  820}],
+        "elevator_shaft": [
+          {"position": [314, 0], "height":  1020}],
+        "elevator": [
+          {"position": [314, 115], "v_direction":  "down", "stops": [300, 900]}],
+        "miner": [
+          {"position": [550, 890], "h_direction": "right", "activity":  "walking"}]
       }
     }
   }
