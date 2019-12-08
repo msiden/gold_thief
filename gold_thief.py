@@ -672,7 +672,7 @@ class Sprite(pygame.sprite.Sprite):
         self.longevity_ms = longevity_ms
         self.expiration_ms = pygame.time.get_ticks() + self.longevity_ms if self.longevity_ms else 0
         self.ignore_screen_boundaries = self.is_truck
-        self.stops = stops
+        self.stops = sorted(stops) if stops else stops
         self.can_climb_slopes = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         if image:
             self.animations = None
@@ -903,10 +903,18 @@ class Sprite(pygame.sprite.Sprite):
 
         # Move elevators
         if self.is_elevator:
-            stop_points = [range(s-self.standard_speed, s+self.standard_speed) for s in self.stops]
-            stop_the_elevator = any([self.rect.bottom in i for i in stop_points])
-            if stop_the_elevator:
+            stop_points = [range(stp, stp+self.standard_speed) for stp in self.stops]
+            stop_point_reached = [self.rect.bottom in i for i in stop_points]
+
+            if any(stop_point_reached):
                 print("STOP")
+                if stop_point_reached.index(True) == len(stop_point_reached)-1:
+                    print("LAST STOP")
+                    self.v_direction = change_direction(self.v_direction)
+                elif stop_point_reached.index(True) == 0:
+                    print("FIRST STOP")
+                    self.v_direction = change_direction(self.v_direction)
+                pygame.time.delay(500)
             self.move(self.v_direction)
 
     def update(self, activity=None):

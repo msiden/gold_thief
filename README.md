@@ -44,6 +44,7 @@ TODO:
     - [ ] Elevator must pause at stops
 - [ ] Design lots of mines
 - [ ] More textures
+- [ ] See if we can speed the game up by not applying gravity to sprites that have already landed
 - [ ] Create more sprites
     - [X] Ladder
     - [X] Miner
