@@ -6,7 +6,7 @@ import random
 import itertools
 
 # Constants you may want to play around with
-CHICKEN_MODE = False
+CHICKEN_MODE = True
 SHOW_START_SCREEN = False
 START_MINE = 2
 PLAYER_LIVES = 5
@@ -679,6 +679,7 @@ class Sprite(pygame.sprite.Sprite):
         self.stops = sorted(stops) if stops else stops
         self.can_climb_slopes = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         self.stop_direction = stop_direction
+        self.stop_points = [range(stp, stp + self.standard_speed) for stp in self.stops] if self.stops else None
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -909,8 +910,14 @@ class Sprite(pygame.sprite.Sprite):
         # Move elevators
         if self.is_elevator and not self.is_paused():
             self.move(self.v_direction)
-            stop_points = [range(stp, stp+self.standard_speed) for stp in self.stops]
-            stop_point_reached = [self.rect.bottom in i for i in stop_points]
+
+            # Check if another sprite is riding the elevator and if so move that sprite too
+            for spr in mine.all_sprites:
+                for spt in spr.sprites():
+                    if spt.collides(self) and not spt.is_elevator_shaft:
+                        print(spt.name)
+
+            stop_point_reached = [self.rect.bottom in i for i in self.stop_points]
             if any(stop_point_reached) and (self.v_direction == self.stop_direction or not self.stop_direction):
                 last_stop = stop_point_reached.index(True) == len(stop_point_reached) - 1
                 first_stop = stop_point_reached.index(True) == 0
