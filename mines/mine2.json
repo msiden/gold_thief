@@ -18,7 +18,7 @@
         "elevator_shaft": [
           {"position": [314, 0], "height":  1020}],
         "elevator": [
-          {"position": [314, 115], "v_direction":  "down", "stops": [415, 230, 1020]}],
+          {"position": [314, 115], "v_direction":  "down", "stops": [415, 230, 1020], "stop_direction": "down"}],
         "miner": [
           {"position": [550, 890], "h_direction": "right", "activity":  "walking"}]
       }

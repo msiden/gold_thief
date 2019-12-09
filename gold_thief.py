@@ -21,6 +21,7 @@ WAKE_UP_TIME_MS = 5000
 MAX_FALL_PIX = 100
 MAX_CONTROL_WHILE_FALLING_PIX = 50
 ELEVATOR_SPEED = 5
+ELEVATOR_PAUSE_MS = 3000
 
 # Constants you probably don't want to play around with
 CLIMBABLE_PIX = 1
@@ -540,11 +541,12 @@ class Mines(object):
             leads_to = spr["leads_to"] if "leads_to" in spr else None
             exit_dir = spr["exit_dir"] if "exit_dir" in spr else None
             stops = spr["stops"] if "stops" in spr else None
+            stop_direction = spr["stop_direction"] if "stop_direction" in spr else None
             sprites.append(Sprite(
                 name=name, position=spr["position"], image=image, activity=activity, h_direction=h_direction,
                 v_direction=v_direction, height=height, animation_freq_ms=animation_freq_ms,
-                standard_speed=standard_speed,
-                slow_speed=slow_speed, leads_to=leads_to, exit_dir=exit_dir, stops=stops))
+                standard_speed=standard_speed, slow_speed=slow_speed, leads_to=leads_to, exit_dir=exit_dir,
+                stops=stops, stop_direction=stop_direction))
         for spr in sprites:
             group.add(spr)
         return group
@@ -591,7 +593,7 @@ class Sprite(pygame.sprite.Sprite):
     def __init__(
             self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none",
             height=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED, leads_to=None,
-            exit_dir=None, longevity_ms=None, stops=None):
+            exit_dir=None, longevity_ms=None, stops=None, stop_direction=None):
         """
         Create a new sprite
 
@@ -620,6 +622,8 @@ class Sprite(pygame.sprite.Sprite):
             the given number of milliseconds
         - stops -- (List. Optional. Defaults to None) Applicable for elevators (and carts?). Positions (in pix) where
             the sprite should pause.
+        - stop_direction -- (String. Optional. Defaults to None) Applicable for elevators. Will only stop when giong
+            in this direction ("up" or "down")
         """
         pygame.sprite.Sprite.__init__(self)
 
@@ -674,6 +678,7 @@ class Sprite(pygame.sprite.Sprite):
         self.ignore_screen_boundaries = self.is_truck
         self.stops = sorted(stops) if stops else stops
         self.can_climb_slopes = self.name in (SpriteName.PLAYER, SpriteName.MINER)
+        self.stop_direction = stop_direction
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -902,20 +907,15 @@ class Sprite(pygame.sprite.Sprite):
             self.move(self.v_direction)
 
         # Move elevators
-        if self.is_elevator:
+        if self.is_elevator and not self.is_paused():
+            self.move(self.v_direction)
             stop_points = [range(stp, stp+self.standard_speed) for stp in self.stops]
             stop_point_reached = [self.rect.bottom in i for i in stop_points]
-
-            if any(stop_point_reached):
-                print("STOP")
-                if stop_point_reached.index(True) == len(stop_point_reached)-1:
-                    print("LAST STOP")
-                    self.v_direction = change_direction(self.v_direction)
-                elif stop_point_reached.index(True) == 0:
-                    print("FIRST STOP")
-                    self.v_direction = change_direction(self.v_direction)
-                pygame.time.delay(500)
-            self.move(self.v_direction)
+            if any(stop_point_reached) and self.v_direction == self.stop_direction:
+                last_stop = stop_point_reached.index(True) == len(stop_point_reached) - 1
+                first_stop = stop_point_reached.index(True) == 0
+                self.v_direction = change_direction(self.v_direction) if first_stop or last_stop else self.v_direction
+                self.update(Activity.PAUSED)
 
     def update(self, activity=None):
         """
@@ -942,11 +942,16 @@ class Sprite(pygame.sprite.Sprite):
 
         # Check if the sprite activity has changed and if so change animation
         if activity != self.activity:
-            self.animation = animation_loop(self.animations[activity])
 
-            # Start the wake up timer if the sprite has passed out
+            # Activate timer for paused or passed out sprites
             if activity == Activity.PASSED_OUT:
                 self.wake_up_time = now + WAKE_UP_TIME_MS
+            elif activity == Activity.PAUSED:
+                self.wake_up_time = now + ELEVATOR_PAUSE_MS
+                activity = self.activity
+
+            # Load new animation
+            self.animation = animation_loop(self.animations[activity])
 
         # Check if it's time to wake up the sprite from passed out state
         elif self.is_passed_out() and now >= self.wake_up_time:
@@ -959,6 +964,7 @@ class Sprite(pygame.sprite.Sprite):
             self.animation = animation_loop(self.animations[activity])
             self.immortality_timer = IMMORTAL_TIME if self.is_player else 0
             self.image_transparency_val = IMG_SEMI_TRANSPARENCY if self.is_player else IMG_FULLY_OPAQUE
+
 
         # Update immortality timer if sprite is in immortal state after waking up from passed out state
         if self.immortality_timer > 0:
@@ -1092,6 +1098,9 @@ class Sprite(pygame.sprite.Sprite):
     def is_passed_out(self):
         return self.activity == Activity.PASSED_OUT
 
+    def is_paused(self):
+        return pygame.time.get_ticks() < self.wake_up_time
+
     def is_walking(self):
         return self.activity in (
             Activity.WALKING, Activity.WALKING_WITH_GOLD, Activity.PUSHING_EMPTY_WHEELBARROW,
@@ -1200,6 +1209,7 @@ class Activity(object):
     LOADED_03 = "loaded_03"
     LOADED_04 = "loaded_04"
     LOADED_05 = "loaded_05"
+    PAUSED = "paused"
     PASSED_OUT = "passed_out"
     PULLING_UP = "pulling_up"
     PUSHING_EMPTY_WHEELBARROW = "pushing_empty_wheelbarrow"
