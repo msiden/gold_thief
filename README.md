@@ -41,7 +41,7 @@ TODO:
     - [ ] Player and miner must pass out if landing on elevator
     - [ ] Player and miner must be able to ride elevator
     - [ ] Player and miner must pass out if hit in the head by elevator
-    - [ ] Elevator must pause at stops
+    - [x] Elevator must pause at stops
 - [ ] Design lots of mines
 - [ ] More textures
 - [ ] See if we can speed the game up by not applying gravity to sprites that have already landed

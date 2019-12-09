@@ -911,10 +911,10 @@ class Sprite(pygame.sprite.Sprite):
             self.move(self.v_direction)
             stop_points = [range(stp, stp+self.standard_speed) for stp in self.stops]
             stop_point_reached = [self.rect.bottom in i for i in stop_points]
-            if any(stop_point_reached) and self.v_direction == self.stop_direction:
+            if any(stop_point_reached) and (self.v_direction == self.stop_direction or not self.stop_direction):
                 last_stop = stop_point_reached.index(True) == len(stop_point_reached) - 1
                 first_stop = stop_point_reached.index(True) == 0
-                self.v_direction = change_direction(self.v_direction) if first_stop or last_stop else self.v_direction
+                self.v_direction = Direction.UP if last_stop else Direction.DOWN if first_stop else self.v_direction
                 self.update(Activity.PAUSED)
 
     def update(self, activity=None):
