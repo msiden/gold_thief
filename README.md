@@ -38,9 +38,10 @@ TODO:
 - [ ] Elevators
     - [x] Make elevator move
     - [ ] Miners can choose to wait for elevators
-    - [ ] Player and miner must pass out if landing on elevator
-    - [ ] Player and miner must be able to ride elevator
-    - [ ] Player and miner must pass out if hit in the head by elevator
+    - [ ] Miners must not move while elevators are moving
+    - [x] Player and miner must pass out if landing on elevator
+    - [x] Player and miner must be able to ride elevator
+    - [ ] Player and miner must not be able to get on if elevator bottom is above their bottom
     - [x] Elevator must pause at stops
 - [ ] Design lots of mines
 - [ ] More textures
