@@ -287,8 +287,7 @@ def move_sprites():
                 not_climbing_ladder = not (spr.can_climb_ladders and spr.collides(mine.ladders))
                 cant_climb_ladder = not spr.can_climb_ladders
                 is_passed_out = spr.is_passed_out()
-                not_riding_elevator = not spr.is_riding_elevator
-                apply_gravity = not_riding_elevator and (not_climbing_ladder or cant_climb_ladder or is_passed_out)
+                apply_gravity = not_climbing_ladder or cant_climb_ladder or is_passed_out
                 if apply_gravity:
                     spr.move(Direction.DOWN, GRAVITY)
 
@@ -334,18 +333,6 @@ def move_sprites():
 
     # Update warnings animations
     warnings.update()
-
-    # Check if a sprite is standing on an elevator
-    """for spr in mine.all_sprites + ([mine.players] if mine.room == original_room else []):
-        for spt in spr.sprites():
-            if spt.is_elevator_shaft:
-                continue
-            if spt.is_riding_elevator:
-                #spt.rect.bottom = self.rect.bottom
-                print(spt.name)
-                #spt.rect.bottom = elv.rect.bottom
-                #elv.saved_sprite = spt"""
-
 
     # Change back to the original room where the player is
     mine.set(mine_=mine.mine, room_=original_room)
@@ -806,6 +793,15 @@ class Sprite(pygame.sprite.Sprite):
                     activity = Activity.WALKING if self.is_miner else Activity.IDLE
                 break
 
+            # Check for collision with an elevator
+            elif self.collides(mine.elevators):
+                if self.fall_pix >= MAX_FALL_PIX and self.can_pass_out:
+                    self.pass_out()
+                    activity = Activity.PASSED_OUT
+
+                # Reset fall distance count
+                self.fall_pix = 0 if vertical else self.fall_pix
+
             # Keep track of how many pixels the sprite has fallen
             elif vertical and self.v_direction == Direction.DOWN and not (
                     self.collides(mine.ladders) and self.can_climb_ladders) and not self.is_elevator:
@@ -930,21 +926,16 @@ class Sprite(pygame.sprite.Sprite):
                 self.v_direction = Direction.UP if last_stop else Direction.DOWN if first_stop else self.v_direction
                 self.update(Activity.PAUSED)
 
-        # Check if a sprite is riding an elevator
+        # Check if another sprite is riding the elevator and if so move that sprite to the same vertical position as
+        # the elevator
         if self.is_elevator:
             for spr in mine.all_sprites + [mine.players]:
                 for spt in spr.sprites():
                     if spt.is_elevator_shaft:
                         continue
                     spt.is_riding_elevator = spt.collides(self)
-
-                    # Move the sprite to the same vertical position as the elevator
                     if spt.is_riding_elevator:
                         spt.rect.bottom = self.rect.bottom
-
-                        # Check if the sprite lands on the elevator after falling
-                        if spt.fall_pix >= MAX_FALL_PIX and spt.can_pass_out: # and not spt.is_passed_out():
-                            spt.pass_out()
 
     def update(self, activity=None):
         """
@@ -993,7 +984,6 @@ class Sprite(pygame.sprite.Sprite):
             self.animation = animation_loop(self.animations[activity])
             self.immortality_timer = IMMORTAL_TIME if self.is_player else 0
             self.image_transparency_val = IMG_SEMI_TRANSPARENCY if self.is_player else IMG_FULLY_OPAQUE
-
 
         # Update immortality timer if sprite is in immortal state after waking up from passed out state
         if self.immortality_timer > 0:
