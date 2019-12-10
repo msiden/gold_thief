@@ -22,6 +22,8 @@ MAX_FALL_PIX = 100
 MAX_CONTROL_WHILE_FALLING_PIX = 50
 ELEVATOR_SPEED = 5
 ELEVATOR_PAUSE_MS = 3000
+WARNINGS_ANIMATION_FREQ_MS = 100
+WARNINGS_DURATION_MS = 1000
 
 # Constants you probably don't want to play around with
 CLIMBABLE_PIX = 1
@@ -31,8 +33,6 @@ IMG_FULLY_OPAQUE = 255
 IMG_TRANSPARENCY_INCREMENTATION = 1
 SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
-WARNINGS_ANIMATION_FREQ_MS = 100
-WARNINGS_DURATION_MS = 1000
 
 # Make sure we get the right screen resolution
 ctypes.windll.user32.SetProcessDPIAware()
@@ -287,7 +287,7 @@ def move_sprites():
                 not_climbing_ladder = not (spr.can_climb_ladders and spr.collides(mine.ladders))
                 cant_climb_ladder = not spr.can_climb_ladders
                 is_passed_out = spr.is_passed_out()
-                not_riding_elevator = not spr.collides(mine.elevators)
+                not_riding_elevator = not spr.is_riding_elevator
                 apply_gravity = not_riding_elevator and (not_climbing_ladder or cant_climb_ladder or is_passed_out)
                 if apply_gravity:
                     spr.move(Direction.DOWN, GRAVITY)
@@ -299,7 +299,7 @@ def move_sprites():
         # Check if a miner collides with an exit point to another room
         exit_room(mine.exits.sprites(), mine.miners.sprites())
 
-        # Check miner is close to an exit point leading to the same room as the player and if so present a warning
+        # Check if miner is close to an exit point leading to the same room as the player and if so present a warning
         for ex, mi in itertools.product(mine.exits.sprites(), mine.miners.sprites()):
             if mi.is_placeholder or ex.is_placeholder:
                 continue
@@ -334,6 +334,18 @@ def move_sprites():
 
     # Update warnings animations
     warnings.update()
+
+    # Check if a sprite is standing on an elevator
+    """for spr in mine.all_sprites + ([mine.players] if mine.room == original_room else []):
+        for spt in spr.sprites():
+            if spt.is_elevator_shaft:
+                continue
+            if spt.is_riding_elevator:
+                #spt.rect.bottom = self.rect.bottom
+                print(spt.name)
+                #spt.rect.bottom = elv.rect.bottom
+                #elv.saved_sprite = spt"""
+
 
     # Change back to the original room where the player is
     mine.set(mine_=mine.mine, room_=original_room)
@@ -481,9 +493,9 @@ class Mines(object):
             self.rooms[r]["exits"] = self.generate_sprites(
                 r, SpriteName.EXIT, image=Folder.IDLE_IMGS.format(SpriteName.EXIT) + "001.png")
             self.rooms[r]["elevators"] = self.generate_sprites(r, SpriteName.ELEVATOR, standard_speed=ELEVATOR_SPEED)
-            self.rooms[r]["all_sprites"] = (
+            self.rooms[r]["all_sprites"] = [
                 self.rooms[r]["ladders"], self.rooms[r]["elevator_shafts"], self.rooms[r]["trucks"],
-                self.rooms[r]["gold_sacks"], self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"])
+                self.rooms[r]["gold_sacks"], self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"]]
             self.rooms[r]["not_player"] = (
                 self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["ladders"], self.rooms[r]["trucks"],
                 self.rooms[r]["wheelbarrows"], self.rooms[r]["elevator_shafts"], self.rooms[r]["elevators"])
@@ -680,6 +692,7 @@ class Sprite(pygame.sprite.Sprite):
         self.can_climb_slopes = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         self.stop_direction = stop_direction
         self.stop_points = [range(stp, stp + self.standard_speed) for stp in self.stops] if self.stops else None
+        self.is_riding_elevator = False
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -910,19 +923,28 @@ class Sprite(pygame.sprite.Sprite):
         # Move elevators
         if self.is_elevator and not self.is_paused():
             self.move(self.v_direction)
-
-            # Check if another sprite is riding the elevator and if so move that sprite too
-            for spr in mine.all_sprites:
-                for spt in spr.sprites():
-                    if spt.collides(self) and not spt.is_elevator_shaft:
-                        print(spt.name)
-
             stop_point_reached = [self.rect.bottom in i for i in self.stop_points]
             if any(stop_point_reached) and (self.v_direction == self.stop_direction or not self.stop_direction):
                 last_stop = stop_point_reached.index(True) == len(stop_point_reached) - 1
                 first_stop = stop_point_reached.index(True) == 0
                 self.v_direction = Direction.UP if last_stop else Direction.DOWN if first_stop else self.v_direction
                 self.update(Activity.PAUSED)
+
+        # Check if a sprite is riding an elevator
+        if self.is_elevator:
+            for spr in mine.all_sprites + [mine.players]:
+                for spt in spr.sprites():
+                    if spt.is_elevator_shaft:
+                        continue
+                    spt.is_riding_elevator = spt.collides(self)
+
+                    # Move the sprite to the same vertical position as the elevator
+                    if spt.is_riding_elevator:
+                        spt.rect.bottom = self.rect.bottom
+
+                        # Check if the sprite lands on the elevator after falling
+                        if spt.fall_pix >= MAX_FALL_PIX and spt.can_pass_out: # and not spt.is_passed_out():
+                            spt.pass_out()
 
     def update(self, activity=None):
         """
@@ -1520,3 +1542,4 @@ while game_is_running:
 
     # Update the screen
     pygame.display.flip()
+    print(mine.player.activity)
