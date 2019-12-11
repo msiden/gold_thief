@@ -925,12 +925,13 @@ class Sprite(pygame.sprite.Sprite):
                 for spt in spr.sprites():
                     if spt.is_elevator_shaft:
                         continue
-                    elevator_collision = spt.collides(self) and self.rect.bottom >= spt.rect.bottom - 5 #and spt.rect.bottom > self.rect.bottom - 25
+                    elevator_collision = spt.collides(self) and self.rect.bottom >= spt.rect.bottom - 5
+                    y = (self.rect.bottom - 5) - spt.rect.bottom
                     if not spt.is_riding_elevator and elevator_collision:
-                        spt.rect.bottom = self.rect.bottom - 5
                         spt.is_riding_elevator = True
+                        spt.move(Direction.UP if y < 0 else Direction.DOWN, speed=abs(y))
                     elif spt.is_riding_elevator and not self.is_paused():
-                        spt.move(self.v_direction, speed=ELEVATOR_SPEED)
+                        spt.move(self.v_direction, speed=abs(y))
                     if not elevator_collision:
                         spt.is_riding_elevator = False
 
