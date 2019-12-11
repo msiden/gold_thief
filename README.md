@@ -23,7 +23,13 @@ TODO:
     - [ ] Riding cart
     - [ ] Idle with stun gun
     - [ ] Walking with stun gun
-    - [ ] Using stun gun 
+    - [ ] Using stun gun
+    - [ ] Riding elevator with empty wheelbarrow 
+    - [ ] Riding elevator with loaded 01 wheelbarrow
+    - [ ] Riding elevator with loaded 02 wheelbarrow
+    - [ ] Riding elevator with loaded 03 wheelbarrow
+    - [ ] Riding elevator with gold
+    - [ ] Idle riding elevator
 - [ ] More player abilities
     - [x] Climb
     - [x] Carry sack
@@ -39,9 +45,10 @@ TODO:
     - [x] Make elevator move
     - [ ] Miners can choose to wait for elevators
     - [ ] Miners must not move while elevators are moving
+    - [ ] Animations
     - [x] Player and miner must pass out if landing on elevator
     - [x] Player and miner must be able to ride elevator
-    - [ ] Player and miner must not be able to get on if elevator bottom is above their bottom
+    - [x] Player and miner must not be able to get on if elevator bottom is above their bottom
     - [x] Elevator must pause at stops
 - [ ] Design lots of mines
 - [ ] More textures

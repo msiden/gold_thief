@@ -287,9 +287,12 @@ def move_sprites():
                 not_climbing_ladder = not (spr.can_climb_ladders and spr.collides(mine.ladders))
                 cant_climb_ladder = not spr.can_climb_ladders
                 is_passed_out = spr.is_passed_out()
-                apply_gravity = not_climbing_ladder or cant_climb_ladder or is_passed_out
+                apply_gravity = \
+                    not spr.is_riding_elevator and (not_climbing_ladder or cant_climb_ladder or is_passed_out)
                 if apply_gravity:
                     spr.move(Direction.DOWN, GRAVITY)
+                else:
+                    spr.update()
 
         # Move computer controlled sprites
         for m in mine.miners.sprites() + mine.elevators.sprites():
@@ -916,6 +919,21 @@ class Sprite(pygame.sprite.Sprite):
 
             self.move(self.v_direction)
 
+        # Check if a sprite is riding an elevator and if so move that sprite with the elevator
+        if self.is_elevator:
+            for spr in mine.all_sprites + [mine.players]:
+                for spt in spr.sprites():
+                    if spt.is_elevator_shaft:
+                        continue
+                    elevator_collision = spt.collides(self) and self.rect.bottom >= spt.rect.bottom - 5 #and spt.rect.bottom > self.rect.bottom - 25
+                    if not spt.is_riding_elevator and elevator_collision:
+                        spt.rect.bottom = self.rect.bottom - 5
+                        spt.is_riding_elevator = True
+                    elif spt.is_riding_elevator and not self.is_paused():
+                        spt.move(self.v_direction, speed=ELEVATOR_SPEED)
+                    if not elevator_collision:
+                        spt.is_riding_elevator = False
+
         # Move elevators
         if self.is_elevator and not self.is_paused():
             self.move(self.v_direction)
@@ -925,17 +943,6 @@ class Sprite(pygame.sprite.Sprite):
                 first_stop = stop_point_reached.index(True) == 0
                 self.v_direction = Direction.UP if last_stop else Direction.DOWN if first_stop else self.v_direction
                 self.update(Activity.PAUSED)
-
-        # Check if another sprite is riding the elevator and if so move that sprite to the same vertical position as
-        # the elevator
-        if self.is_elevator:
-            for spr in mine.all_sprites + [mine.players]:
-                for spt in spr.sprites():
-                    if spt.is_elevator_shaft:
-                        continue
-                    spt.is_riding_elevator = spt.collides(self)
-                    if spt.is_riding_elevator:
-                        spt.rect.bottom = self.rect.bottom
 
     def update(self, activity=None):
         """
@@ -1098,6 +1105,7 @@ class Sprite(pygame.sprite.Sprite):
         # Drop the sprite on the ground
         if not (dropped_in_wheelbarrow or dropped_in_truck):
             self.saved_sprite.rect.center = self.rect.center
+            self.saved_sprite.rect.y -= 70
             group.add(self.saved_sprite)
             if carries_wheelbarrow:
                 self.saved_sprite.h_direction = self.h_direction
@@ -1532,4 +1540,3 @@ while game_is_running:
 
     # Update the screen
     pygame.display.flip()
-    print(mine.player.activity)
