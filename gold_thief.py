@@ -535,7 +535,7 @@ class Mines(object):
             sprites_db = self.database["rooms"][str(room_)]["sprites"][name]
         sprites = []
         group = pygame.sprite.Group()
-        for spr in sprites_db:
+        for i, spr in enumerate(sprites_db):
             activity = spr["activity"] if "activity" in spr else Activity.IDLE
             h_direction = spr["h_direction"] if "h_direction" in spr else Direction.RIGHT
             v_direction = spr["v_direction"] if "v_direction" in spr else Direction.DOWN
@@ -548,7 +548,7 @@ class Mines(object):
                 name=name, position=spr["position"], image=image, activity=activity, h_direction=h_direction,
                 v_direction=v_direction, height=height, animation_freq_ms=animation_freq_ms,
                 standard_speed=standard_speed, slow_speed=slow_speed, leads_to=leads_to, exit_dir=exit_dir,
-                stops=stops, stop_direction=stop_direction))
+                stops=stops, stop_direction=stop_direction, id_number=i+1))
         for spr in sprites:
             group.add(spr)
         return group
@@ -595,7 +595,7 @@ class Sprite(pygame.sprite.Sprite):
     def __init__(
             self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none",
             height=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED, leads_to=None,
-            exit_dir=None, longevity_ms=None, stops=None, stop_direction=None):
+            exit_dir=None, longevity_ms=None, stops=None, stop_direction=None, id_number=None):
         """
         Create a new sprite
 
@@ -626,6 +626,8 @@ class Sprite(pygame.sprite.Sprite):
             the sprite should pause.
         - stop_direction -- (String. Optional. Defaults to None) Applicable for elevators. Will only stop when giong
             in this direction ("up" or "down")
+        - id_number -- (Integer. Optional. Defaults to None) Give the sprite a unique id number. Useful for
+            distinguishing between sprites with the same name.
         """
         pygame.sprite.Sprite.__init__(self)
 
@@ -682,6 +684,7 @@ class Sprite(pygame.sprite.Sprite):
         self.can_climb_slopes = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         self.stop_direction = stop_direction
         self.is_riding_elevator = False
+        self.id_number = id_number
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -805,7 +808,7 @@ class Sprite(pygame.sprite.Sprite):
                 self.fall_pix = 0 if vertical else self.fall_pix
 
             # Keep track of how many pixels the sprite has fallen
-            elif vertical and self.v_direction == Direction.DOWN and not (
+            if vertical and self.v_direction == Direction.DOWN and not (
                     self.collides(mine.ladders) and self.can_climb_ladders) and not self.is_elevator:
                 self.fall_pix += 1
                 if self.fall_pix >= self.max_control_while_falling_pix:
@@ -818,14 +821,14 @@ class Sprite(pygame.sprite.Sprite):
 
             # Check if the sprite has reached a stop point (applicable to elevators and carts) and if so pause
             # the sprite
-            elif self.rect.bottom in self.stops:
+            if self.rect.bottom in self.stops:
                 last_stop = self.stops.index(self.rect.bottom) == len(self.stops) - 1
                 first_stop = self.stops.index(self.rect.bottom) == 0
-                activity = Activity.PAUSED \
-                    if (first_stop or first_stop) or not self.stop_direction or self.stop_direction == self.v_direction \
-                    else activity
+                activity = Activity.PAUSED if (first_stop or last_stop) or not self.stop_direction \
+                    or self.stop_direction == self.v_direction else activity
                 if first_stop or last_stop:
                     self.v_direction = {last_stop: Direction.UP, first_stop: Direction.DOWN}[True]
+                break
 
         self.update(activity if activity else self.activity)
 
@@ -940,14 +943,15 @@ class Sprite(pygame.sprite.Sprite):
                     if spt.is_elevator_shaft:
                         continue
                     elevator_collision = spt.collides(self) and self.rect.bottom >= spt.rect.bottom - 5
-                    y = (self.rect.bottom - 3) - spt.rect.bottom
-                    if not spt.is_riding_elevator and elevator_collision:
-                        spt.is_riding_elevator = True
+                    riding_this_elevator = spt.is_riding_elevator == self.id_number
+                    y = (self.rect.bottom - 5) - spt.rect.bottom
+                    if not riding_this_elevator and elevator_collision:
+                        spt.is_riding_elevator = self.id_number
                         spt.move(Direction.UP if y < 0 else Direction.DOWN, speed=abs(y))
-                    elif spt.is_riding_elevator and not self.is_paused():
+                    elif riding_this_elevator and not self.is_paused():
                         spt.move(self.v_direction, speed=abs(y))
                     if not elevator_collision:
-                        spt.is_riding_elevator = False
+                        spt.is_riding_elevator = None if riding_this_elevator else spt.is_riding_elevator
 
     def update(self, activity=None):
         """
