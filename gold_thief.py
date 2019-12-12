@@ -678,10 +678,9 @@ class Sprite(pygame.sprite.Sprite):
         self.longevity_ms = longevity_ms
         self.expiration_ms = pygame.time.get_ticks() + self.longevity_ms if self.longevity_ms else 0
         self.ignore_screen_boundaries = self.is_truck
-        self.stops = sorted(stops) if stops else stops
+        self.stops = sorted(stops) if stops else []
         self.can_climb_slopes = self.name in (SpriteName.PLAYER, SpriteName.MINER)
         self.stop_direction = stop_direction
-        self.stop_points = [range(stp, stp + self.standard_speed) for stp in self.stops] if self.stops else None
         self.is_riding_elevator = False
         if image:
             self.animations = None
@@ -797,7 +796,7 @@ class Sprite(pygame.sprite.Sprite):
                 break
 
             # Check for collision with an elevator
-            elif self.collides(mine.elevators):
+            elif self.collides(mine.elevators) and (self.is_player or self.is_miner):
                 if self.fall_pix >= MAX_FALL_PIX and self.can_pass_out:
                     self.pass_out()
                     activity = Activity.PASSED_OUT
@@ -816,6 +815,17 @@ class Sprite(pygame.sprite.Sprite):
                         activity = Activity.FALLING_WITH_GOLD
                     else:
                         activity = Activity.FALLING
+
+            # Check if the sprite has reached a stop point (applicable to elevators and carts) and if so pause
+            # the sprite
+            elif self.rect.bottom in self.stops:
+                last_stop = self.stops.index(self.rect.bottom) == len(self.stops) - 1
+                first_stop = self.stops.index(self.rect.bottom) == 0
+                activity = Activity.PAUSED \
+                    if (first_stop or first_stop) or not self.stop_direction or self.stop_direction == self.v_direction \
+                    else activity
+                if first_stop or last_stop:
+                    self.v_direction = {last_stop: Direction.UP, first_stop: Direction.DOWN}[True]
 
         self.update(activity if activity else self.activity)
 
@@ -919,6 +929,10 @@ class Sprite(pygame.sprite.Sprite):
 
             self.move(self.v_direction)
 
+        # Move elevators
+        if self.is_elevator and not self.is_paused():
+            self.move(self.v_direction)
+
         # Check if a sprite is riding an elevator and if so move that sprite with the elevator
         if self.is_elevator:
             for spr in mine.all_sprites + [mine.players]:
@@ -926,7 +940,7 @@ class Sprite(pygame.sprite.Sprite):
                     if spt.is_elevator_shaft:
                         continue
                     elevator_collision = spt.collides(self) and self.rect.bottom >= spt.rect.bottom - 5
-                    y = (self.rect.bottom - 5) - spt.rect.bottom
+                    y = (self.rect.bottom - 3) - spt.rect.bottom
                     if not spt.is_riding_elevator and elevator_collision:
                         spt.is_riding_elevator = True
                         spt.move(Direction.UP if y < 0 else Direction.DOWN, speed=abs(y))
@@ -934,16 +948,6 @@ class Sprite(pygame.sprite.Sprite):
                         spt.move(self.v_direction, speed=abs(y))
                     if not elevator_collision:
                         spt.is_riding_elevator = False
-
-        # Move elevators
-        if self.is_elevator and not self.is_paused():
-            self.move(self.v_direction)
-            stop_point_reached = [self.rect.bottom in i for i in self.stop_points]
-            if any(stop_point_reached) and (self.v_direction == self.stop_direction or not self.stop_direction):
-                last_stop = stop_point_reached.index(True) == len(stop_point_reached) - 1
-                first_stop = stop_point_reached.index(True) == 0
-                self.v_direction = Direction.UP if last_stop else Direction.DOWN if first_stop else self.v_direction
-                self.update(Activity.PAUSED)
 
     def update(self, activity=None):
         """

@@ -46,6 +46,8 @@ TODO:
     - [ ] Miners can choose to wait for elevators
     - [ ] Miners must not move while elevators are moving
     - [ ] Animations
+    - [x] Refactoring - check for stop points in move method
+    - [ ] Verify functionality with more than one elevator
     - [x] Player and miner must pass out if landing on elevator
     - [x] Player and miner must be able to ride elevator
     - [x] Player and miner must not be able to get on if elevator bottom is above their bottom
@@ -75,3 +77,4 @@ TODO:
 KNOWN ISSUES
 - [ ] Passed out timer (and other timers) must pause when in pause mode
 - [ ] Wheelbarrow temporarily disappears if player falls while pushing wheelbarrow
+- [ ] Player can sometimes fall straight through an elevator if it has already started moving down when the player steps on
