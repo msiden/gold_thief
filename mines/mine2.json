@@ -13,20 +13,23 @@
           {"position": [120, 20], "h_direction": "right", "activity":  "idle"}],
         "gold": [
           {"position": [545, 80]}],
-        "xladder": [
-          {"position": [1055, 200], "height":  820}],
         "elevator_shaft": [
           {"position": [314, 0], "height":  1020},
           {"position": [1046, 0], "height":  1020}],
-        "xelevator_shaft": [
-          {"position": [314, 0], "height":  1020}],
-        "xelevator": [
-          {"position": [314, 115], "v_direction":  "up", "stops": [230, 410, 1020], "stop_direction": "down"}],
         "elevator": [
           {"position": [314, 115], "v_direction":  "up", "stops": [230, 410, 1020], "stop_direction": "down"},
           {"position": [1046, 215], "v_direction":  "down", "stops": [230, 410, 766, 1020], "stop_direction": "up"}],
         "miner": [
           {"position": [550, 890], "h_direction": "right", "activity":  "walking"}]
+      }
+    },
+    "2": {
+    "layout": "room2_2.png",
+    "sprites": {
+      "gold": [
+        {"position": [545, 80]}],
+      "elevator_shaft": [
+        {"position": [314, -20], "height":  1040}]
       }
     }
   }

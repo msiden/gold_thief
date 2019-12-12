@@ -46,13 +46,13 @@ TODO:
     - [ ] Miners can choose to wait for elevators
     - [ ] Miners must not move while elevators are moving
     - [ ] Animations
-    - [ ] Elevators must be able to move between rooms
     - [x] Refactoring - check for stop points in move method
     - [x] Verify functionality with more than one elevator    
     - [x] Player and miner must pass out if landing on elevator
     - [x] Player and miner must be able to ride elevator
     - [x] Player and miner must not be able to get on if elevator bottom is above their bottom
     - [x] Elevator must pause at stops
+- [ ] Elevators must be able to move between rooms    
 - [ ] Design lots of mines
 - [ ] More textures
 - [ ] See if we can speed the game up by not applying gravity to sprites that have already landed

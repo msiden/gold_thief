@@ -298,7 +298,7 @@ def move_sprites():
         for m in mine.miners.sprites() + mine.elevators.sprites():
             m.move_cc()
 
-        # Check if a miner collides with an exit point to another room
+        # Check if a sprite collides with an exit point to another room
         exit_room(mine.exits.sprites(), mine.miners.sprites())
 
         # Check if miner is close to an exit point leading to the same room as the player and if so present a warning
