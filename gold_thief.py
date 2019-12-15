@@ -244,6 +244,7 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
         Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name),
         Animation.IDLE_CLIMBING: Folder.IDLE_CLIMBING_IMGS.format(sprite_name),
         Animation.IDLE_CLIMBING_WITH_GOLD: Folder.IDLE_CLIMBING_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.IDLE_RIDING_ELEVATOR: Folder.IDLE_RIDING_ELEVATOR_IMGS.format(sprite_name),
         Animation.IDLE_WITH_EMPTY_WHEELBARROW: Folder.IDLE_WITH_EMPTY_WHEELBARROW_IMGS.format(sprite_name),
         Animation.IDLE_WITH_GOLD: Folder.IDLE_WITH_GOLD_IMGS.format(sprite_name),
         Animation.IDLE_WITH_LOADED_01_WHEELBARROW: Folder.IDLE_WITH_LOADED_01_WHEELBARROW_IMGS.format(sprite_name),
@@ -259,6 +260,15 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
         Animation.PUSHING_LOADED_01_WHEELBARROW: Folder.PUSHING_LOADED_01_WHEELBARROW_IMGS.format(sprite_name),
         Animation.PUSHING_LOADED_02_WHEELBARROW: Folder.PUSHING_LOADED_02_WHEELBARROW_IMGS.format(sprite_name),
         Animation.PUSHING_LOADED_03_WHEELBARROW: Folder.PUSHING_LOADED_03_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW:
+            Folder.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.RIDING_ELEVATOR_WITH_GOLD: Folder.RIDING_ELEVATOR_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW:
+            Folder.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW:
+            Folder.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW:
+            Folder.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW_IMGS.format(sprite_name),
         Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
         Animation.WALKING_WITH_GOLD: Folder.WALKING_WITH_GOLD_IMGS.format(sprite_name)}[animation]
     size = (SPRITE_SIZE[0] * multiply_x_by, SPRITE_SIZE[1] * multiply_y_by)
@@ -1235,6 +1245,7 @@ class Activity(object):
     IDLE = "idle"
     IDLE_CLIMBING = "idle_climbing"
     IDLE_CLIMBING_WITH_GOLD = "idle_climbing_with_gold"
+    IDLE_RIDING_ELEVATOR = "idle_riding_elevator"
     IDLE_WITH_EMPTY_WHEELBARROW = "idle_with_empty_wheelbarrow"
     IDLE_WITH_GOLD = "idle_with_gold"
     IDLE_WITH_LOADED_01_WHEELBARROW = "idle_with_loaded_01_wheelbarrow"
@@ -1253,6 +1264,11 @@ class Activity(object):
     PUSHING_LOADED_02_WHEELBARROW = "pushing_loaded_02_wheelbarrow"
     PUSHING_LOADED_03_WHEELBARROW = "pushing_loaded_03_wheelbarrow"
     RIDING_CART = "riding cart"
+    RIDING_ELEVATOR_WITH_GOLD = "riding_elevator_with_gold"
+    RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW = "riding_elevator_with_empty_wheelbarrow"
+    RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW = "riding_elevator_with_loaded_01_wheelbarrow"
+    RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW = "riding_elevator_with_loaded_02_wheelbarrow"
+    RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW = "riding_elevator_with_loaded_03_wheelbarrow"
     WALKING = "walking"
     WALKING_WITH_GOLD = "walking_with_gold"
 
@@ -1283,30 +1299,40 @@ class Folder(object):
     MINES = "mines" + os.sep
     SPRITES = IMAGES + "sprites" + os.sep
     TEXTURES = IMAGES + "textures" + os.sep
-    CLIMBING_IMGS = SPRITES + "{}" + os.sep + "climbing" + os.sep
-    CLIMBING_UP_IMGS = SPRITES + "{}" + os.sep + "climbing_up" + os.sep
-    CLIMBING_DOWN_IMGS = SPRITES + "{}" + os.sep + "climbing_down" + os.sep
-    CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "climbing_with_gold" + os.sep
-    IDLE_IMGS = SPRITES + "{}" + os.sep + "idle" + os.sep
-    IDLE_CLIMBING_IMGS = SPRITES + "{}" + os.sep + "idle_climbing" + os.sep
-    IDLE_CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "idle_climbing_with_gold" + os.sep
-    IDLE_WITH_EMPTY_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_empty_wheelbarrow" + os.sep
-    IDLE_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "idle_with_gold" + os.sep
-    IDLE_WITH_LOADED_01_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_loaded_01_wheelbarrow" + os.sep
-    IDLE_WITH_LOADED_02_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_loaded_02_wheelbarrow" + os.sep
-    IDLE_WITH_LOADED_03_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_loaded_03_wheelbarrow" + os.sep
-    LOADED_01 = SPRITES + "{}" + os.sep + "loaded_01" + os.sep
-    LOADED_02 = SPRITES + "{}" + os.sep + "loaded_02" + os.sep
-    LOADED_03 = SPRITES + "{}" + os.sep + "loaded_03" + os.sep
-    LOADED_04 = SPRITES + "{}" + os.sep + "loaded_04" + os.sep
-    LOADED_05 = SPRITES + "{}" + os.sep + "loaded_05" + os.sep
-    PUSHING_EMPTY_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_empty_wheelbarrow" + os.sep
-    PUSHING_LOADED_01_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_loaded_01_wheelbarrow" + os.sep
-    PUSHING_LOADED_02_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_loaded_02_wheelbarrow" + os.sep
-    PUSHING_LOADED_03_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_loaded_03_wheelbarrow" + os.sep
-    PASSED_OUT_IMGS = SPRITES + "{}" + os.sep + "passed_out" + os.sep
-    WALKING_IMGS = SPRITES + "{}" + os.sep + "walking" + os.sep
-    WALKING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "walking_with_gold" + os.sep
+    CLIMBING_IMGS = SPRITES + "{}" + os.sep + Activity.CLIMBING + os.sep
+    CLIMBING_UP_IMGS = SPRITES + "{}" + os.sep + Activity.CLIMBING_UP + os.sep
+    CLIMBING_DOWN_IMGS = SPRITES + "{}" + os.sep + Activity.CLIMBING_DOWN + os.sep
+    CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + Activity.CLIMBING_WITH_GOLD + os.sep
+    IDLE_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE + os.sep
+    IDLE_CLIMBING_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_CLIMBING + os.sep
+    IDLE_CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_CLIMBING_WITH_GOLD + os.sep
+    IDLE_RIDING_ELEVATOR_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_RIDING_ELEVATOR + os.sep
+    IDLE_WITH_EMPTY_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_WITH_EMPTY_WHEELBARROW + os.sep
+    IDLE_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_WITH_GOLD + os.sep
+    IDLE_WITH_LOADED_01_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_WITH_LOADED_01_WHEELBARROW + os.sep
+    IDLE_WITH_LOADED_02_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_WITH_LOADED_02_WHEELBARROW + os.sep
+    IDLE_WITH_LOADED_03_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_WITH_LOADED_03_WHEELBARROW + os.sep
+    LOADED_01 = SPRITES + "{}" + os.sep + Activity.LOADED_01 + os.sep
+    LOADED_02 = SPRITES + "{}" + os.sep + Activity.LOADED_02 + os.sep
+    LOADED_03 = SPRITES + "{}" + os.sep + Activity.LOADED_03 + os.sep
+    LOADED_04 = SPRITES + "{}" + os.sep + Activity.LOADED_04 + os.sep
+    LOADED_05 = SPRITES + "{}" + os.sep + Activity.LOADED_05 + os.sep
+    PUSHING_EMPTY_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.PUSHING_EMPTY_WHEELBARROW + os.sep
+    PUSHING_LOADED_01_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.PUSHING_LOADED_01_WHEELBARROW + os.sep
+    PUSHING_LOADED_02_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.PUSHING_LOADED_02_WHEELBARROW + os.sep
+    PUSHING_LOADED_03_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.PUSHING_LOADED_03_WHEELBARROW + os.sep
+    PASSED_OUT_IMGS = SPRITES + "{}" + os.sep + Activity.PASSED_OUT + os.sep
+    RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW_IMGS = \
+        SPRITES + "{}" + os.sep + Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW + os.sep
+    RIDING_ELEVATOR_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + Activity.RIDING_ELEVATOR_WITH_GOLD + os.sep
+    RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW_IMGS = \
+        SPRITES + "{}" + os.sep + Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW + os.sep
+    RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW_IMGS = \
+        SPRITES + "{}" + os.sep + Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW + os.sep
+    RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW_IMGS = \
+        SPRITES + "{}" + os.sep + Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW + os.sep
+    WALKING_IMGS = SPRITES + "{}" + os.sep + Activity.WALKING + os.sep
+    WALKING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + Activity.WALKING_WITH_GOLD + os.sep
 
 
 class FileName(object):
@@ -1373,6 +1399,7 @@ SPRITE_ANIMATIONS = {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER),
         Animation.IDLE_CLIMBING: load_images(Animation.IDLE_CLIMBING, SpriteName.PLAYER),
         Animation.IDLE_CLIMBING_WITH_GOLD: load_images(Animation.IDLE_CLIMBING_WITH_GOLD, SpriteName.PLAYER),
+        Animation.IDLE_RIDING_ELEVATOR: load_images(Animation.IDLE_RIDING_ELEVATOR, SpriteName.PLAYER),
         Animation.IDLE_WITH_EMPTY_WHEELBARROW: load_images(
             Animation.IDLE_WITH_EMPTY_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
         Animation.IDLE_WITH_GOLD: load_images(Animation.IDLE_WITH_GOLD, SpriteName.PLAYER),
@@ -1391,6 +1418,16 @@ SPRITE_ANIMATIONS = {
             Animation.PUSHING_LOADED_02_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
         Animation.PUSHING_LOADED_03_WHEELBARROW: load_images(
             Animation.PUSHING_LOADED_03_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
+        Animation.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW: load_images(
+            Animation.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW, SpriteName.PLAYER),
+        Animation.RIDING_ELEVATOR_WITH_GOLD: load_images(
+            Animation.RIDING_ELEVATOR_WITH_GOLD, SpriteName.PLAYER),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW: load_images(
+            Animation.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW, SpriteName.PLAYER),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW: load_images(
+            Animation.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW, SpriteName.PLAYER),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW: load_images(
+            Animation.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW, SpriteName.PLAYER),
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
         Animation.WALKING_WITH_GOLD: load_images(Animation.WALKING_WITH_GOLD, SpriteName.PLAYER)},
     SpriteName.TRUCK: {

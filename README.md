@@ -24,12 +24,12 @@ TODO:
     - [ ] Idle with stun gun
     - [ ] Walking with stun gun
     - [ ] Using stun gun
-    - [ ] Riding elevator with empty wheelbarrow 
-    - [ ] Riding elevator with loaded 01 wheelbarrow
-    - [ ] Riding elevator with loaded 02 wheelbarrow
-    - [ ] Riding elevator with loaded 03 wheelbarrow
-    - [ ] Riding elevator with gold
-    - [ ] Idle riding elevator
+    - [x] Riding elevator with empty wheelbarrow 
+    - [x] Riding elevator with loaded 01 wheelbarrow
+    - [x] Riding elevator with loaded 02 wheelbarrow
+    - [x] Riding elevator with loaded 03 wheelbarrow
+    - [x] Riding elevator with gold
+    - [x] Idle riding elevator
 - [ ] More player abilities
     - [x] Climb
     - [x] Carry sack
