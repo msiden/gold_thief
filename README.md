@@ -40,7 +40,7 @@ TODO:
     - [x] Die if caught by miner 
     - [ ] Use stun gun (add bonus points!)    
     - [x] Empty gold in truck and collect points
-    - [x] Kill miners if hitting with gold sack
+    - [x] Knock out miners if hitting with gold sack
 - [ ] Elevators
     - [x] Make elevator move
     - [ ] Miners can choose to wait for elevators

@@ -712,6 +712,7 @@ class Sprite(pygame.sprite.Sprite):
         self.stop_direction = stop_direction
         self.is_riding_elevator = False
         self.id_number = id_number
+        self.is_waiting_for_elevator = False
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -727,17 +728,30 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = position
         self.mask = pygame.mask.from_surface(self.image)
 
-    def collides(self, sprites):
+    def collides(self, sprites, return_sprite=False):
         """
         Check if the sprite collides with another sprite
 
         - sprites -- (List, Tuple or object) The sprite or sprites to check for collision against
+        - return_sprite -- (Boolean. Optional. Defaults to False) If True will return a tuple containing collision
+            result and the sprite with which the collision was
 
-        Returns: Boolean
+        Returns: Boolean or Tuple
         """
         sprites = [sprites] if type(sprites) not in (list, tuple) else sprites
         sprites = [sprites[0].group_single] if type(sprites[0]) is not pygame.sprite.Group else sprites
-        return any([pygame.sprite.spritecollide(self, x, False, pygame.sprite.collide_mask) for x in sprites])
+        collisions = []
+        collided_sprite = None
+        for sprite in sprites:
+            collision = pygame.sprite.spritecollide(self, sprite, False, pygame.sprite.collide_mask)
+            if collision:
+                collisions.append(collision[0])
+                collided_sprite = collision[0]
+        result = bool(collisions)
+        if return_sprite:
+            return result, collided_sprite
+        else:
+            return result
 
     def move(self, direction, speed=None, activity=None):
         """
@@ -873,6 +887,15 @@ class Sprite(pygame.sprite.Sprite):
         close_to_center = ladder_center in range(x_pos - self.speed, x_pos + self.speed)
         can_climb_ladder = \
             close_to_center and not self.is_climbing() and not self.ladder_enter_selection and self.can_climb_ladders
+        not_an_elevator = not (self.is_elevator or self.is_elevator_shaft)
+        collides_with_elevator, elevator = self.collides(mine.elevators, True)
+        collides_with_elevator = collides_with_elevator and not_an_elevator and elevator.is_paused()
+        collides_with_elev_shaft, shaft = self.collides(mine.elevator_shafts, True)
+        collides_with_elev_shaft = collides_with_elev_shaft and not_an_elevator and ((
+            self.is_moving_right() and self.rect.right >= shaft.rect.x + 50 and self.rect.x < shaft.rect.center[0])
+            or (self.is_moving_left() and self.rect.x <= shaft.rect.right - 50
+                and self.rect.right > shaft.rect.center[0]))
+        can_wait_for_elevator = collides_with_elev_shaft and not self.is_riding_elevator
 
         # If the sprite is currently able to start climbing a ladder then make a random selection whether to start
         # climbing and if so, if what direction, or to keep walking
@@ -887,6 +910,18 @@ class Sprite(pygame.sprite.Sprite):
             self.just_entered_ladder = True if random_no > 0 else False
         elif not self.collides(mine.ladders):
             self.ladder_enter_selection = False
+
+        # Decide whether to wait for and ride an elevator or not
+        if can_wait_for_elevator: # and random.randrange(0, 2):
+            self.update(Activity.IDLE)
+            self.is_waiting_for_elevator = True
+
+        if self.is_waiting_for_elevator and collides_with_elevator:
+            self.update(Activity.WALKING)
+            if self.rect.center[0] in range(elevator.rect.center[0]-20, elevator.rect.center[0]+20):
+                self.update(Activity.PAUSED)
+                #self.is_waiting_for_elevator = False
+
 
         # If the sprite is walking, then just keep walking
         if self.is_walking():
@@ -1238,6 +1273,18 @@ class Sprite(pygame.sprite.Sprite):
 
     def is_loaded(self):
         return "loaded" in self.activity
+
+    def is_moving_right(self):
+        return self.h_direction == Direction.RIGHT
+
+    def is_moving_left(self):
+        return self.h_direction == Direction.LEFT
+
+    def is_moving_up(self):
+        return self.v_direction == Direction.UP
+
+    def is_moving_down(self):
+        return self.v_direction == Direction.DOWN
 
 
 class OnScreenTexts(object):
