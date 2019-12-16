@@ -45,7 +45,7 @@ TODO:
     - [x] Make elevator move
     - [ ] Miners can choose to wait for elevators
     - [ ] Miners must not move while elevators are moving
-    - [ ] Animations
+    - [x] Animations
     - [x] Refactoring - check for stop points in move method
     - [x] Verify functionality with more than one elevator    
     - [x] Player and miner must pass out if landing on elevator

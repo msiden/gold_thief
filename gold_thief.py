@@ -166,16 +166,28 @@ def key_presses(interact_key_pressed):
             mine.player.update(Activity.IDLE_CLIMBING_WITH_GOLD)
         elif mine.player.is_climbing():
             mine.player.update(Activity.IDLE_CLIMBING)
+        elif mine.player.is_riding_elevator and mine.player.is_carrying_gold():
+            mine.player.update(Activity.RIDING_ELEVATOR_WITH_GOLD)
         elif mine.player.is_carrying_gold():
             mine.player.update(Activity.IDLE_WITH_GOLD)
+        elif mine.player.is_riding_elevator and mine.player.is_pushing_empty_wheelbarrow():
+            mine.player.update(Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW)
         elif mine.player.is_pushing_empty_wheelbarrow():
             mine.player.update(Activity.IDLE_WITH_EMPTY_WHEELBARROW)
+        elif mine.player.is_riding_elevator and mine.player.is_pushing_loaded_01_wheelbarrow():
+            mine.player.update(Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW)
+        elif mine.player.is_riding_elevator and mine.player.is_pushing_loaded_02_wheelbarrow():
+            mine.player.update(Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW)
+        elif mine.player.is_riding_elevator and mine.player.is_pushing_loaded_03_wheelbarrow():
+            mine.player.update(Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW)
         elif mine.player.is_pushing_loaded_01_wheelbarrow():
             mine.player.update(Activity.IDLE_WITH_LOADED_01_WHEELBARROW)
         elif mine.player.is_pushing_loaded_02_wheelbarrow():
             mine.player.update(Activity.IDLE_WITH_LOADED_02_WHEELBARROW)
         elif mine.player.is_pushing_loaded_03_wheelbarrow():
             mine.player.update(Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
+        elif mine.player.is_riding_elevator:
+            mine.player.update(Activity.IDLE_RIDING_ELEVATOR)
         else:
             mine.player.update(Activity.IDLE)
 
@@ -188,15 +200,20 @@ def key_presses(interact_key_pressed):
     if move_horizontal:
         if mine.player.is_carrying_gold():
             activity = Activity.CLIMBING_WITH_GOLD \
-                if mine.player.is_climbing() and mine.player.collides(mine.ladders) else Activity.WALKING_WITH_GOLD
+                if mine.player.is_climbing() and mine.player.collides(mine.ladders) \
+                else Activity.WALKING_WITH_GOLD
         elif mine.player.is_pushing_empty_wheelbarrow():
-            activity = Activity.PUSHING_EMPTY_WHEELBARROW
+            activity = Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW \
+                if mine.player.is_riding_elevator else Activity.PUSHING_EMPTY_WHEELBARROW
         elif mine.player.is_pushing_loaded_01_wheelbarrow():
-            activity = Activity.PUSHING_LOADED_01_WHEELBARROW
+            activity = Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW \
+                if mine.player.is_riding_elevator else Activity.PUSHING_LOADED_01_WHEELBARROW
         elif mine.player.is_pushing_loaded_02_wheelbarrow():
-            activity = Activity.PUSHING_LOADED_02_WHEELBARROW
+            activity =  Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW \
+                if mine.player.is_riding_elevator else Activity.PUSHING_LOADED_02_WHEELBARROW
         elif mine.player.is_pushing_loaded_03_wheelbarrow():
-            activity = Activity.PUSHING_LOADED_03_WHEELBARROW
+            activity = Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW \
+                if mine.player.is_riding_elevator else Activity.PUSHING_LOADED_03_WHEELBARROW
         else:
             activity = \
                 Activity.CLIMBING if mine.player.is_climbing() and mine.player.collides(mine.ladders) else Activity.WALKING
@@ -955,11 +972,29 @@ class Sprite(pygame.sprite.Sprite):
                     elevator_collision = spt.collides(self) and self.rect.bottom >= spt.rect.bottom - 5
                     riding_this_elevator = spt.is_riding_elevator == self.id_number
                     y = (self.rect.bottom - 5) - spt.rect.bottom
+
+                    # Set activity
+                    if not spt.is_player:
+                        activity = None
+                    elif spt.is_carrying_gold():
+                        activity = Activity.RIDING_ELEVATOR_WITH_GOLD
+                    elif spt.is_pushing_empty_wheelbarrow():
+                        activity = Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW
+                    elif spt.is_pushing_loaded_01_wheelbarrow():
+                        activity = Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW
+                    elif spt.is_pushing_loaded_02_wheelbarrow():
+                        activity = Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW
+                    elif spt.is_pushing_loaded_03_wheelbarrow():
+                        activity = Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW
+                    else:
+                        activity = Activity.IDLE_RIDING_ELEVATOR
+
+                    # Move the sprite when applicable
                     if not riding_this_elevator and elevator_collision:
                         spt.is_riding_elevator = self.id_number
-                        spt.move(Direction.UP if y < 0 else Direction.DOWN, speed=abs(y))
+                        spt.move(Direction.UP if y < 0 else Direction.DOWN, speed=abs(y), activity=activity)
                     elif riding_this_elevator and not self.is_paused():
-                        spt.move(self.v_direction, speed=abs(y))
+                        spt.move(self.v_direction, speed=abs(y), activity=activity)
                     if not elevator_collision:
                         spt.is_riding_elevator = None if riding_this_elevator else spt.is_riding_elevator
 
@@ -1169,22 +1204,30 @@ class Sprite(pygame.sprite.Sprite):
     def is_carrying_gold(self):
         return self.activity in (
             Activity.WALKING_WITH_GOLD, Activity.IDLE_WITH_GOLD, Activity.IDLE_CLIMBING_WITH_GOLD,
-            Activity.CLIMBING_WITH_GOLD, Activity.FALLING_WITH_GOLD)
+            Activity.CLIMBING_WITH_GOLD, Activity.FALLING_WITH_GOLD, Activity.RIDING_ELEVATOR_WITH_GOLD)
 
     def is_pulling_up(self):
         return self.activity == Activity.PULLING_UP
 
     def is_pushing_empty_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_EMPTY_WHEELBARROW, Activity.IDLE_WITH_EMPTY_WHEELBARROW)
+        return self.activity in (
+            Activity.PUSHING_EMPTY_WHEELBARROW, Activity.IDLE_WITH_EMPTY_WHEELBARROW,
+            Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW)
 
     def is_pushing_loaded_01_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_LOADED_01_WHEELBARROW, Activity.IDLE_WITH_LOADED_01_WHEELBARROW)
+        return self.activity in (
+            Activity.PUSHING_LOADED_01_WHEELBARROW, Activity.IDLE_WITH_LOADED_01_WHEELBARROW,
+            Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW)
 
     def is_pushing_loaded_02_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_02_WHEELBARROW)
+        return self.activity in (
+            Activity.PUSHING_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_02_WHEELBARROW,
+            Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW)
 
     def is_pushing_loaded_03_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_LOADED_03_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
+        return self.activity in (
+            Activity.PUSHING_LOADED_03_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW,
+            Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW)
 
     def is_pushing_loaded_wheelbarrow(self):
         return self.is_pushing_loaded_01_wheelbarrow() or self.is_pushing_loaded_02_wheelbarrow() \
