@@ -891,12 +891,12 @@ class Sprite(pygame.sprite.Sprite):
         close_to_center = ladder_center in range(x_pos - self.speed, x_pos + self.speed)
         can_climb_ladder = \
             close_to_center and not self.is_climbing() and not self.ladder_enter_selection and self.can_climb_ladders
-        not_an_elevator = not (self.is_elevator or self.is_elevator_shaft)
+        is_not_an_elevator = not (self.is_elevator or self.is_elevator_shaft)
         random_no = random.randrange(0, 2)
         collides_with_elevator, elevator = self.collides(mine.elevators, True)
-        collides_with_elevator = collides_with_elevator and not_an_elevator and elevator.is_paused()
+        collides_with_elevator = collides_with_elevator and is_not_an_elevator and elevator.is_paused()
         collides_with_elev_shaft, shaft = self.collides(mine.elevator_shafts, True)
-        collides_with_elev_shaft = collides_with_elev_shaft and not_an_elevator and ((
+        collides_with_elev_shaft = collides_with_elev_shaft and is_not_an_elevator and ((
             self.is_moving_right() and right >= shaft.rect.x + 50 and left < shaft.rect.center[0])
             or (self.is_moving_left() and left <= shaft.rect.right - 50 and right > shaft.rect.center[0]))
         can_wait_for_elevator = collides_with_elev_shaft and not self.is_riding_elevator
@@ -1023,12 +1023,15 @@ class Sprite(pygame.sprite.Sprite):
                 for spt in spr.sprites():
                     if spt.is_elevator_shaft:
                         continue
-                    elevator_collision = spt.collides(self) and self.rect.bottom >= spt.rect.bottom - 5
+                    elevator_collision = spt.collides(self) and self.rect.bottom >= spt.rect.bottom - 5 \
+                        and spt.rect.bottom >= self.rect.bottom - GRAVITY
                     riding_this_elevator = spt.is_riding_elevator == self.id_number
                     y = (self.rect.bottom - 5) - spt.rect.bottom
 
                     # Set activity
-                    if not spt.is_player:
+                    if spt.is_passed_out():
+                        activity = Activity.PASSED_OUT
+                    elif not spt.is_player:
                         activity = None
                     elif spt.is_carrying_gold():
                         activity = Activity.RIDING_ELEVATOR_WITH_GOLD

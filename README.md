@@ -43,8 +43,8 @@ TODO:
     - [x] Knock out miners if hitting with gold sack
 - [ ] Elevators
     - [x] Make elevator move
-    - [ ] Miners can choose to wait for elevators
-    - [ ] Miners must not move while elevators are moving
+    - [x] Miners can choose to wait for elevators
+    - [x] Miners must not move while elevators are moving
     - [x] Animations
     - [x] Refactoring - check for stop points in move method
     - [x] Verify functionality with more than one elevator    
@@ -52,6 +52,9 @@ TODO:
     - [x] Player and miner must be able to ride elevator
     - [x] Player and miner must not be able to get on if elevator bottom is above their bottom
     - [x] Elevator must pause at stops
+    - [x] Fix bug causing sprites to jump when hit by elevator from below
+    - [ ] Miners must only make decision once whether to exit elevator or not
+    - [x] Player is not passed out if landing on elevator
 - [ ] Elevators must be able to move between rooms    
 - [ ] Design lots of mines
 - [ ] More textures
