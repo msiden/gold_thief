@@ -713,6 +713,8 @@ class Sprite(pygame.sprite.Sprite):
         self.is_riding_elevator = False
         self.id_number = id_number
         self.is_waiting_for_elevator = False
+        self.enter_elevator_selection = False
+        self.elevator_entry_pos = None
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -880,6 +882,8 @@ class Sprite(pygame.sprite.Sprite):
         y_pos = self.rect.y
         bottom_pos = self.rect.bottom - 1
         x_pos = self.rect.center[0]
+        right = self.rect.right
+        left = self.rect.x
         r_range = x_pos + SPRITE_SIZE[0]
         l_range = x_pos - SPRITE_SIZE[0]
         ladder_center = [l.rect.center[0] for l in mine.ladders.sprites() if l.collides(self)]
@@ -888,14 +892,23 @@ class Sprite(pygame.sprite.Sprite):
         can_climb_ladder = \
             close_to_center and not self.is_climbing() and not self.ladder_enter_selection and self.can_climb_ladders
         not_an_elevator = not (self.is_elevator or self.is_elevator_shaft)
+        random_no = random.randrange(0, 2)
         collides_with_elevator, elevator = self.collides(mine.elevators, True)
         collides_with_elevator = collides_with_elevator and not_an_elevator and elevator.is_paused()
         collides_with_elev_shaft, shaft = self.collides(mine.elevator_shafts, True)
         collides_with_elev_shaft = collides_with_elev_shaft and not_an_elevator and ((
-            self.is_moving_right() and self.rect.right >= shaft.rect.x + 50 and self.rect.x < shaft.rect.center[0])
-            or (self.is_moving_left() and self.rect.x <= shaft.rect.right - 50
-                and self.rect.right > shaft.rect.center[0]))
+            self.is_moving_right() and right >= shaft.rect.x + 50 and left < shaft.rect.center[0])
+            or (self.is_moving_left() and left <= shaft.rect.right - 50 and right > shaft.rect.center[0]))
         can_wait_for_elevator = collides_with_elev_shaft and not self.is_riding_elevator
+        wait_for_elevator = can_wait_for_elevator and random_no if not self.enter_elevator_selection else False
+        self.enter_elevator_selection = can_wait_for_elevator if not self.enter_elevator_selection else True
+        self.enter_elevator_selection = False if not can_wait_for_elevator else self.enter_elevator_selection
+        self.elevator_entry_pos = \
+            None if self.is_riding_elevator and elevator and not elevator.is_paused() else self.elevator_entry_pos
+        enter_elevator = self.is_waiting_for_elevator and collides_with_elevator
+        exit_elevator = \
+            self.is_riding_elevator and elevator and elevator.is_paused() and self.elevator_entry_pos != y_pos \
+            and random_no
 
         # If the sprite is currently able to start climbing a ladder then make a random selection whether to start
         # climbing and if so, if what direction, or to keep walking
@@ -912,16 +925,22 @@ class Sprite(pygame.sprite.Sprite):
             self.ladder_enter_selection = False
 
         # Decide whether to wait for and ride an elevator or not
-        if can_wait_for_elevator: # and random.randrange(0, 2):
+        if wait_for_elevator:
             self.update(Activity.IDLE)
             self.is_waiting_for_elevator = True
 
-        if self.is_waiting_for_elevator and collides_with_elevator:
-            self.update(Activity.WALKING)
-            if self.rect.center[0] in range(elevator.rect.center[0]-20, elevator.rect.center[0]+20):
-                self.update(Activity.PAUSED)
-                #self.is_waiting_for_elevator = False
+        # Climb on the elevator
+        elif enter_elevator:
+            activity = Activity.WALKING
+            if x_pos in range(elevator.rect.center[0]-20, elevator.rect.center[0]+20):
+                activity = Activity.IDLE
+                self.is_waiting_for_elevator = False
+                self.elevator_entry_pos = y_pos
+            self.update(activity)
 
+        # Decide whether to step off the elevator when the elevator stops
+        elif exit_elevator:
+            self.update(Activity.WALKING)
 
         # If the sprite is walking, then just keep walking
         if self.is_walking():
