@@ -31,7 +31,7 @@
 
 
 #### Improvements
-- [ ] Elevators must be able to move between rooms
+- [ ] Enable elevators to move between rooms
 - [ ] Design lots of mines
 - [ ] Design more background textures
 - [ ] The entire code could do well with some refactoring
