@@ -20,8 +20,13 @@ Control the player as follows:
 
 Hint! Miners don't much like getting hit in the head with a gold sack ;)
 
-#### Contributions
-Gold Thief is still under development and is missing some features from the original game.  
+#### Further development
+Gold Thief is still under development and is missing some features from the original game. Actually I'm not sure I 
+will ever get the chance to completely finnish it. 
  
-Check out the [to do list](docs/todo.md) if you're interested in contributing.  
+A to do-list can be found [here](docs/todo.md)  
 **You don't need any coding skills to design mines (levels)**. Read [this](docs/designing_mines.md) to learn how.   
+
+
+#### Contact
+[Please do](mailto:martin.siden@live.se) :)

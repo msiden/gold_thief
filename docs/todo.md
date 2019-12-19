@@ -1,4 +1,4 @@
-#TO DO:
+# TO DO:
 
 #### ADD NEW FEATURES:
 - [ ] Mine carts
@@ -46,7 +46,7 @@
 - [ ] Make sure there is always at least one miner in the same room as the player
     
     
-#### KNOWN ISSUES
+#### Known issues
 - [ ] Passed out timer (and other timers) must pause when in pause mode
 - [ ] Wheelbarrow temporarily disappears if player falls while pushing wheelbarrow
 - [ ] Player can sometimes fall straight through an elevator if it has already started moving down when the player steps on
