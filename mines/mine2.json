@@ -20,7 +20,9 @@
           {"position": [314, 115], "v_direction":  "up", "stops": [230, 410, 1020], "stop_direction": "down"},
           {"position": [1046, 215], "v_direction":  "down", "stops": [230, 410, 766, 1020], "stop_direction": "up"}],
         "miner": [
-          {"position": [600, 890], "h_direction": "left", "activity":  "walking"}]
+          {"position": [600, 890], "h_direction": "left", "activity":  "walking"},
+          {"position": [700, 890], "h_direction": "right", "activity":  "walking"},
+          {"position": [900, 890], "h_direction": "left", "activity":  "walking"}]
       }
     }
   }

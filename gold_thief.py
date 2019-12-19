@@ -6,12 +6,13 @@ import random
 import itertools
 
 # Constants you may want to play around with
-CHICKEN_MODE = True
-SHOW_START_SCREEN = False
-START_MINE = 2
+CHICKEN_MODE = False
+SHOW_START_SCREEN = True
+START_MINE = 1
 PLAYER_LIVES = 5
 BONUS_POINTS = 10
 GRAVITY = 25
+HORIZONTAL_FALL_SPEED = 1
 IMMORTAL_TIME = 5000
 STANDARD_SPEED = 9
 SLOW_SPEED = 5
@@ -318,6 +319,8 @@ def move_sprites():
                     not spr.is_riding_elevator and (not_climbing_ladder or cant_climb_ladder or is_passed_out)
                 if apply_gravity:
                     spr.move(Direction.DOWN, GRAVITY)
+                    if spr.is_falling():
+                        spr.move(spr.h_direction, HORIZONTAL_FALL_SPEED)
                 else:
                     spr.update()
 
@@ -906,9 +909,9 @@ class Sprite(pygame.sprite.Sprite):
         self.elevator_entry_pos = \
             None if self.is_riding_elevator and elevator and not elevator.is_paused() else self.elevator_entry_pos
         enter_elevator = self.is_waiting_for_elevator and collides_with_elevator
-        exit_elevator = \
-            self.is_riding_elevator and elevator and elevator.is_paused() and self.elevator_entry_pos != y_pos \
-            and random_no
+        elevator_has_stopped = self.is_riding_elevator and elevator and elevator.is_paused()
+        self.elevator_entry_pos = y_pos if elevator_has_stopped and not random_no else self.elevator_entry_pos
+        exit_elevator = elevator_has_stopped and self.elevator_entry_pos != y_pos and random_no
 
         # If the sprite is currently able to start climbing a ladder then make a random selection whether to start
         # climbing and if so, if what direction, or to keep walking
@@ -1031,6 +1034,8 @@ class Sprite(pygame.sprite.Sprite):
                     # Set activity
                     if spt.is_passed_out():
                         activity = Activity.PASSED_OUT
+                    elif spt.is_miner:
+                        activity = Activity.IDLE
                     elif not spt.is_player:
                         activity = None
                     elif spt.is_carrying_gold():

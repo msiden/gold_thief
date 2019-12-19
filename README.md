@@ -1,85 +1,27 @@
 # Gold Thief
-A platform puzzle game made with PyGame based on the C64 classic Gilligan's Gold
+A platform puzzle game based on the 1984 C64 classic Gilligan's Gold (https://www.youtube.com/watch?v=cunOhhLYR50)
 
-TODO:  
-- [ ] Player animations  
-    - [x] Idle
-    - [x] Walking
-    - [x] Climbing
-    - [x] Idle while climbing
-    - [ ] Pulling up
-    - [x] Passed out
-    - [x] Idle carrying sack
-    - [x] Walking carrying sack
-    - [x] Climbing carrying sack
-    - [x] Pushing empty wheelbarrow
-    - [x] Pushing loaded 01 wheelbarrow
-    - [x] Pushing loaded 02 wheelbarrow
-    - [x] Pushing loaded 03 wheelbarrow
-    - [x] Idle with empty wheelbarrow
-    - [x] Idle with loaded 01 wheelbarrow
-    - [x] Idle with loaded 02 wheelbarrow
-    - [x] Idle with loaded 03 wheelbarrow
-    - [ ] Riding cart
-    - [ ] Idle with stun gun
-    - [ ] Walking with stun gun
-    - [ ] Using stun gun
-    - [x] Riding elevator with empty wheelbarrow 
-    - [x] Riding elevator with loaded 01 wheelbarrow
-    - [x] Riding elevator with loaded 02 wheelbarrow
-    - [x] Riding elevator with loaded 03 wheelbarrow
-    - [x] Riding elevator with gold
-    - [x] Idle riding elevator
-- [ ] More player abilities
-    - [x] Climb
-    - [x] Carry sack
-    - [x] Die if fall to far
-    - [ ] Pull up
-    - [x] Push wheelbarrow
-    - [ ] Ride cart   
-    - [x] Die if caught by miner 
-    - [ ] Use stun gun (add bonus points!)    
-    - [x] Empty gold in truck and collect points
-    - [x] Knock out miners if hitting with gold sack
-- [ ] Elevators
-    - [x] Make elevator move
-    - [x] Miners can choose to wait for elevators
-    - [x] Miners must not move while elevators are moving
-    - [x] Animations
-    - [x] Refactoring - check for stop points in move method
-    - [x] Verify functionality with more than one elevator    
-    - [x] Player and miner must pass out if landing on elevator
-    - [x] Player and miner must be able to ride elevator
-    - [x] Player and miner must not be able to get on if elevator bottom is above their bottom
-    - [x] Elevator must pause at stops
-    - [x] Fix bug causing sprites to jump when hit by elevator from below
-    - [ ] Miners must only make decision once whether to exit elevator or not
-    - [x] Player is not passed out if landing on elevator
-- [ ] Elevators must be able to move between rooms    
-- [ ] Design lots of mines
-- [ ] More textures
-- [ ] See if we can speed the game up by not applying gravity to sprites that have already landed
-- [ ] Create more sprites
-    - [X] Ladder
-    - [X] Miner
-    - [X] Gold sack
-    - [ ] Cart
-    - [x] Wheelbarrow
-    - [ ] Stun gun
-    - [ ] Key
-    - [x] Elevator
-    - [ ] Handle
-    - [x] Truck
-    - [ ] Door  
-- [ ] Make carts move
-- [ ] High scores
-- [ ] Save game function
-- [ ] Sound effects
-- [ ] Music
-- [ ] Make sure there is always at least one miner in the same room as the player
-    
-KNOWN ISSUES
-- [ ] Passed out timer (and other timers) must pause when in pause mode
-- [ ] Wheelbarrow temporarily disappears if player falls while pushing wheelbarrow
-- [ ] Player can sometimes fall straight through an elevator if it has already started moving down when the player steps on
-- [ ] Player can end up inside a wall if falling and passing out with wheelbarrow
+Gold Thief is written in Python 3.7 using the PyGame (1.9.6) library
+
+#### Installation
+* Clone or download the project
+* Make sure you have Python 3.7+ and PyGame 1.9.6 installed on your machine
+* Open a command prompt and type: python gold_thief.py
+* Gold Thief was developed on Windows 10. I imagine it should work well on Mac and Linux too but no promises. 
+ 
+#### Game play
+Your family's gold mines have been seized by an evil mining conglomerate through a hostile take over. 
+Your objective is to steal back all the gold by collecting it sack by sack from the mines and delivering it to the 
+waiting truck while avoiding getting caught by one of the evil miners.
+
+Control the player as follows:  
+**UP/DOWN/LEFT/RIGHT:** Steer the player  
+**CTRL/ALT/SPACE/ALTGR:** Pick up or drop a gold sack or a wheelbarrow
+
+Hint! Miners don't much like getting hit in the head with a gold sack ;)
+
+#### Contributions
+Gold Thief is still under development and is missing some features from the original game.  
+ 
+Check out the [to do list](docs/todo.md) if you're interested in contributing.  
+**You don't need any coding skills to design mines (levels)**. Read [this](docs/designing_mines.md) to learn how.   
