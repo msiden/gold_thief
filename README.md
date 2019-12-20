@@ -5,7 +5,7 @@ Gold Thief is written in Python 3.7 using the PyGame (1.9.6) library
 
 #### Installation
 * Clone or download the project
-* Make sure you have Python 3.7+ and PyGame 1.9.6 installed on your machine
+* Make sure you have Python 3.7+ (I guess it may be compatible with earlier versions as well but no promises) and PyGame 1.9.6 installed on your machine
 * Open a command prompt and type: python gold_thief.py
 * Gold Thief was developed on Windows 10. I imagine it should work well on Mac and Linux too but no promises. 
  
@@ -28,5 +28,5 @@ A to do-list can be found [here](docs/todo.md)
 **You don't need any coding skills to design mines (levels)**. Read [this](docs/designing_mines.md) to learn how.   
 
 
-#### Contact
+#### Contact me
 [Please do](mailto:martin.siden@live.se) :)

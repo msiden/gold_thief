@@ -6,9 +6,9 @@ import random
 import itertools
 
 # Constants you may want to play around with
-CHICKEN_MODE = False
-SHOW_START_SCREEN = True
-START_MINE = 1
+CHICKEN_MODE = True
+SHOW_START_SCREEN = False
+START_MINE = 2
 PLAYER_LIVES = 5
 BONUS_POINTS = 10
 GRAVITY = 25
@@ -20,7 +20,7 @@ MINER_SPEED = 8
 MINER_WARNING_DISTANCE_PIX = 200
 WAKE_UP_TIME_MS = 5000
 MAX_FALL_PIX = 100
-MAX_CONTROL_WHILE_FALLING_PIX = 50
+MAX_CONTROL_WHILE_FALLING_PIX = 10
 ELEVATOR_SPEED = 5
 ELEVATOR_PAUSE_MS = 3000
 WARNINGS_ANIMATION_FREQ_MS = 100
@@ -836,8 +836,14 @@ class Sprite(pygame.sprite.Sprite):
                     activity = self.activity
                 elif self.is_computer_controlled and self.is_walking():
                     self.h_direction = change_direction(self.h_direction)
-                elif self.is_pushing_wheelbarrow():
-                    activity = self.activity
+                elif self.is_pushing_empty_wheelbarrow():
+                    activity = Activity.PUSHING_EMPTY_WHEELBARROW
+                elif self.is_pushing_loaded_01_wheelbarrow():
+                    activity = Activity.PUSHING_LOADED_01_WHEELBARROW
+                elif self.is_pushing_loaded_02_wheelbarrow():
+                    activity = Activity.PUSHING_LOADED_02_WHEELBARROW
+                elif self.is_pushing_loaded_03_wheelbarrow():
+                    activity = Activity.PUSHING_LOADED_03_WHEELBARROW
                 elif self.is_elevator:
                     self.v_direction = change_direction(self.v_direction)
                 else:
@@ -854,7 +860,7 @@ class Sprite(pygame.sprite.Sprite):
                 self.fall_pix = 0 if vertical else self.fall_pix
 
             # Keep track of how many pixels the sprite has fallen
-            if vertical and self.v_direction == Direction.DOWN and not (
+            if vertical and self.is_facing_down and not (
                     self.collides(mine.ladders) and self.can_climb_ladders) and not self.is_elevator:
                 self.fall_pix += 1
                 if self.fall_pix >= self.max_control_while_falling_pix:
@@ -862,6 +868,14 @@ class Sprite(pygame.sprite.Sprite):
                         activity = Activity.PASSED_OUT
                     elif self.is_carrying_gold():
                         activity = Activity.FALLING_WITH_GOLD
+                    elif self.is_pushing_empty_wheelbarrow():
+                        activity = Activity.FALLING_WITH_EMPTY_WHEELBARROW
+                    elif self.is_pushing_loaded_01_wheelbarrow():
+                        activity = Activity.FALLING_WITH_LOADED_01_WHEELBARROW
+                    elif self.is_pushing_loaded_02_wheelbarrow():
+                        activity = Activity.FALLING_WITH_LOADED_02_WHEELBARROW
+                    elif self.is_pushing_loaded_03_wheelbarrow():
+                        activity = Activity.FALLING_WITH_LOADED_03_WHEELBARROW
                     else:
                         activity = Activity.FALLING
 
@@ -1255,7 +1269,10 @@ class Sprite(pygame.sprite.Sprite):
             Activity.CLIMBING, Activity.CLIMBING_WITH_GOLD, Activity.IDLE_CLIMBING, Activity.IDLE_CLIMBING_WITH_GOLD)
 
     def is_falling(self):
-        return self.activity in (Activity.FALLING, Activity.FALLING_WITH_GOLD)
+        return self.activity in (
+            Activity.FALLING, Activity.FALLING_WITH_GOLD, Activity.FALLING_WITH_EMPTY_WHEELBARROW,
+            Activity.FALLING_WITH_LOADED_01_WHEELBARROW, Activity.FALLING_WITH_LOADED_02_WHEELBARROW,
+            Activity.FALLING_WITH_LOADED_03_WHEELBARROW)
 
     def is_idle(self):
         return self.activity in (
@@ -1274,22 +1291,22 @@ class Sprite(pygame.sprite.Sprite):
     def is_pushing_empty_wheelbarrow(self):
         return self.activity in (
             Activity.PUSHING_EMPTY_WHEELBARROW, Activity.IDLE_WITH_EMPTY_WHEELBARROW,
-            Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW)
+            Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW, Activity.FALLING_WITH_EMPTY_WHEELBARROW)
 
     def is_pushing_loaded_01_wheelbarrow(self):
         return self.activity in (
             Activity.PUSHING_LOADED_01_WHEELBARROW, Activity.IDLE_WITH_LOADED_01_WHEELBARROW,
-            Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW)
+            Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW, Activity.FALLING_WITH_LOADED_01_WHEELBARROW)
 
     def is_pushing_loaded_02_wheelbarrow(self):
         return self.activity in (
             Activity.PUSHING_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_02_WHEELBARROW,
-            Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW)
+            Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW, Activity.FALLING_WITH_LOADED_02_WHEELBARROW)
 
     def is_pushing_loaded_03_wheelbarrow(self):
         return self.activity in (
             Activity.PUSHING_LOADED_03_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW,
-            Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW)
+            Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW, Activity.FALLING_WITH_LOADED_03_WHEELBARROW)
 
     def is_pushing_loaded_wheelbarrow(self):
         return self.is_pushing_loaded_01_wheelbarrow() or self.is_pushing_loaded_02_wheelbarrow() \
@@ -1359,6 +1376,10 @@ class Activity(object):
     CLIMBING_WITH_GOLD = "climbing_with_gold"
     FALLING = "falling"
     FALLING_WITH_GOLD = "falling_with_gold"
+    FALLING_WITH_EMPTY_WHEELBARROW = "falling_with_empty_wheelbarrow"
+    FALLING_WITH_LOADED_01_WHEELBARROW = "falling_with_loaded_01_wheelbarrow"
+    FALLING_WITH_LOADED_02_WHEELBARROW = "falling_with_loaded_02_wheelbarrow"
+    FALLING_WITH_LOADED_03_WHEELBARROW = "falling_with_loaded_03_wheelbarrow"
     IDLE = "idle"
     IDLE_CLIMBING = "idle_climbing"
     IDLE_CLIMBING_WITH_GOLD = "idle_climbing_with_gold"
@@ -1513,6 +1534,14 @@ SPRITE_ANIMATIONS = {
         Animation.CLIMBING_WITH_GOLD: load_images(Animation.CLIMBING_WITH_GOLD, SpriteName.PLAYER),
         Animation.FALLING: load_images(Animation.IDLE, SpriteName.PLAYER),
         Animation.FALLING_WITH_GOLD: load_images(Animation.IDLE_WITH_GOLD, SpriteName.PLAYER),
+        Animation.FALLING_WITH_EMPTY_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_EMPTY_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
+        Animation.FALLING_WITH_LOADED_01_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_LOADED_01_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
+        Animation.FALLING_WITH_LOADED_02_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_LOADED_02_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
+        Animation.FALLING_WITH_LOADED_03_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_LOADED_03_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER),
         Animation.IDLE_CLIMBING: load_images(Animation.IDLE_CLIMBING, SpriteName.PLAYER),
         Animation.IDLE_CLIMBING_WITH_GOLD: load_images(Animation.IDLE_CLIMBING_WITH_GOLD, SpriteName.PLAYER),
@@ -1703,3 +1732,4 @@ while game_is_running:
 
     # Update the screen
     pygame.display.flip()
+    print(mine.player.is_falling(), mine.player.activity)
