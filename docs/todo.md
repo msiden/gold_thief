@@ -48,6 +48,5 @@
     
 #### Known issues
 - [ ] Passed out timer (and other timers) must pause when in pause mode
-- [ ] Wheelbarrow temporarily disappears if player falls while pushing wheelbarrow
 - [ ] Player can sometimes fall straight through an elevator if it has already started moving down when the player steps on
-- [ ] Player can end up inside a wall if falling and passing out with wheelbarrow
+- [ ] Player loses all lives if falling and landing on an elevator while pushing a wheelbarrow

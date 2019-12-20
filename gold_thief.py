@@ -6,9 +6,9 @@ import random
 import itertools
 
 # Constants you may want to play around with
-CHICKEN_MODE = True
-SHOW_START_SCREEN = False
-START_MINE = 2
+CHICKEN_MODE = False
+SHOW_START_SCREEN = True
+START_MINE = 1
 PLAYER_LIVES = 5
 BONUS_POINTS = 10
 GRAVITY = 25
@@ -876,6 +876,8 @@ class Sprite(pygame.sprite.Sprite):
                         activity = Activity.FALLING_WITH_LOADED_02_WHEELBARROW
                     elif self.is_pushing_loaded_03_wheelbarrow():
                         activity = Activity.FALLING_WITH_LOADED_03_WHEELBARROW
+                    elif self.is_wheelbarrow:
+                        activity = self.activity
                     else:
                         activity = Activity.FALLING
 
@@ -1145,8 +1147,7 @@ class Sprite(pygame.sprite.Sprite):
         """Make the sprite pass out, remove one life etc"""
         if self.is_passed_out():
             return
-        if self.saved_sprite:
-            self.drop_sprite()
+        self.drop_sprite()
         self.update(Activity.PASSED_OUT)
         self.lives -= 1 if self.is_mortal else 0
 
@@ -1240,8 +1241,10 @@ class Sprite(pygame.sprite.Sprite):
             if carries_wheelbarrow:
                 self.saved_sprite.h_direction = self.h_direction
                 self.saved_sprite.rect.x = self.rect.x
-                self.rect.x += 120 if self.is_facing_left else 0
                 self.saved_sprite.rect.y = self.rect.y
+                if self.is_facing_left and not self.collides(mine.layout_sprite):
+                    self.move(Direction.RIGHT, 120)
+                    self.h_direction = Direction.LEFT
 
         # Reset sprite data
         if carries_wheelbarrow and dropped_in_truck:
@@ -1732,4 +1735,3 @@ while game_is_running:
 
     # Update the screen
     pygame.display.flip()
-    print(mine.player.is_falling(), mine.player.activity)
