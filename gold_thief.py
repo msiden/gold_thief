@@ -5,32 +5,35 @@ import ctypes
 import random
 import itertools
 
-# Constants that are useful during development
-CHICKEN_MODE = True
+# Constants you may want to play around with
+CHICKEN_MODE = False
 SHOW_START_SCREEN = True
 START_MINE = 1
 PLAYER_LIVES = 5
-
-# Other constants
 BONUS_POINTS = 10
-CLIMBABLE_PIX = 1
-FPS = 25
-GRAVITY = 20
-IMG_SEMI_TRANSPARENCY = 80
-IMG_FULLY_OPAQUE = 255
-IMG_TRANSPARENCY_INCREMENTATION = 1
+GRAVITY = 25
+HORIZONTAL_FALL_SPEED = 1
 IMMORTAL_TIME = 5000
-MAX_FALL_PIX = 100
-MAX_CONTROL_WHILE_FALLING_PIX = 50
 STANDARD_SPEED = 9
 SLOW_SPEED = 5
 MINER_SPEED = 8
 MINER_WARNING_DISTANCE_PIX = 200
-SCREEN_SIZE = (1440, 1080)
-SPRITE_SIZE = (120, 120)
 WAKE_UP_TIME_MS = 5000
+MAX_FALL_PIX = 100
+MAX_CONTROL_WHILE_FALLING_PIX = 10
+ELEVATOR_SPEED = 5
+ELEVATOR_PAUSE_MS = 3000
 WARNINGS_ANIMATION_FREQ_MS = 100
 WARNINGS_DURATION_MS = 1000
+
+# Constants you probably don't want to play around with
+CLIMBABLE_PIX = 1
+FPS = 25
+IMG_SEMI_TRANSPARENCY = 80
+IMG_FULLY_OPAQUE = 255
+IMG_TRANSPARENCY_INCREMENTATION = 1
+SCREEN_SIZE = (1440, 1080)
+SPRITE_SIZE = (120, 120)
 
 # Make sure we get the right screen resolution
 ctypes.windll.user32.SetProcessDPIAware()
@@ -164,16 +167,28 @@ def key_presses(interact_key_pressed):
             mine.player.update(Activity.IDLE_CLIMBING_WITH_GOLD)
         elif mine.player.is_climbing():
             mine.player.update(Activity.IDLE_CLIMBING)
+        elif mine.player.is_riding_elevator and mine.player.is_carrying_gold():
+            mine.player.update(Activity.RIDING_ELEVATOR_WITH_GOLD)
         elif mine.player.is_carrying_gold():
             mine.player.update(Activity.IDLE_WITH_GOLD)
+        elif mine.player.is_riding_elevator and mine.player.is_pushing_empty_wheelbarrow():
+            mine.player.update(Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW)
         elif mine.player.is_pushing_empty_wheelbarrow():
             mine.player.update(Activity.IDLE_WITH_EMPTY_WHEELBARROW)
+        elif mine.player.is_riding_elevator and mine.player.is_pushing_loaded_01_wheelbarrow():
+            mine.player.update(Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW)
+        elif mine.player.is_riding_elevator and mine.player.is_pushing_loaded_02_wheelbarrow():
+            mine.player.update(Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW)
+        elif mine.player.is_riding_elevator and mine.player.is_pushing_loaded_03_wheelbarrow():
+            mine.player.update(Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW)
         elif mine.player.is_pushing_loaded_01_wheelbarrow():
             mine.player.update(Activity.IDLE_WITH_LOADED_01_WHEELBARROW)
         elif mine.player.is_pushing_loaded_02_wheelbarrow():
             mine.player.update(Activity.IDLE_WITH_LOADED_02_WHEELBARROW)
         elif mine.player.is_pushing_loaded_03_wheelbarrow():
             mine.player.update(Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
+        elif mine.player.is_riding_elevator:
+            mine.player.update(Activity.IDLE_RIDING_ELEVATOR)
         else:
             mine.player.update(Activity.IDLE)
 
@@ -186,15 +201,20 @@ def key_presses(interact_key_pressed):
     if move_horizontal:
         if mine.player.is_carrying_gold():
             activity = Activity.CLIMBING_WITH_GOLD \
-                if mine.player.is_climbing() and mine.player.collides(mine.ladders) else Activity.WALKING_WITH_GOLD
+                if mine.player.is_climbing() and mine.player.collides(mine.ladders) \
+                else Activity.WALKING_WITH_GOLD
         elif mine.player.is_pushing_empty_wheelbarrow():
-            activity = Activity.PUSHING_EMPTY_WHEELBARROW
+            activity = Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW \
+                if mine.player.is_riding_elevator else Activity.PUSHING_EMPTY_WHEELBARROW
         elif mine.player.is_pushing_loaded_01_wheelbarrow():
-            activity = Activity.PUSHING_LOADED_01_WHEELBARROW
+            activity = Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW \
+                if mine.player.is_riding_elevator else Activity.PUSHING_LOADED_01_WHEELBARROW
         elif mine.player.is_pushing_loaded_02_wheelbarrow():
-            activity = Activity.PUSHING_LOADED_02_WHEELBARROW
+            activity =  Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW \
+                if mine.player.is_riding_elevator else Activity.PUSHING_LOADED_02_WHEELBARROW
         elif mine.player.is_pushing_loaded_03_wheelbarrow():
-            activity = Activity.PUSHING_LOADED_03_WHEELBARROW
+            activity = Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW \
+                if mine.player.is_riding_elevator else Activity.PUSHING_LOADED_03_WHEELBARROW
         else:
             activity = \
                 Activity.CLIMBING if mine.player.is_climbing() and mine.player.collides(mine.ladders) else Activity.WALKING
@@ -242,6 +262,7 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
         Animation.IDLE: Folder.IDLE_IMGS.format(sprite_name),
         Animation.IDLE_CLIMBING: Folder.IDLE_CLIMBING_IMGS.format(sprite_name),
         Animation.IDLE_CLIMBING_WITH_GOLD: Folder.IDLE_CLIMBING_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.IDLE_RIDING_ELEVATOR: Folder.IDLE_RIDING_ELEVATOR_IMGS.format(sprite_name),
         Animation.IDLE_WITH_EMPTY_WHEELBARROW: Folder.IDLE_WITH_EMPTY_WHEELBARROW_IMGS.format(sprite_name),
         Animation.IDLE_WITH_GOLD: Folder.IDLE_WITH_GOLD_IMGS.format(sprite_name),
         Animation.IDLE_WITH_LOADED_01_WHEELBARROW: Folder.IDLE_WITH_LOADED_01_WHEELBARROW_IMGS.format(sprite_name),
@@ -257,6 +278,15 @@ def load_images(animation, sprite_name, multiply_x_by=1, multiply_y_by=1):
         Animation.PUSHING_LOADED_01_WHEELBARROW: Folder.PUSHING_LOADED_01_WHEELBARROW_IMGS.format(sprite_name),
         Animation.PUSHING_LOADED_02_WHEELBARROW: Folder.PUSHING_LOADED_02_WHEELBARROW_IMGS.format(sprite_name),
         Animation.PUSHING_LOADED_03_WHEELBARROW: Folder.PUSHING_LOADED_03_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW:
+            Folder.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.RIDING_ELEVATOR_WITH_GOLD: Folder.RIDING_ELEVATOR_WITH_GOLD_IMGS.format(sprite_name),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW:
+            Folder.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW:
+            Folder.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW_IMGS.format(sprite_name),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW:
+            Folder.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW_IMGS.format(sprite_name),
         Animation.WALKING: Folder.WALKING_IMGS.format(sprite_name),
         Animation.WALKING_WITH_GOLD: Folder.WALKING_WITH_GOLD_IMGS.format(sprite_name)}[animation]
     size = (SPRITE_SIZE[0] * multiply_x_by, SPRITE_SIZE[1] * multiply_y_by)
@@ -282,20 +312,28 @@ def move_sprites():
         # Apply gravity to all sprites. This will also update sprite animations.
         for sp in mine.affected_by_gravity + ([mine.players] if mine.room == original_room else []):
             for spr in sp.sprites():
-                if not (spr.can_climb_ladders and spr.collides(mine.ladders)) \
-                        or not spr.can_climb_ladders or spr.is_passed_out():
+                not_climbing_ladder = not (spr.can_climb_ladders and spr.collides(mine.ladders))
+                cant_climb_ladder = not spr.can_climb_ladders
+                is_passed_out = spr.is_passed_out()
+                apply_gravity = \
+                    not spr.is_riding_elevator and (not_climbing_ladder or cant_climb_ladder or is_passed_out)
+                if apply_gravity:
                     spr.move(Direction.DOWN, GRAVITY)
+                    if spr.is_falling():
+                        spr.move(spr.h_direction, HORIZONTAL_FALL_SPEED)
+                else:
+                    spr.update()
 
-        # Move miners
-        for m in mine.miners.sprites():
+        # Move computer controlled sprites
+        for m in mine.miners.sprites() + mine.elevators.sprites():
             m.move_cc()
 
-        # Check if a miner collides with an exit point to another room
+        # Check if a sprite collides with an exit point to another room
         exit_room(mine.exits.sprites(), mine.miners.sprites())
 
-        # Check miner is close to an exit point leading to the same room as the player and if so present a warning
+        # Check if miner is close to an exit point leading to the same room as the player and if so present a warning
         for ex, mi in itertools.product(mine.exits.sprites(), mine.miners.sprites()):
-            if mi.is_placeholder:
+            if mi.is_placeholder or ex.is_placeholder:
                 continue
             heading_left = mi.h_direction == Direction.LEFT and mi.is_walking()
             heading_right = mi.h_direction == Direction.RIGHT and mi.is_walking()
@@ -367,6 +405,8 @@ class Mines(object):
         self.trucks = None
         self.wheelbarrows = None
         self.exits = None
+        self.elevators = None
+        self.elevator_shafts = None
         self.all_sprites = None
         self.not_player = None
         self.affected_by_gravity = None
@@ -414,6 +454,8 @@ class Mines(object):
         self.affected_by_gravity = self.rooms[str(self.room)]["affected_by_gravity"]
         self.player = self.rooms[str(self.room)]["player"] if not self.player else self.player
         self.players = self.rooms[str(self.room)]["players"] if not self.players else self.players
+        self.elevator_shafts = self.rooms[str(self.room)]["elevator_shafts"]
+        self.elevators = self.rooms[str(self.room)]["elevators"]
 
     def load(self, mine_):
         """
@@ -464,16 +506,19 @@ class Mines(object):
             self.rooms[r]["gold_sacks"] = self.generate_sprites(r, SpriteName.GOLD, animation_freq_ms=500)
             self.rooms[r]["ladders"] = self.generate_sprites(
                 r, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
+            self.rooms[r]["elevator_shafts"] = self.generate_sprites(
+                r, SpriteName.ELEVATOR_SHAFT, image=Folder.IDLE_IMGS.format(SpriteName.ELEVATOR_SHAFT) + "001.png")
             self.rooms[r]["trucks"] = self.generate_sprites(r, SpriteName.TRUCK, animation_freq_ms=100)
             self.rooms[r]["wheelbarrows"] = self.generate_sprites(r, SpriteName.WHEELBARROW)
             self.rooms[r]["exits"] = self.generate_sprites(
                 r, SpriteName.EXIT, image=Folder.IDLE_IMGS.format(SpriteName.EXIT) + "001.png")
-            self.rooms[r]["all_sprites"] = (
-                self.rooms[r]["ladders"], self.rooms[r]["trucks"], self.rooms[r]["gold_sacks"],
-                self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"])
+            self.rooms[r]["elevators"] = self.generate_sprites(r, SpriteName.ELEVATOR, standard_speed=ELEVATOR_SPEED)
+            self.rooms[r]["all_sprites"] = [
+                self.rooms[r]["ladders"], self.rooms[r]["elevator_shafts"], self.rooms[r]["trucks"],
+                self.rooms[r]["gold_sacks"], self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"]]
             self.rooms[r]["not_player"] = (
                 self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["ladders"], self.rooms[r]["trucks"],
-                self.rooms[r]["wheelbarrows"])
+                self.rooms[r]["wheelbarrows"], self.rooms[r]["elevator_shafts"], self.rooms[r]["elevators"])
             self.rooms[r]["affected_by_gravity"] = [
                 self.rooms[r]["miners"], self.rooms[r]["gold_sacks"], self.rooms[r]["trucks"],
                 self.rooms[r]["wheelbarrows"]]
@@ -520,18 +565,20 @@ class Mines(object):
             sprites_db = self.database["rooms"][str(room_)]["sprites"][name]
         sprites = []
         group = pygame.sprite.Group()
-        for spr in sprites_db:
+        for i, spr in enumerate(sprites_db):
             activity = spr["activity"] if "activity" in spr else Activity.IDLE
             h_direction = spr["h_direction"] if "h_direction" in spr else Direction.RIGHT
             v_direction = spr["v_direction"] if "v_direction" in spr else Direction.DOWN
             height = spr["height"] if "height" in spr else None
             leads_to = spr["leads_to"] if "leads_to" in spr else None
             exit_dir = spr["exit_dir"] if "exit_dir" in spr else None
+            stops = spr["stops"] if "stops" in spr else None
+            stop_direction = spr["stop_direction"] if "stop_direction" in spr else None
             sprites.append(Sprite(
                 name=name, position=spr["position"], image=image, activity=activity, h_direction=h_direction,
                 v_direction=v_direction, height=height, animation_freq_ms=animation_freq_ms,
-                standard_speed=standard_speed,
-                slow_speed=slow_speed, leads_to=leads_to, exit_dir=exit_dir))
+                standard_speed=standard_speed, slow_speed=slow_speed, leads_to=leads_to, exit_dir=exit_dir,
+                stops=stops, stop_direction=stop_direction, id_number=i+1))
         for spr in sprites:
             group.add(spr)
         return group
@@ -578,7 +625,7 @@ class Sprite(pygame.sprite.Sprite):
     def __init__(
             self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none",
             height=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED, leads_to=None,
-            exit_dir=None, longevity_ms=None):
+            exit_dir=None, longevity_ms=None, stops=None, stop_direction=None, id_number=None):
         """
         Create a new sprite
 
@@ -605,6 +652,12 @@ class Sprite(pygame.sprite.Sprite):
             facing to go through the exit.
         - longevity_ms -- (Integer. Optional. Defaults to None) If set to a positive value the sprite will expire after
             the given number of milliseconds
+        - stops -- (List. Optional. Defaults to None) Applicable for elevators (and carts?). Positions (in pix) where
+            the sprite should pause.
+        - stop_direction -- (String. Optional. Defaults to None) Applicable for elevators. Will only stop when giong
+            in this direction ("up" or "down")
+        - id_number -- (Integer. Optional. Defaults to None) Give the sprite a unique id number. Useful for
+            distinguishing between sprites with the same name.
         """
         pygame.sprite.Sprite.__init__(self)
 
@@ -623,9 +676,10 @@ class Sprite(pygame.sprite.Sprite):
         self.is_ladder = self.name == SpriteName.LADDER
         self.is_truck = self.name == SpriteName.TRUCK
         self.is_wheelbarrow = self.name == SpriteName.WHEELBARROW
-        self.is_axe = self.name == SpriteName.AXE
+        self.is_stun_gun = self.name == SpriteName.STUN_GUN
         self.is_cart = self.name == SpriteName.CART
         self.is_elevator = self.name == SpriteName.ELEVATOR
+        self.is_elevator_shaft = self.name == SpriteName.ELEVATOR_SHAFT
         self.is_handle = self.name == SpriteName.HANDLE
         self.standard_speed = standard_speed
         self.slow_speed = slow_speed
@@ -656,6 +710,14 @@ class Sprite(pygame.sprite.Sprite):
         self.longevity_ms = longevity_ms
         self.expiration_ms = pygame.time.get_ticks() + self.longevity_ms if self.longevity_ms else 0
         self.ignore_screen_boundaries = self.is_truck
+        self.stops = sorted(stops) if stops else []
+        self.can_climb_slopes = self.name in (SpriteName.PLAYER, SpriteName.MINER)
+        self.stop_direction = stop_direction
+        self.is_riding_elevator = False
+        self.id_number = id_number
+        self.is_waiting_for_elevator = False
+        self.enter_elevator_selection = False
+        self.elevator_entry_pos = None
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -671,17 +733,30 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = position
         self.mask = pygame.mask.from_surface(self.image)
 
-    def collides(self, sprites):
+    def collides(self, sprites, return_sprite=False):
         """
         Check if the sprite collides with another sprite
 
         - sprites -- (List, Tuple or object) The sprite or sprites to check for collision against
+        - return_sprite -- (Boolean. Optional. Defaults to False) If True will return a tuple containing collision
+            result and the sprite with which the collision was
 
-        Returns: Boolean
+        Returns: Boolean or Tuple
         """
         sprites = [sprites] if type(sprites) not in (list, tuple) else sprites
         sprites = [sprites[0].group_single] if type(sprites[0]) is not pygame.sprite.Group else sprites
-        return any([pygame.sprite.spritecollide(self, x, False, pygame.sprite.collide_mask) for x in sprites])
+        collisions = []
+        collided_sprite = None
+        for sprite in sprites:
+            collision = pygame.sprite.spritecollide(self, sprite, False, pygame.sprite.collide_mask)
+            if collision:
+                collisions.append(collision[0])
+                collided_sprite = collision[0]
+        result = bool(collisions)
+        if return_sprite:
+            return result, collided_sprite
+        else:
+            return result
 
     def move(self, direction, speed=None, activity=None):
         """
@@ -734,7 +809,7 @@ class Sprite(pygame.sprite.Sprite):
                 self.fall_pix = 0 if vertical else self.fall_pix
 
                 # Try climbing up slope
-                if self.is_walking() or self.is_idle():
+                if self.can_climb_slopes and (self.is_walking() or self.is_idle()):
                     for _ in range(CLIMBABLE_PIX):
                         self.rect.move_ip(0, -1)
                         if not self.collides(mine.layouts):
@@ -745,7 +820,7 @@ class Sprite(pygame.sprite.Sprite):
                     else:
                         self.rect.move_ip(0, CLIMBABLE_PIX)
 
-                # Stop the sprite or change direction if impossible to get passed obstacle
+                # Stop the sprite or change direction if impossible to get past obstacle
                 self.rect.move_ip(-(one_pixel * i) if horizontal else 0, -y)
                 if self.is_carrying_gold() and self.is_climbing():
                     activity = Activity.CLIMBING_WITH_GOLD
@@ -761,23 +836,61 @@ class Sprite(pygame.sprite.Sprite):
                     activity = self.activity
                 elif self.is_computer_controlled and self.is_walking():
                     self.h_direction = change_direction(self.h_direction)
-                elif self.is_pushing_wheelbarrow():
-                    activity = self.activity
+                elif self.is_pushing_empty_wheelbarrow():
+                    activity = Activity.PUSHING_EMPTY_WHEELBARROW
+                elif self.is_pushing_loaded_01_wheelbarrow():
+                    activity = Activity.PUSHING_LOADED_01_WHEELBARROW
+                elif self.is_pushing_loaded_02_wheelbarrow():
+                    activity = Activity.PUSHING_LOADED_02_WHEELBARROW
+                elif self.is_pushing_loaded_03_wheelbarrow():
+                    activity = Activity.PUSHING_LOADED_03_WHEELBARROW
+                elif self.is_elevator:
+                    self.v_direction = change_direction(self.v_direction)
                 else:
                     activity = Activity.WALKING if self.is_miner else Activity.IDLE
                 break
 
+            # Check for collision with an elevator
+            elif self.collides(mine.elevators) and (self.is_player or self.is_miner):
+                if self.fall_pix >= MAX_FALL_PIX and self.can_pass_out:
+                    self.pass_out()
+                    activity = Activity.PASSED_OUT
+
+                # Reset fall distance count
+                self.fall_pix = 0 if vertical else self.fall_pix
+
             # Keep track of how many pixels the sprite has fallen
-            elif vertical and self.v_direction == Direction.DOWN and not (
-                    self.collides(mine.ladders) and self.can_climb_ladders):
+            if vertical and self.is_facing_down and not (
+                    self.collides(mine.ladders) and self.can_climb_ladders) and not self.is_elevator:
                 self.fall_pix += 1
                 if self.fall_pix >= self.max_control_while_falling_pix:
                     if self.is_passed_out():
                         activity = Activity.PASSED_OUT
                     elif self.is_carrying_gold():
                         activity = Activity.FALLING_WITH_GOLD
+                    elif self.is_pushing_empty_wheelbarrow():
+                        activity = Activity.FALLING_WITH_EMPTY_WHEELBARROW
+                    elif self.is_pushing_loaded_01_wheelbarrow():
+                        activity = Activity.FALLING_WITH_LOADED_01_WHEELBARROW
+                    elif self.is_pushing_loaded_02_wheelbarrow():
+                        activity = Activity.FALLING_WITH_LOADED_02_WHEELBARROW
+                    elif self.is_pushing_loaded_03_wheelbarrow():
+                        activity = Activity.FALLING_WITH_LOADED_03_WHEELBARROW
+                    elif self.is_wheelbarrow:
+                        activity = self.activity
                     else:
                         activity = Activity.FALLING
+
+            # Check if the sprite has reached a stop point (applicable to elevators and carts) and if so pause
+            # the sprite
+            if self.rect.bottom in self.stops:
+                last_stop = self.stops.index(self.rect.bottom) == len(self.stops) - 1
+                first_stop = self.stops.index(self.rect.bottom) == 0
+                activity = Activity.PAUSED if (first_stop or last_stop) or not self.stop_direction \
+                    or self.stop_direction == self.v_direction else activity
+                if first_stop or last_stop:
+                    self.v_direction = {last_stop: Direction.UP, first_stop: Direction.DOWN}[True]
+                break
 
         self.update(activity if activity else self.activity)
 
@@ -788,12 +901,33 @@ class Sprite(pygame.sprite.Sprite):
         y_pos = self.rect.y
         bottom_pos = self.rect.bottom - 1
         x_pos = self.rect.center[0]
+        right = self.rect.right
+        left = self.rect.x
         r_range = x_pos + SPRITE_SIZE[0]
         l_range = x_pos - SPRITE_SIZE[0]
         ladder_center = [l.rect.center[0] for l in mine.ladders.sprites() if l.collides(self)]
         ladder_center = ladder_center[0] if ladder_center else -10
         close_to_center = ladder_center in range(x_pos - self.speed, x_pos + self.speed)
-        can_climb_ladder = close_to_center and not self.is_climbing() and not self.ladder_enter_selection
+        can_climb_ladder = \
+            close_to_center and not self.is_climbing() and not self.ladder_enter_selection and self.can_climb_ladders
+        is_not_an_elevator = not (self.is_elevator or self.is_elevator_shaft)
+        random_no = random.randrange(0, 2)
+        collides_with_elevator, elevator = self.collides(mine.elevators, True)
+        collides_with_elevator = collides_with_elevator and is_not_an_elevator and elevator.is_paused()
+        collides_with_elev_shaft, shaft = self.collides(mine.elevator_shafts, True)
+        collides_with_elev_shaft = collides_with_elev_shaft and is_not_an_elevator and ((
+            self.is_moving_right() and right >= shaft.rect.x + 50 and left < shaft.rect.center[0])
+            or (self.is_moving_left() and left <= shaft.rect.right - 50 and right > shaft.rect.center[0]))
+        can_wait_for_elevator = collides_with_elev_shaft and not self.is_riding_elevator
+        wait_for_elevator = can_wait_for_elevator and random_no if not self.enter_elevator_selection else False
+        self.enter_elevator_selection = can_wait_for_elevator if not self.enter_elevator_selection else True
+        self.enter_elevator_selection = False if not can_wait_for_elevator else self.enter_elevator_selection
+        self.elevator_entry_pos = \
+            None if self.is_riding_elevator and elevator and not elevator.is_paused() else self.elevator_entry_pos
+        enter_elevator = self.is_waiting_for_elevator and collides_with_elevator
+        elevator_has_stopped = self.is_riding_elevator and elevator and elevator.is_paused()
+        self.elevator_entry_pos = y_pos if elevator_has_stopped and not random_no else self.elevator_entry_pos
+        exit_elevator = elevator_has_stopped and self.elevator_entry_pos != y_pos and random_no
 
         # If the sprite is currently able to start climbing a ladder then make a random selection whether to start
         # climbing and if so, if what direction, or to keep walking
@@ -808,6 +942,24 @@ class Sprite(pygame.sprite.Sprite):
             self.just_entered_ladder = True if random_no > 0 else False
         elif not self.collides(mine.ladders):
             self.ladder_enter_selection = False
+
+        # Decide whether to wait for and ride an elevator or not
+        if wait_for_elevator:
+            self.update(Activity.IDLE)
+            self.is_waiting_for_elevator = True
+
+        # Climb on the elevator
+        elif enter_elevator:
+            activity = Activity.WALKING
+            if x_pos in range(elevator.rect.center[0]-20, elevator.rect.center[0]+20):
+                activity = Activity.IDLE
+                self.is_waiting_for_elevator = False
+                self.elevator_entry_pos = y_pos
+            self.update(activity)
+
+        # Decide whether to step off the elevator when the elevator stops
+        elif exit_elevator:
+            self.update(Activity.WALKING)
 
         # If the sprite is walking, then just keep walking
         if self.is_walking():
@@ -880,6 +1032,50 @@ class Sprite(pygame.sprite.Sprite):
 
             self.move(self.v_direction)
 
+        # Move elevators
+        if self.is_elevator and not self.is_paused():
+            self.move(self.v_direction)
+
+        # Check if a sprite is riding an elevator and if so move that sprite with the elevator
+        if self.is_elevator:
+            for spr in mine.all_sprites + [mine.players]:
+                for spt in spr.sprites():
+                    if spt.is_elevator_shaft:
+                        continue
+                    elevator_collision = spt.collides(self) and self.rect.bottom >= spt.rect.bottom - 5 \
+                        and spt.rect.bottom >= self.rect.bottom - GRAVITY
+                    riding_this_elevator = spt.is_riding_elevator == self.id_number
+                    y = (self.rect.bottom - 5) - spt.rect.bottom
+
+                    # Set activity
+                    if spt.is_passed_out():
+                        activity = Activity.PASSED_OUT
+                    elif spt.is_miner:
+                        activity = Activity.IDLE
+                    elif not spt.is_player:
+                        activity = None
+                    elif spt.is_carrying_gold():
+                        activity = Activity.RIDING_ELEVATOR_WITH_GOLD
+                    elif spt.is_pushing_empty_wheelbarrow():
+                        activity = Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW
+                    elif spt.is_pushing_loaded_01_wheelbarrow():
+                        activity = Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW
+                    elif spt.is_pushing_loaded_02_wheelbarrow():
+                        activity = Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW
+                    elif spt.is_pushing_loaded_03_wheelbarrow():
+                        activity = Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW
+                    else:
+                        activity = Activity.IDLE_RIDING_ELEVATOR
+
+                    # Move the sprite when applicable
+                    if not riding_this_elevator and elevator_collision:
+                        spt.is_riding_elevator = self.id_number
+                        spt.move(Direction.UP if y < 0 else Direction.DOWN, speed=abs(y), activity=activity)
+                    elif riding_this_elevator and not self.is_paused():
+                        spt.move(self.v_direction, speed=abs(y), activity=activity)
+                    if not elevator_collision:
+                        spt.is_riding_elevator = None if riding_this_elevator else spt.is_riding_elevator
+
     def update(self, activity=None):
         """
         Update the sprite status
@@ -905,11 +1101,16 @@ class Sprite(pygame.sprite.Sprite):
 
         # Check if the sprite activity has changed and if so change animation
         if activity != self.activity:
-            self.animation = animation_loop(self.animations[activity])
 
-            # Start the wake up timer if the sprite has passed out
+            # Activate timer for paused or passed out sprites
             if activity == Activity.PASSED_OUT:
                 self.wake_up_time = now + WAKE_UP_TIME_MS
+            elif activity == Activity.PAUSED:
+                self.wake_up_time = now + ELEVATOR_PAUSE_MS
+                activity = self.activity
+
+            # Load new animation
+            self.animation = animation_loop(self.animations[activity])
 
         # Check if it's time to wake up the sprite from passed out state
         elif self.is_passed_out() and now >= self.wake_up_time:
@@ -946,8 +1147,7 @@ class Sprite(pygame.sprite.Sprite):
         """Make the sprite pass out, remove one life etc"""
         if self.is_passed_out():
             return
-        if self.saved_sprite:
-            self.drop_sprite()
+        self.drop_sprite()
         self.update(Activity.PASSED_OUT)
         self.lives -= 1 if self.is_mortal else 0
 
@@ -1036,12 +1236,15 @@ class Sprite(pygame.sprite.Sprite):
         # Drop the sprite on the ground
         if not (dropped_in_wheelbarrow or dropped_in_truck):
             self.saved_sprite.rect.center = self.rect.center
+            self.saved_sprite.rect.y -= 70
             group.add(self.saved_sprite)
             if carries_wheelbarrow:
                 self.saved_sprite.h_direction = self.h_direction
                 self.saved_sprite.rect.x = self.rect.x
-                self.rect.x += 120 if self.is_facing_left else 0
                 self.saved_sprite.rect.y = self.rect.y
+                if self.is_facing_left and not self.collides(mine.layout_sprite):
+                    self.move(Direction.RIGHT, 120)
+                    self.h_direction = Direction.LEFT
 
         # Reset sprite data
         if carries_wheelbarrow and dropped_in_truck:
@@ -1055,6 +1258,9 @@ class Sprite(pygame.sprite.Sprite):
     def is_passed_out(self):
         return self.activity == Activity.PASSED_OUT
 
+    def is_paused(self):
+        return pygame.time.get_ticks() < self.wake_up_time
+
     def is_walking(self):
         return self.activity in (
             Activity.WALKING, Activity.WALKING_WITH_GOLD, Activity.PUSHING_EMPTY_WHEELBARROW,
@@ -1066,7 +1272,10 @@ class Sprite(pygame.sprite.Sprite):
             Activity.CLIMBING, Activity.CLIMBING_WITH_GOLD, Activity.IDLE_CLIMBING, Activity.IDLE_CLIMBING_WITH_GOLD)
 
     def is_falling(self):
-        return self.activity in (Activity.FALLING, Activity.FALLING_WITH_GOLD)
+        return self.activity in (
+            Activity.FALLING, Activity.FALLING_WITH_GOLD, Activity.FALLING_WITH_EMPTY_WHEELBARROW,
+            Activity.FALLING_WITH_LOADED_01_WHEELBARROW, Activity.FALLING_WITH_LOADED_02_WHEELBARROW,
+            Activity.FALLING_WITH_LOADED_03_WHEELBARROW)
 
     def is_idle(self):
         return self.activity in (
@@ -1077,22 +1286,30 @@ class Sprite(pygame.sprite.Sprite):
     def is_carrying_gold(self):
         return self.activity in (
             Activity.WALKING_WITH_GOLD, Activity.IDLE_WITH_GOLD, Activity.IDLE_CLIMBING_WITH_GOLD,
-            Activity.CLIMBING_WITH_GOLD, Activity.FALLING_WITH_GOLD)
+            Activity.CLIMBING_WITH_GOLD, Activity.FALLING_WITH_GOLD, Activity.RIDING_ELEVATOR_WITH_GOLD)
 
     def is_pulling_up(self):
         return self.activity == Activity.PULLING_UP
 
     def is_pushing_empty_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_EMPTY_WHEELBARROW, Activity.IDLE_WITH_EMPTY_WHEELBARROW)
+        return self.activity in (
+            Activity.PUSHING_EMPTY_WHEELBARROW, Activity.IDLE_WITH_EMPTY_WHEELBARROW,
+            Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW, Activity.FALLING_WITH_EMPTY_WHEELBARROW)
 
     def is_pushing_loaded_01_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_LOADED_01_WHEELBARROW, Activity.IDLE_WITH_LOADED_01_WHEELBARROW)
+        return self.activity in (
+            Activity.PUSHING_LOADED_01_WHEELBARROW, Activity.IDLE_WITH_LOADED_01_WHEELBARROW,
+            Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW, Activity.FALLING_WITH_LOADED_01_WHEELBARROW)
 
     def is_pushing_loaded_02_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_02_WHEELBARROW)
+        return self.activity in (
+            Activity.PUSHING_LOADED_02_WHEELBARROW, Activity.IDLE_WITH_LOADED_02_WHEELBARROW,
+            Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW, Activity.FALLING_WITH_LOADED_02_WHEELBARROW)
 
     def is_pushing_loaded_03_wheelbarrow(self):
-        return self.activity in (Activity.PUSHING_LOADED_03_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW)
+        return self.activity in (
+            Activity.PUSHING_LOADED_03_WHEELBARROW, Activity.IDLE_WITH_LOADED_03_WHEELBARROW,
+            Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW, Activity.FALLING_WITH_LOADED_03_WHEELBARROW)
 
     def is_pushing_loaded_wheelbarrow(self):
         return self.is_pushing_loaded_01_wheelbarrow() or self.is_pushing_loaded_02_wheelbarrow() \
@@ -1103,6 +1320,18 @@ class Sprite(pygame.sprite.Sprite):
 
     def is_loaded(self):
         return "loaded" in self.activity
+
+    def is_moving_right(self):
+        return self.h_direction == Direction.RIGHT
+
+    def is_moving_left(self):
+        return self.h_direction == Direction.LEFT
+
+    def is_moving_up(self):
+        return self.v_direction == Direction.UP
+
+    def is_moving_down(self):
+        return self.v_direction == Direction.DOWN
 
 
 class OnScreenTexts(object):
@@ -1150,9 +1379,14 @@ class Activity(object):
     CLIMBING_WITH_GOLD = "climbing_with_gold"
     FALLING = "falling"
     FALLING_WITH_GOLD = "falling_with_gold"
+    FALLING_WITH_EMPTY_WHEELBARROW = "falling_with_empty_wheelbarrow"
+    FALLING_WITH_LOADED_01_WHEELBARROW = "falling_with_loaded_01_wheelbarrow"
+    FALLING_WITH_LOADED_02_WHEELBARROW = "falling_with_loaded_02_wheelbarrow"
+    FALLING_WITH_LOADED_03_WHEELBARROW = "falling_with_loaded_03_wheelbarrow"
     IDLE = "idle"
     IDLE_CLIMBING = "idle_climbing"
     IDLE_CLIMBING_WITH_GOLD = "idle_climbing_with_gold"
+    IDLE_RIDING_ELEVATOR = "idle_riding_elevator"
     IDLE_WITH_EMPTY_WHEELBARROW = "idle_with_empty_wheelbarrow"
     IDLE_WITH_GOLD = "idle_with_gold"
     IDLE_WITH_LOADED_01_WHEELBARROW = "idle_with_loaded_01_wheelbarrow"
@@ -1163,6 +1397,7 @@ class Activity(object):
     LOADED_03 = "loaded_03"
     LOADED_04 = "loaded_04"
     LOADED_05 = "loaded_05"
+    PAUSED = "paused"
     PASSED_OUT = "passed_out"
     PULLING_UP = "pulling_up"
     PUSHING_EMPTY_WHEELBARROW = "pushing_empty_wheelbarrow"
@@ -1170,6 +1405,11 @@ class Activity(object):
     PUSHING_LOADED_02_WHEELBARROW = "pushing_loaded_02_wheelbarrow"
     PUSHING_LOADED_03_WHEELBARROW = "pushing_loaded_03_wheelbarrow"
     RIDING_CART = "riding cart"
+    RIDING_ELEVATOR_WITH_GOLD = "riding_elevator_with_gold"
+    RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW = "riding_elevator_with_empty_wheelbarrow"
+    RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW = "riding_elevator_with_loaded_01_wheelbarrow"
+    RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW = "riding_elevator_with_loaded_02_wheelbarrow"
+    RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW = "riding_elevator_with_loaded_03_wheelbarrow"
     WALKING = "walking"
     WALKING_WITH_GOLD = "walking_with_gold"
 
@@ -1200,30 +1440,40 @@ class Folder(object):
     MINES = "mines" + os.sep
     SPRITES = IMAGES + "sprites" + os.sep
     TEXTURES = IMAGES + "textures" + os.sep
-    CLIMBING_IMGS = SPRITES + "{}" + os.sep + "climbing" + os.sep
-    CLIMBING_UP_IMGS = SPRITES + "{}" + os.sep + "climbing_up" + os.sep
-    CLIMBING_DOWN_IMGS = SPRITES + "{}" + os.sep + "climbing_down" + os.sep
-    CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "climbing_with_gold" + os.sep
-    IDLE_IMGS = SPRITES + "{}" + os.sep + "idle" + os.sep
-    IDLE_CLIMBING_IMGS = SPRITES + "{}" + os.sep + "idle_climbing" + os.sep
-    IDLE_CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "idle_climbing_with_gold" + os.sep
-    IDLE_WITH_EMPTY_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_empty_wheelbarrow" + os.sep
-    IDLE_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "idle_with_gold" + os.sep
-    IDLE_WITH_LOADED_01_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_loaded_01_wheelbarrow" + os.sep
-    IDLE_WITH_LOADED_02_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_loaded_02_wheelbarrow" + os.sep
-    IDLE_WITH_LOADED_03_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "idle_with_loaded_03_wheelbarrow" + os.sep
-    LOADED_01 = SPRITES + "{}" + os.sep + "loaded_01" + os.sep
-    LOADED_02 = SPRITES + "{}" + os.sep + "loaded_02" + os.sep
-    LOADED_03 = SPRITES + "{}" + os.sep + "loaded_03" + os.sep
-    LOADED_04 = SPRITES + "{}" + os.sep + "loaded_04" + os.sep
-    LOADED_05 = SPRITES + "{}" + os.sep + "loaded_05" + os.sep
-    PUSHING_EMPTY_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_empty_wheelbarrow" + os.sep
-    PUSHING_LOADED_01_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_loaded_01_wheelbarrow" + os.sep
-    PUSHING_LOADED_02_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_loaded_02_wheelbarrow" + os.sep
-    PUSHING_LOADED_03_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + "pushing_loaded_03_wheelbarrow" + os.sep
-    PASSED_OUT_IMGS = SPRITES + "{}" + os.sep + "passed_out" + os.sep
-    WALKING_IMGS = SPRITES + "{}" + os.sep + "walking" + os.sep
-    WALKING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + "walking_with_gold" + os.sep
+    CLIMBING_IMGS = SPRITES + "{}" + os.sep + Activity.CLIMBING + os.sep
+    CLIMBING_UP_IMGS = SPRITES + "{}" + os.sep + Activity.CLIMBING_UP + os.sep
+    CLIMBING_DOWN_IMGS = SPRITES + "{}" + os.sep + Activity.CLIMBING_DOWN + os.sep
+    CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + Activity.CLIMBING_WITH_GOLD + os.sep
+    IDLE_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE + os.sep
+    IDLE_CLIMBING_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_CLIMBING + os.sep
+    IDLE_CLIMBING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_CLIMBING_WITH_GOLD + os.sep
+    IDLE_RIDING_ELEVATOR_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_RIDING_ELEVATOR + os.sep
+    IDLE_WITH_EMPTY_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_WITH_EMPTY_WHEELBARROW + os.sep
+    IDLE_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_WITH_GOLD + os.sep
+    IDLE_WITH_LOADED_01_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_WITH_LOADED_01_WHEELBARROW + os.sep
+    IDLE_WITH_LOADED_02_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_WITH_LOADED_02_WHEELBARROW + os.sep
+    IDLE_WITH_LOADED_03_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.IDLE_WITH_LOADED_03_WHEELBARROW + os.sep
+    LOADED_01 = SPRITES + "{}" + os.sep + Activity.LOADED_01 + os.sep
+    LOADED_02 = SPRITES + "{}" + os.sep + Activity.LOADED_02 + os.sep
+    LOADED_03 = SPRITES + "{}" + os.sep + Activity.LOADED_03 + os.sep
+    LOADED_04 = SPRITES + "{}" + os.sep + Activity.LOADED_04 + os.sep
+    LOADED_05 = SPRITES + "{}" + os.sep + Activity.LOADED_05 + os.sep
+    PUSHING_EMPTY_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.PUSHING_EMPTY_WHEELBARROW + os.sep
+    PUSHING_LOADED_01_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.PUSHING_LOADED_01_WHEELBARROW + os.sep
+    PUSHING_LOADED_02_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.PUSHING_LOADED_02_WHEELBARROW + os.sep
+    PUSHING_LOADED_03_WHEELBARROW_IMGS = SPRITES + "{}" + os.sep + Activity.PUSHING_LOADED_03_WHEELBARROW + os.sep
+    PASSED_OUT_IMGS = SPRITES + "{}" + os.sep + Activity.PASSED_OUT + os.sep
+    RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW_IMGS = \
+        SPRITES + "{}" + os.sep + Activity.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW + os.sep
+    RIDING_ELEVATOR_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + Activity.RIDING_ELEVATOR_WITH_GOLD + os.sep
+    RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW_IMGS = \
+        SPRITES + "{}" + os.sep + Activity.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW + os.sep
+    RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW_IMGS = \
+        SPRITES + "{}" + os.sep + Activity.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW + os.sep
+    RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW_IMGS = \
+        SPRITES + "{}" + os.sep + Activity.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW + os.sep
+    WALKING_IMGS = SPRITES + "{}" + os.sep + Activity.WALKING + os.sep
+    WALKING_WITH_GOLD_IMGS = SPRITES + "{}" + os.sep + Activity.WALKING_WITH_GOLD + os.sep
 
 
 class FileName(object):
@@ -1232,9 +1482,9 @@ class FileName(object):
 
 
 class SpriteName(object):
-    AXE = "axe"
     CART = "cart"
     ELEVATOR = "elevator"
+    ELEVATOR_SHAFT = "elevator_shaft"
     EXIT = "exit"
     GOLD = "gold"
     HANDLE = "handle"
@@ -1242,6 +1492,7 @@ class SpriteName(object):
     LAYOUT = "layout"
     PLACEHOLDER = "placeholder"
     PLAYER = "player"
+    STUN_GUN = "stun_gun"
     TRUCK = "truck"
     MINER = "miner"
     WARNING = "warning"
@@ -1270,6 +1521,8 @@ class Text(object):
 
 # Load sprite animation images and store in a dict
 SPRITE_ANIMATIONS = {
+    SpriteName.ELEVATOR: {
+        Animation.IDLE: load_images(Animation.IDLE, SpriteName.ELEVATOR)},
     SpriteName.GOLD: {
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.GOLD),
         Animation.FALLING: load_images(Animation.IDLE, SpriteName.GOLD)},
@@ -1284,9 +1537,18 @@ SPRITE_ANIMATIONS = {
         Animation.CLIMBING_WITH_GOLD: load_images(Animation.CLIMBING_WITH_GOLD, SpriteName.PLAYER),
         Animation.FALLING: load_images(Animation.IDLE, SpriteName.PLAYER),
         Animation.FALLING_WITH_GOLD: load_images(Animation.IDLE_WITH_GOLD, SpriteName.PLAYER),
+        Animation.FALLING_WITH_EMPTY_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_EMPTY_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
+        Animation.FALLING_WITH_LOADED_01_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_LOADED_01_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
+        Animation.FALLING_WITH_LOADED_02_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_LOADED_02_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
+        Animation.FALLING_WITH_LOADED_03_WHEELBARROW: load_images(
+            Animation.IDLE_WITH_LOADED_03_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
         Animation.IDLE: load_images(Animation.IDLE, SpriteName.PLAYER),
         Animation.IDLE_CLIMBING: load_images(Animation.IDLE_CLIMBING, SpriteName.PLAYER),
         Animation.IDLE_CLIMBING_WITH_GOLD: load_images(Animation.IDLE_CLIMBING_WITH_GOLD, SpriteName.PLAYER),
+        Animation.IDLE_RIDING_ELEVATOR: load_images(Animation.IDLE_RIDING_ELEVATOR, SpriteName.PLAYER),
         Animation.IDLE_WITH_EMPTY_WHEELBARROW: load_images(
             Animation.IDLE_WITH_EMPTY_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
         Animation.IDLE_WITH_GOLD: load_images(Animation.IDLE_WITH_GOLD, SpriteName.PLAYER),
@@ -1305,6 +1567,16 @@ SPRITE_ANIMATIONS = {
             Animation.PUSHING_LOADED_02_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
         Animation.PUSHING_LOADED_03_WHEELBARROW: load_images(
             Animation.PUSHING_LOADED_03_WHEELBARROW, SpriteName.PLAYER, multiply_x_by=2),
+        Animation.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW: load_images(
+            Animation.RIDING_ELEVATOR_WITH_EMPTY_WHEELBARROW, SpriteName.PLAYER),
+        Animation.RIDING_ELEVATOR_WITH_GOLD: load_images(
+            Animation.RIDING_ELEVATOR_WITH_GOLD, SpriteName.PLAYER),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW: load_images(
+            Animation.RIDING_ELEVATOR_WITH_LOADED_01_WHEELBARROW, SpriteName.PLAYER),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW: load_images(
+            Animation.RIDING_ELEVATOR_WITH_LOADED_02_WHEELBARROW, SpriteName.PLAYER),
+        Animation.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW: load_images(
+            Animation.RIDING_ELEVATOR_WITH_LOADED_03_WHEELBARROW, SpriteName.PLAYER),
         Animation.WALKING: load_images(Animation.WALKING, SpriteName.PLAYER),
         Animation.WALKING_WITH_GOLD: load_images(Animation.WALKING_WITH_GOLD, SpriteName.PLAYER)},
     SpriteName.TRUCK: {
@@ -1448,6 +1720,7 @@ while game_is_running:
         s.draw(screen)
     warnings.draw(screen)
     mine.players.draw(screen)
+    mine.elevators.draw(screen)
 
     # Update remaining time
     mine.seconds_remaining -= clock.get_time() / 1000

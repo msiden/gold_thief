@@ -1,20 +1,28 @@
 {
   "texture": "granite.jpg",
-  "time_limit_mins": 3,
+  "time_limit_mins": 10,
   "rooms": {
     "1": {
       "layout": "room2_1.png",
       "sprites": {
         "truck":  [
-          {"position": [-100, -260]}],
+          {"position": [-180, -260]}],
         "wheelbarrow":  [
           {"position": [750, 20], "h_direction": "left"}],
         "player":  [
           {"position": [120, 20], "h_direction": "right", "activity":  "idle"}],
         "gold": [
-          {"position": [545, 80]}],
-        "ladder": [
-          {"position": [402, 200], "height":  820}]
+          {"position": [545, 80]}, {"position": [555, 80]}, {"position": [565, 80]}],
+        "elevator_shaft": [
+          {"position": [314, 0], "height":  1020},
+          {"position": [1046, 0], "height":  1020}],
+        "elevator": [
+          {"position": [314, 115], "v_direction":  "up", "stops": [230, 410, 1020], "stop_direction": "down"},
+          {"position": [1046, 215], "v_direction":  "down", "stops": [230, 410, 766, 1020], "stop_direction": "up"}],
+        "miner": [
+          {"position": [600, 890], "h_direction": "left", "activity":  "walking"},
+          {"position": [700, 890], "h_direction": "right", "activity":  "walking"},
+          {"position": [900, 890], "h_direction": "left", "activity":  "walking"}]
       }
     }
   }
