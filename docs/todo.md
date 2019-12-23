@@ -50,3 +50,4 @@
 - [ ] Passed out timer (and other timers) must pause when in pause mode
 - [ ] Player can sometimes fall straight through an elevator if it has already started moving down when the player steps on
 - [ ] Player loses all lives if falling and landing on an elevator while pushing a wheelbarrow
+- [ ] Player is knocked out if hit by falling miner when standing on an elevator
