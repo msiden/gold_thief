@@ -6,7 +6,7 @@ import random
 import itertools
 
 # Constants you may want to play around with
-CHICKEN_MODE = False
+CHICKEN_MODE = True
 SHOW_START_SCREEN = True
 START_MINE = 1
 PLAYER_LIVES = 5
