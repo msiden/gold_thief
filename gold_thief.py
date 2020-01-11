@@ -75,7 +75,7 @@ def exit_room(exits_, sprites_):
     Check whether a sprite walks through an exit and if so transport to a different room
 
     - exits_ -- (List. Mandatory) A list of exit point sprites
-    - sprites_ -- (List. Mandatory) A list of sprites to check collision agains. Probably player or miners.
+    - sprites_ -- (List. Mandatory) A list of sprites to check collision against. Probably player or miners.
 
     Returns: None
     """
@@ -95,6 +95,7 @@ def exit_room(exits_, sprites_):
                     mine.rooms[str(e.leads_to["room"])]["miners"].add(spr)
                 spr.rect.x = e.leads_to["x"]
                 spr.rect.y = e.leads_to["y"]
+                spr.in_room = e.leads_to["room"]
 
 
 def flatten_list(l):
@@ -499,20 +500,23 @@ class Mines(object):
             self.no_of_rooms = len(self.database["rooms"])
 
             # Load sprites
-            self.rooms[r]["players"] = self.generate_sprites(r, SpriteName.PLAYER, animation_freq_ms=8)
+            self.rooms[r]["players"] = self.generate_sprites(
+                r, SpriteName.PLAYER, animation_freq_ms=8, org_room_no=int(r))
             self.rooms[r]["player"] = self.rooms[r]["players"].sprites()[0]
             self.rooms[r]["miners"] = self.generate_sprites(
-                r, SpriteName.MINER, standard_speed=MINER_SPEED, animation_freq_ms=8)
-            self.rooms[r]["gold_sacks"] = self.generate_sprites(r, SpriteName.GOLD, animation_freq_ms=500)
+                r, SpriteName.MINER, standard_speed=MINER_SPEED, animation_freq_ms=8, org_room_no=int(r))
+            self.rooms[r]["gold_sacks"] = self.generate_sprites(
+                r, SpriteName.GOLD, animation_freq_ms=500, org_room_no=int(r))
             self.rooms[r]["ladders"] = self.generate_sprites(
                 r, SpriteName.LADDER, image=Folder.IDLE_IMGS.format(SpriteName.LADDER) + "001.png")
             self.rooms[r]["elevator_shafts"] = self.generate_sprites(
                 r, SpriteName.ELEVATOR_SHAFT, image=Folder.IDLE_IMGS.format(SpriteName.ELEVATOR_SHAFT) + "001.png")
             self.rooms[r]["trucks"] = self.generate_sprites(r, SpriteName.TRUCK, animation_freq_ms=100)
-            self.rooms[r]["wheelbarrows"] = self.generate_sprites(r, SpriteName.WHEELBARROW)
+            self.rooms[r]["wheelbarrows"] = self.generate_sprites(r, SpriteName.WHEELBARROW, org_room_no=int(r))
             self.rooms[r]["exits"] = self.generate_sprites(
                 r, SpriteName.EXIT, image=Folder.IDLE_IMGS.format(SpriteName.EXIT) + "001.png")
-            self.rooms[r]["elevators"] = self.generate_sprites(r, SpriteName.ELEVATOR, standard_speed=ELEVATOR_SPEED)
+            self.rooms[r]["elevators"] = self.generate_sprites(
+                r, SpriteName.ELEVATOR, standard_speed=ELEVATOR_SPEED, org_room_no=int(r))
             self.rooms[r]["all_sprites"] = [
                 self.rooms[r]["ladders"], self.rooms[r]["elevator_shafts"], self.rooms[r]["trucks"],
                 self.rooms[r]["gold_sacks"], self.rooms[r]["wheelbarrows"], self.rooms[r]["miners"]]
@@ -541,7 +545,8 @@ class Mines(object):
         self.player.saved_sprite = None
 
     def generate_sprites(
-            self, room_, name, image=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED):
+            self, room_, name, image=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED,
+            org_room_no=None):
         """
         Generate a sprites group from room setup dictionary
 
@@ -554,6 +559,7 @@ class Mines(object):
             carrying a gold sack
         - slow_speed -- (Integer. Optional. Defaults to SLOW_SPEED constant value) The sprite's speed when carrying a
             gold sack
+        - org_room_no -- (Integer. Optional. Defaults to None) The number of the room where the sprite originates.
 
         returns: An instance of pygame.sprites.Group()
         """
@@ -578,7 +584,7 @@ class Mines(object):
                 name=name, position=spr["position"], image=image, activity=activity, h_direction=h_direction,
                 v_direction=v_direction, height=height, animation_freq_ms=animation_freq_ms,
                 standard_speed=standard_speed, slow_speed=slow_speed, leads_to=leads_to, exit_dir=exit_dir,
-                stops=stops, stop_direction=stop_direction, id_number=i+1))
+                stops=stops, stop_direction=stop_direction, id_number=i+1, org_room_no=org_room_no))
         for spr in sprites:
             group.add(spr)
         return group
@@ -625,7 +631,7 @@ class Sprite(pygame.sprite.Sprite):
     def __init__(
             self, name, activity="idle", image=None, position=(0, 0), h_direction="right", v_direction="none",
             height=None, animation_freq_ms=0, standard_speed=STANDARD_SPEED, slow_speed=SLOW_SPEED, leads_to=None,
-            exit_dir=None, longevity_ms=None, stops=None, stop_direction=None, id_number=None):
+            exit_dir=None, longevity_ms=None, stops=None, stop_direction=None, id_number=None, org_room_no=None):
         """
         Create a new sprite
 
@@ -658,6 +664,7 @@ class Sprite(pygame.sprite.Sprite):
             in this direction ("up" or "down")
         - id_number -- (Integer. Optional. Defaults to None) Give the sprite a unique id number. Useful for
             distinguishing between sprites with the same name.
+        - org_room_no -- (Integer. Optional. Defaults to None) The number of the room where the sprite originates.
         """
         pygame.sprite.Sprite.__init__(self)
 
@@ -718,6 +725,8 @@ class Sprite(pygame.sprite.Sprite):
         self.is_waiting_for_elevator = False
         self.enter_elevator_selection = False
         self.elevator_entry_pos = None
+        self.org_room_no = org_room_no
+        self.in_room = org_room_no
         if image:
             self.animations = None
             self.image = pygame.image.load(image).convert()
@@ -1040,6 +1049,8 @@ class Sprite(pygame.sprite.Sprite):
         if self.is_elevator:
             for spr in mine.all_sprites + [mine.players]:
                 for spt in spr.sprites():
+                    if spt.in_room != self.in_room:
+                        continue
                     if spt.is_elevator_shaft:
                         continue
                     elevator_collision = spt.collides(self) and self.rect.bottom >= spt.rect.bottom - 5 \
@@ -1074,7 +1085,7 @@ class Sprite(pygame.sprite.Sprite):
                     elif riding_this_elevator and not self.is_paused():
                         spt.move(self.v_direction, speed=abs(y), activity=activity)
                     if not elevator_collision:
-                        spt.is_riding_elevator = None if riding_this_elevator else spt.is_riding_elevator
+                        spt.is_riding_elevator = False if riding_this_elevator else spt.is_riding_elevator
 
     def update(self, activity=None):
         """

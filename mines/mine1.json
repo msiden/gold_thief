@@ -75,7 +75,9 @@
         "elevator": [
           {"position": [220, 600], "v_direction":  "up", "stops": [205, 350, 656, 718, 880], "stop_direction": "up"}],
         "exit": [
-          {"position": [100, -100], "exit_dir": "up", "leads_to": {"room":  1, "x": 110, "y":  960}}]}
+          {"position": [-120, 80], "exit_dir": "left", "leads_to": {"room":  2, "x": 1360, "y":  83}},
+          {"position": [-120, 580], "exit_dir": "left", "leads_to": {"room":  2, "x": 1360, "y":  590}},
+          {"position": [-120, 740], "exit_dir": "left", "leads_to": {"room":  2, "x": 1360, "y":  756}}]}
     }
   }
 }
