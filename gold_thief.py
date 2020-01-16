@@ -8,7 +8,7 @@ import itertools
 # Constants you may want to play around with
 CHICKEN_MODE = True
 SHOW_START_SCREEN = True
-START_MINE = 1
+START_MINE = 2
 PLAYER_LIVES = 5
 BONUS_POINTS = 10
 GRAVITY = 25
@@ -925,8 +925,8 @@ class Sprite(pygame.sprite.Sprite):
         collides_with_elevator = collides_with_elevator and is_not_an_elevator and elevator.is_paused()
         collides_with_elev_shaft, shaft = self.collides(mine.elevator_shafts, True)
         collides_with_elev_shaft = collides_with_elev_shaft and is_not_an_elevator and ((
-            self.is_moving_right() and right >= shaft.rect.x + 50 and left < shaft.rect.center[0])
-            or (self.is_moving_left() and left <= shaft.rect.right - 50 and right > shaft.rect.center[0]))
+            self.is_moving_right() and right >= shaft.rect.x + 60 and left < shaft.rect.center[0])
+            or (self.is_moving_left() and left <= shaft.rect.right - 60 and right > shaft.rect.center[0]))
         can_wait_for_elevator = collides_with_elev_shaft and not self.is_riding_elevator
         wait_for_elevator = can_wait_for_elevator and random_no if not self.enter_elevator_selection else False
         self.enter_elevator_selection = can_wait_for_elevator if not self.enter_elevator_selection else True

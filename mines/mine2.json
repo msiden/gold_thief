@@ -1,0 +1,87 @@
+{
+  "texture": "basalt.jpg",
+  "time_limit_mins": 10,
+  "rooms": {
+    "1": {
+      "layout": "room2_1.png",
+      "sprites": {
+        "truck":  [
+          {"position": [-100, 570]}],
+        "wheelbarrow":  [
+          {"position": [450, 935], "h_direction": "right"}],
+        "player":  [
+          {"position": [40, 935], "h_direction": "right", "activity":  "idle"}],
+        "miner": [
+          {"position": [700, 123], "h_direction": "left", "activity":  "walking"},
+          {"position": [1150, 455], "h_direction": "right", "activity":  "walking"}],
+        "gold": [
+          {"position": [380, 110]}, {"position": [400, 110]}, {"position": [420, 110]}, {"position": [1170, 455]}],
+        "ladder": [
+          {"position": [700, 670], "height":  377},
+          {"position": [1212, 670], "height":  347},
+          {"position": [561, 220], "height":  256},
+          {"position": [1306, 315], "height":  273},
+          {"position": [1129, 0], "height":  342}],
+        "elevator_shaft": [{"position": [822, 342], "height":  460}],
+        "elevator": [
+          {"position": [822, 588], "v_direction":  "up", "stops": [476, 588, 802], "stop_direction": "up"}],
+        "exit": [
+          {"position": [1130, -100], "exit_dir": "up", "leads_to": {"room":  4, "x": 1130, "y":  960}},
+          {"position": [1440, 884], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  895}},
+          {"position": [1440, 210], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  220}}]
+      }
+    },
+    "2": {
+      "layout": "room2_2.png",
+      "sprites": {
+        "gold": [{"position": [790, 470]}],
+        "elevator_shaft": [{"position": [325, 209], "height":  808}],
+        "elevator": [
+          {"position": [325, 209], "v_direction":  "down", "stops": [342, 698, 1015]}],
+        "exit": [
+          {"position": [-120, 210], "exit_dir": "left", "leads_to": {"room":  1, "x": 1360, "y":  220}},
+          {"position": [-120, 885], "exit_dir": "left", "leads_to": {"room":  1, "x": 1360, "y":  895}},
+          {"position": [1440, 465], "exit_dir": "right", "leads_to": {"room":  3, "x": -20, "y":  477}}]
+      }
+    },
+    "3": {
+      "layout": "room2_3.png",
+      "sprites": {
+        "miner": [
+          {"position": [470, 39], "h_direction": "left", "activity":  "walking"},
+          {"position": [1000, 466], "h_direction": "right", "activity":  "walking"}],
+        "gold": [
+          {"position": [250, 39]}, {"position": [1150, 39]}, {"position": [250, 245]}, {"position": [1150, 245]},
+          {"position": [250, 465]}, {"position": [1150, 465]}, {"position": [250, 765]}, {"position": [1150, 765]},
+          {"position": [250, 918]}, {"position": [1150, 918]}],
+        "elevator_shaft": [
+          {"position": [113, 36], "height":  1013},
+          {"position": [721, 36], "height":  1013},
+          {"position": [1291, 36], "height":  1013}],
+        "elevator": [
+          {"position": [113, 36], "v_direction":  "down", "stops": [170, 600, 1049], "stop_direction": "down"},
+          {"position": [721, 36], "v_direction":  "down", "stops": [170, 379, 898, 1049], "stop_direction": "up"},
+          {"position": [1291, 36], "v_direction":  "down", "stops": [170, 600, 1049], "stop_direction": "down"}],
+        "exit": [
+          {"position": [-120, 465], "exit_dir": "left", "leads_to": {"room":  2, "x": 1360, "y":  477}}]}
+    },
+    "4": {
+      "layout": "room2_4.png",
+      "sprites": {
+        "gold": [
+          {"position": [330, 800]}, {"position": [1110, 740]}, {"position": [1280, 500]}, {"position": [580, 415]},
+          {"position": [350, 150]}],
+        "ladder": [
+          {"position": [1129, 1015], "height":  70},
+          {"position": [570, 650], "height":  407},
+          {"position": [1289, 175], "height":  295}
+        ],
+        "elevator_shaft": [{"position": [783, 408], "height":  460}],
+        "elevator": [
+          {"position": [783, 500], "v_direction":  "up", "stops": [542, 693, 868]}],
+        "exit": [
+          {"position": [5, 1075], "exit_dir": "down", "leads_to": {"room":  1, "x": 0, "y":  0}},
+          {"position": [1130, 1075], "exit_dir": "down", "leads_to": {"room":  1, "x": 1130, "y":  0}}]}
+    }
+  }
+}
