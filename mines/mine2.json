@@ -1,6 +1,6 @@
 {
   "texture": "basalt.jpg",
-  "time_limit_mins": 10,
+  "time_limit_mins": 15,
   "rooms": {
     "1": {
       "layout": "room2_1.png",

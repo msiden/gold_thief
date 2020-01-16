@@ -6,9 +6,9 @@ import random
 import itertools
 
 # Constants you may want to play around with
-CHICKEN_MODE = True
+CHICKEN_MODE = False
 SHOW_START_SCREEN = True
-START_MINE = 2
+START_MINE = 1
 PLAYER_LIVES = 5
 BONUS_POINTS = 10
 GRAVITY = 25
