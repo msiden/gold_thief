@@ -1,6 +1,6 @@
 {
   "texture": "basalt.jpg",
-  "time_limit_mins": 15,
+  "time_limit_mins": 18,
   "rooms": {
     "1": {
       "layout": "room2_1.png",
@@ -48,12 +48,10 @@
       "layout": "room2_3.png",
       "sprites": {
         "miner": [
-          {"position": [470, 39], "h_direction": "left", "activity":  "walking"},
-          {"position": [1000, 466], "h_direction": "right", "activity":  "walking"}],
+          {"position": [470, 39], "h_direction": "left", "activity":  "walking"}],
         "gold": [
-          {"position": [250, 39]}, {"position": [1150, 39]}, {"position": [250, 245]}, {"position": [1150, 245]},
-          {"position": [250, 465]}, {"position": [1150, 465]}, {"position": [250, 765]}, {"position": [1150, 765]},
-          {"position": [250, 918]}, {"position": [1150, 918]}],
+          {"position": [250, 39]}, {"position": [1150, 245]}, {"position": [250, 465]}, {"position": [1150, 765]},
+          {"position": [250, 918]}],
         "elevator_shaft": [
           {"position": [113, 36], "height":  1013},
           {"position": [721, 36], "height":  1013},

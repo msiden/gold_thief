@@ -1,6 +1,6 @@
 {
   "texture": "granite.jpg",
-  "time_limit_mins": 10,
+  "time_limit_mins": 13,
   "rooms": {
     "1": {
       "layout": "room1_1.png",
@@ -64,7 +64,7 @@
           {"position": [1000, 930], "h_direction": "right", "activity":  "walking"}],
         "gold": [
           {"position": [380, 225]}, {"position": [940, 225]}, {"position": [860, 370]}, {"position": [80, 595]},
-          {"position": [430, 560]}, {"position": [700, 930]}, {"position": [1160, 930]}, {"position": [1190, 684]}],
+          {"position": [430, 560]}, {"position": [700, 930]}],
         "ladder": [
           {"position": [1078, 180], "height":  170},
           {"position": [703, 330], "height":  163},
