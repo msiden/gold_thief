@@ -1,69 +1,83 @@
 {
   "texture": "granite.jpg",
-  "time_limit_mins": 10,
+  "time_limit_mins": 13,
   "rooms": {
     "1": {
       "layout": "room1_1.png",
       "sprites": {
         "truck":  [
-          {"position": [-100, -260]}],
+          {"position": [-230, -300]}],
         "wheelbarrow":  [
-          {"position": [1150, 100], "h_direction": "left"}],
+          {"position": [600, 80], "h_direction": "left"}],
         "player":  [
-          {"position": [120, 20], "h_direction": "right", "activity":  "idle"}],
+          {"position": [75, 20], "h_direction": "right", "activity":  "idle"}],
         "miner": [
-          {"position": [700, 290], "h_direction": "right", "activity":  "walking"},
-          {"position": [250, 385], "h_direction": "right", "activity":  "walking"}],
+          {"position": [700, 903], "h_direction": "left", "activity":  "walking"},
+          {"position": [700, 258], "h_direction": "left", "activity":  "walking"}],
         "gold": [
-          {"position": [250, 390]}, {"position": [250, 710]}, {"position": [1230, 650]}, {"position": [545, 80]},
-          {"position": [845, 80]}, {"position": [945, 80]}],
+          {"position": [140, 311]}, {"position": [600, 260]}, {"position": [835, 675]}, {"position": [1200, 595]}],
         "ladder": [
-          {"position": [402, 200], "height":  820},
-          {"position": [1055, 200], "height":  260},
-          {"position": [95, 385], "height":  443},
-          {"position": [880, 520], "height":  265},
-          {"position": [110, 980], "height":  100}],
+          {"position": [63, 265], "height":  583},
+          {"position": [243, 170], "height":  855},
+          {"position": [709, 487], "height":  310},
+          {"position": [981, 170], "height":  300}],
         "exit": [
-          {"position": [1430, 110], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  110}},
-          {"position": [1430, 280], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  300}},
-          {"position": [1430, 630], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  645}},
-          {"position": [1430, 890], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  901}},
-          {"position": [100, 1060], "exit_dir": "down", "leads_to": {"room":  3, "x": 110, "y":  0}}]}
+          {"position": [1440, 80], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  83}},
+          {"position": [1440, 260], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  260}},
+          {"position": [1440, 594], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  595}},
+          {"position": [1440, 905], "exit_dir": "right", "leads_to": {"room":  2, "x": -20, "y":  905}}]
+      }
     },
     "2": {
       "layout": "room1_2.png",
       "sprites": {
         "miner": [
-          {"position": [350, 100], "h_direction": "right", "activity":  "walking"},
-          {"position": [350, 630], "h_direction": "right", "activity":  "walking"}],
+          {"position": [800, 575], "h_direction": "right", "activity":  "walking"}],
         "gold": [
-          {"position": [740, 280]}, {"position": [515, 460]}, {"position": [1170, 460]}, {"position": [1130, 630]},
-          {"position": [250, 890]}],
+          {"position": [760, 242]}, {"position": [480, 410]}, {"position": [1155, 410]}, {"position": [1000, 575]},
+          {"position": [980, 900]}],
         "ladder": [
-          {"position": [385, 200], "height":  210},
-          {"position": [45, 285], "height":  300},
-          {"position": [365, 630], "height":  390},
-          {"position": [887, 200], "height":  565},
-          {"position": [1034, 280], "height":  295},
-          {"position": [1302, 280], "height":  635}],
+          {"position": [365, 170], "height":  210},
+          {"position": [62, 350], "height":  188},
+          {"position": [310, 680], "height":  345},
+          {"position": [1042, 262], "height":  266},
+          {"position": [1310, 262], "height":  454},
+          {"position": [1115, 685], "height":  341}],
+        "elevator_shaft": [{"position": [879, 80], "height":  636}],
+        "elevator": [
+          {"position": [879, 204], "v_direction":  "down", "stops": [205, 381, 716], "stop_direction": "down"}],
         "exit": [
-          {"position": [-100, 110], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  110}},
-          {"position": [-100, 280], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  293}},
-          {"position": [-100, 630], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  645}},
-          {"position": [-100, 890], "exit_dir": "left", "leads_to": {"room":  1, "x": 1350, "y":  901}}]}
+          {"position": [-120, 80], "exit_dir": "left", "leads_to": {"room":  1, "x": 1360, "y":  83}},
+          {"position": [-120, 242], "exit_dir": "left", "leads_to": {"room":  1, "x": 1360, "y":  260}},
+          {"position": [-120, 575], "exit_dir": "left", "leads_to": {"room":  1, "x": 1360, "y":  596}},
+          {"position": [-120, 882], "exit_dir": "left", "leads_to": {"room":  1, "x": 1360, "y":  906}},
+          {"position": [1440, 80], "exit_dir": "right", "leads_to": {"room":  3, "x": -20, "y":  83}},
+          {"position": [1440, 580], "exit_dir": "right", "leads_to": {"room":  3, "x": -20, "y":  590}},
+          {"position": [1440, 740], "exit_dir": "right", "leads_to": {"room":  3, "x": -20, "y":  756}}
+        ]
+      }
     },
     "3": {
       "layout": "room1_3.png",
       "sprites": {
         "miner": [
-          {"position": [1200, 870], "h_direction": "right", "activity":  "climbing"}],
+          {"position": [1000, 930], "h_direction": "right", "activity":  "walking"}],
         "gold": [
-          {"position": [230, 800]}, {"position": [1250, 900]}],
+          {"position": [380, 225]}, {"position": [940, 225]}, {"position": [860, 370]}, {"position": [80, 595]},
+          {"position": [430, 560]}, {"position": [700, 930]}],
         "ladder": [
-          {"position": [110, 0], "height":  540},
-          {"position": [720, 620], "height":  430}],
+          {"position": [1078, 180], "height":  170},
+          {"position": [703, 330], "height":  163},
+          {"position": [1079, 470], "height":  341},
+          {"position": [1306, 684], "height":  380}
+        ],
+        "elevator_shaft": [{"position": [221, 80], "height":  800}],
+        "elevator": [
+          {"position": [220, 600], "v_direction":  "up", "stops": [205, 350, 656, 718, 880], "stop_direction": "up"}],
         "exit": [
-          {"position": [100, -100], "exit_dir": "up", "leads_to": {"room":  1, "x": 110, "y":  960}}]}
+          {"position": [-120, 80], "exit_dir": "left", "leads_to": {"room":  2, "x": 1360, "y":  83}},
+          {"position": [-120, 580], "exit_dir": "left", "leads_to": {"room":  2, "x": 1360, "y":  590}},
+          {"position": [-120, 740], "exit_dir": "left", "leads_to": {"room":  2, "x": 1360, "y":  756}}]}
     }
   }
 }
