@@ -4,6 +4,7 @@ import json
 import ctypes
 import random
 import itertools
+import sys
 
 # Constants you may want to play around with
 CHICKEN_MODE = False
@@ -36,7 +37,8 @@ SCREEN_SIZE = (1440, 1080)
 SPRITE_SIZE = (120, 120)
 
 # Make sure we get the right screen resolution
-ctypes.windll.user32.SetProcessDPIAware()
+if sys.platform != "linux":
+    ctypes.windll.user32.SetProcessDPIAware()
 
 # Setup screen
 screen = pygame.display.set_mode(SCREEN_SIZE)
